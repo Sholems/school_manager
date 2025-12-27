@@ -1,0 +1,3900 @@
+(globalThis.TURBOPACK || (globalThis.TURBOPACK = [])).push([typeof document === "object" ? document.currentScript : undefined,
+"[project]/lib/utils.ts [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "DOMAINS_AFFECTIVE",
+    ()=>DOMAINS_AFFECTIVE,
+    "DOMAINS_PSYCHOMOTOR",
+    ()=>DOMAINS_PSYCHOMOTOR,
+    "INITIAL_SETTINGS",
+    ()=>INITIAL_SETTINGS,
+    "PRESET_CLASSES",
+    ()=>PRESET_CLASSES,
+    "PRESET_PRESCHOOL_SUBJECTS",
+    ()=>PRESET_PRESCHOOL_SUBJECTS,
+    "PRESET_PRIMARY_SUBJECTS",
+    ()=>PRESET_PRIMARY_SUBJECTS,
+    "SEED_CLASSES",
+    ()=>SEED_CLASSES,
+    "SEED_STAFF",
+    ()=>SEED_STAFF,
+    "SEED_STUDENTS",
+    ()=>SEED_STUDENTS,
+    "SEED_TEACHERS",
+    ()=>SEED_TEACHERS,
+    "STORAGE_KEYS",
+    ()=>STORAGE_KEYS,
+    "calculateGrade",
+    ()=>calculateGrade,
+    "formatCurrency",
+    ()=>formatCurrency,
+    "generateId",
+    ()=>generateId,
+    "getCurrentTimestamp",
+    ()=>getCurrentTimestamp,
+    "getStudentBalance",
+    ()=>getStudentBalance,
+    "getStudentPosition",
+    ()=>getStudentPosition,
+    "getSubjectsForClass",
+    ()=>getSubjectsForClass,
+    "getTodayString",
+    ()=>getTodayString,
+    "loadFromStorage",
+    ()=>loadFromStorage,
+    "ordinalSuffix",
+    ()=>ordinalSuffix,
+    "saveToStorage",
+    ()=>saveToStorage
+]);
+const calculateGrade = (total)=>{
+    if (total >= 75) return {
+        grade: 'A',
+        comment: 'Excellent'
+    };
+    if (total >= 65) return {
+        grade: 'B',
+        comment: 'Very Good'
+    };
+    if (total >= 50) return {
+        grade: 'C',
+        comment: 'Good'
+    };
+    if (total >= 40) return {
+        grade: 'D',
+        comment: 'Fair'
+    };
+    return {
+        grade: 'F',
+        comment: 'Fail'
+    };
+};
+const generateId = ()=>crypto.randomUUID();
+const getCurrentTimestamp = ()=>Date.now();
+const getTodayString = ()=>new Date().toISOString().split('T')[0];
+const STORAGE_KEYS = {
+    SETTINGS: 'ng_school_settings',
+    STUDENTS: 'ng_school_students',
+    TEACHERS: 'ng_school_teachers',
+    STAFF: 'ng_school_staff',
+    CLASSES: 'ng_school_classes',
+    FEES: 'ng_school_fees',
+    PAYMENTS: 'ng_school_payments',
+    EXPENSES: 'ng_school_expenses',
+    SCORES: 'ng_school_scores',
+    ATTENDANCE: 'ng_school_attendance'
+};
+const loadFromStorage = (key, fallback)=>{
+    try {
+        const item = localStorage.getItem(key);
+        if (!item) return fallback;
+        const parsed = JSON.parse(item);
+        // For objects (like Settings), merge with fallback to ensure new keys exist
+        if (typeof fallback === 'object' && fallback !== null && !Array.isArray(fallback)) {
+            return {
+                ...fallback,
+                ...parsed
+            };
+        }
+        return parsed;
+    } catch (e) {
+        console.error(`Error loading ${key}`, e);
+        return fallback;
+    }
+};
+const saveToStorage = (key, data)=>{
+    try {
+        localStorage.setItem(key, JSON.stringify(data));
+    } catch (e) {
+        console.error(`Error saving ${key}`, e);
+    }
+};
+const INITIAL_SETTINGS = {
+    id: 'singleton',
+    created_at: Date.now(),
+    updated_at: Date.now(),
+    school_name: 'Bright Future Academy',
+    school_address: '123 Education Lane, Lagos, Nigeria',
+    school_email: 'info@brightfuture.ng',
+    school_phone: '08012345678',
+    school_tagline: 'Knowledge for a brighter tomorrow',
+    current_session: '2025/2026',
+    current_term: 'First Term',
+    logo_media: null,
+    watermark_media: null,
+    director_name: 'Godspower Arthur',
+    director_signature: null,
+    head_of_school_name: 'Oluwaseun Arthur',
+    head_of_school_signature: null,
+    subjects_global: [
+        'Mathematics',
+        'English',
+        'Science'
+    ],
+    terms: [
+        'First Term',
+        'Second Term',
+        'Third Term'
+    ],
+    show_position: true,
+    show_skills: true,
+    tiled_watermark: false,
+    next_term_begins: '2025-05-04',
+    class_teacher_label: 'Class Teacher',
+    head_teacher_label: 'Head of School',
+    report_font_family: 'inherit',
+    report_scale: 100,
+    landing_hero_title: 'Excellence in Education',
+    landing_hero_subtitle: 'Nurturing the leaders of tomorrow with a world-class educational experience.',
+    landing_features: 'Academic Excellence, Modern Facilities, Expert Teachers, Safe Environment, Holistic Development, Affordable Fees',
+    landing_hero_image: null,
+    landing_about_text: 'We are committed to providing quality education that prepares students for the challenges of tomorrow. Our experienced teachers, modern facilities, and comprehensive curriculum ensure every child reaches their full potential.',
+    landing_gallery_images: [],
+    landing_primary_color: '#16a34a',
+    landing_show_stats: true,
+    landing_cta_text: 'Start Your Journey',
+    promotion_threshold: 50,
+    promotion_rules: 'manual',
+    role_permissions: {
+        super_admin: {
+            navigation: [
+                'dashboard',
+                'students',
+                'teachers',
+                'staff',
+                'classes',
+                'grading',
+                'attendance',
+                'bursary',
+                'announcements',
+                'calendar',
+                'analytics',
+                'id_cards',
+                'broadsheet',
+                'data',
+                'settings'
+            ],
+            dashboardWidgets: [
+                'stats',
+                'finance_chart',
+                'student_population',
+                'quick_actions',
+                'recent_transactions'
+            ]
+        },
+        admin: {
+            navigation: [
+                'dashboard',
+                'students',
+                'teachers',
+                'staff',
+                'classes',
+                'grading',
+                'attendance',
+                'bursary',
+                'announcements',
+                'calendar',
+                'analytics',
+                'id_cards',
+                'broadsheet',
+                'data',
+                'settings'
+            ],
+            dashboardWidgets: [
+                'stats',
+                'finance_chart',
+                'student_population',
+                'quick_actions',
+                'recent_transactions'
+            ]
+        },
+        teacher: {
+            navigation: [
+                'dashboard',
+                'grading',
+                'attendance',
+                'announcements',
+                'calendar'
+            ],
+            dashboardWidgets: [
+                'stats',
+                'quick_actions',
+                'my_classes'
+            ]
+        },
+        student: {
+            navigation: [
+                'dashboard',
+                'bursary',
+                'calendar',
+                'id_cards'
+            ],
+            dashboardWidgets: [
+                'my_scores',
+                'my_attendance',
+                'my_fees'
+            ]
+        },
+        parent: {
+            navigation: [
+                'dashboard',
+                'bursary',
+                'calendar',
+                'id_cards'
+            ],
+            dashboardWidgets: [
+                'my_scores',
+                'my_attendance',
+                'my_fees'
+            ]
+        },
+        staff: {
+            navigation: [
+                'dashboard',
+                'calendar'
+            ],
+            dashboardWidgets: [
+                'quick_actions',
+                'my_tasks'
+            ]
+        }
+    }
+};
+const PRESET_PRESCHOOL_SUBJECTS = [
+    'Language',
+    'Numeracy',
+    'Sensorial',
+    'Practical Life',
+    'Cultural Studies',
+    'Art',
+    'Story Telling',
+    'C.R.S'
+];
+const PRESET_PRIMARY_SUBJECTS = [
+    'Mathematics',
+    'English Language',
+    'Basic Science',
+    'Social Studies',
+    'Civic Education',
+    'C.R.S',
+    'Verbal Reasoning',
+    'Quantitative Reasoning',
+    'ICT',
+    'Creative Art',
+    'Vocational Aptitude',
+    'Writing'
+];
+const getSubjectsForClass = (cls)=>{
+    if (!cls) return [];
+    if (cls.subjects && cls.subjects.length > 0) return cls.subjects;
+    const lowerName = cls.name.toLowerCase();
+    if (lowerName.includes('play') || lowerName.includes('reception') || lowerName.includes('nursery') || lowerName.includes('kinder')) {
+        return PRESET_PRESCHOOL_SUBJECTS;
+    }
+    return PRESET_PRIMARY_SUBJECTS;
+};
+const PRESET_CLASSES = [
+    'Playschool',
+    'Reception',
+    'Kindergarten',
+    'Year 1',
+    'Year 2',
+    'Year 3',
+    'Year 4',
+    'Year 5',
+    'Year 6'
+];
+const DOMAINS_AFFECTIVE = [
+    'Punctuality',
+    'Attentiveness',
+    'Neatness',
+    'Honesty',
+    'Self Control',
+    'Politeness',
+    'Leadership'
+];
+const DOMAINS_PSYCHOMOTOR = [
+    'Handwriting',
+    'Verbal Fluency',
+    'Sports/Games',
+    'Handling Tools',
+    'Drawing/Painting',
+    'Music/Dance'
+];
+const SEED_TEACHERS = [
+    {
+        id: 't1',
+        name: 'Mr. John Doe',
+        address: 'Lagos',
+        email: 'john@school.ng',
+        phone: '08012345678',
+        created_at: Date.now(),
+        updated_at: Date.now()
+    },
+    {
+        id: 't2',
+        name: 'Mrs. Jane Smith',
+        address: 'Abuja',
+        email: 'jane@school.ng',
+        phone: '08087654321',
+        created_at: Date.now(),
+        updated_at: Date.now()
+    }
+];
+const SEED_STAFF = [
+    {
+        id: 'st1',
+        name: 'Mrs. Grace Okoro',
+        role: 'Bursar',
+        tasks: 'Collect fees, manage accounts',
+        email: 'bursar@school.ng',
+        phone: '08099999999',
+        address: 'Lagos',
+        created_at: Date.now(),
+        updated_at: Date.now()
+    },
+    {
+        id: 'st2',
+        name: 'Mr. Ahmed Musa',
+        role: 'Security',
+        tasks: 'Gate security, patrol',
+        email: '',
+        phone: '08088888888',
+        address: 'Lagos',
+        created_at: Date.now(),
+        updated_at: Date.now()
+    }
+];
+const SEED_CLASSES = PRESET_CLASSES.map(_c = (name, i)=>({
+        id: `c-${i}`,
+        name,
+        class_teacher_id: i === 0 ? 't1' : i === 3 ? 't2' : null,
+        subjects: null,
+        created_at: Date.now(),
+        updated_at: Date.now()
+    }));
+_c1 = SEED_CLASSES;
+const SEED_STUDENTS = [
+    {
+        id: 's1',
+        student_no: 'ST001',
+        names: 'Chinedu Eze',
+        gender: 'Male',
+        class_id: 'c-3',
+        dob: '2015-05-12',
+        parent_name: 'Mr. Eze',
+        parent_phone: '08000000001',
+        address: 'Ikeja',
+        created_at: Date.now(),
+        updated_at: Date.now()
+    },
+    {
+        id: 's2',
+        student_no: 'ST002',
+        names: 'Amina Bello',
+        gender: 'Female',
+        class_id: 'c-3',
+        dob: '2015-08-23',
+        parent_name: 'Mrs. Bello',
+        parent_phone: '08000000002',
+        address: 'Lekki',
+        created_at: Date.now(),
+        updated_at: Date.now()
+    },
+    {
+        id: 's3',
+        student_no: 'ST003',
+        names: 'Funke Akindele',
+        gender: 'Female',
+        class_id: 'c-0',
+        dob: '2019-02-10',
+        parent_name: 'Mr. Akindele',
+        parent_phone: '08000000003',
+        address: 'Yaba',
+        created_at: Date.now(),
+        updated_at: Date.now()
+    }
+];
+const formatCurrency = (amount)=>{
+    return new Intl.NumberFormat('en-NG', {
+        style: 'currency',
+        currency: 'NGN'
+    }).format(amount);
+};
+const getStudentBalance = (student, fees, payments, session, term)=>{
+    // Calculate total bill for this session/term
+    const classFees = fees.filter((f)=>f.session === session && f.term === term && (f.class_id === null || f.class_id === student.class_id));
+    const totalBill = classFees.reduce((acc, f)=>acc + f.amount, 0);
+    // Calculate total paid
+    const studentPayments = payments.filter((p)=>p.student_id === student.id && p.session === session && p.term === term);
+    const totalPaid = studentPayments.reduce((acc, p)=>acc + p.amount, 0);
+    return {
+        totalBill,
+        totalPaid,
+        balance: totalBill - totalPaid
+    };
+};
+const getStudentPosition = (studentId, students, scores, session, term)=>{
+    const student = students.find((s)=>s.id === studentId);
+    if (!student) return null;
+    const classStudents = students.filter((s)=>s.class_id === student.class_id);
+    const classScores = classStudents.map((s)=>{
+        const score = scores.find((sc)=>sc.student_id === s.id && sc.session === session && sc.term === term);
+        return {
+            student_id: s.id,
+            total: score?.rows.reduce((acc, r)=>acc + r.total, 0) || 0
+        };
+    }).sort((a, b)=>b.total - a.total);
+    const index = classScores.findIndex((s)=>s.student_id === studentId);
+    return index !== -1 ? index + 1 : null;
+};
+const ordinalSuffix = (i)=>{
+    const j = i % 10, k = i % 100;
+    if (j === 1 && k !== 11) return i + "st";
+    if (j === 2 && k !== 12) return i + "nd";
+    if (j === 3 && k !== 13) return i + "rd";
+    return i + "th";
+};
+var _c, _c1;
+__turbopack_context__.k.register(_c, "SEED_CLASSES$PRESET_CLASSES.map");
+__turbopack_context__.k.register(_c1, "SEED_CLASSES");
+if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
+    __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
+}
+}),
+"[project]/lib/store.ts [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "useSchoolStore",
+    ()=>useSchoolStore
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/zustand/esm/react.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$middleware$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/zustand/esm/middleware.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/lib/utils.ts [app-client] (ecmascript)");
+;
+;
+;
+const useSchoolStore = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$react$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["create"])()((0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$middleware$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["persist"])((set, get)=>({
+        settings: __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["INITIAL_SETTINGS"],
+        students: [],
+        teachers: [],
+        staff: [],
+        classes: [],
+        scores: [],
+        fees: [],
+        payments: [],
+        expenses: [],
+        attendance: [],
+        subjectTeachers: [],
+        announcements: [],
+        messages: [],
+        events: [],
+        isLoaded: false,
+        currentUser: null,
+        currentRole: 'admin',
+        view: 'dashboard',
+        initStore: ()=>{
+            if (get().isLoaded) return;
+            set({
+                settings: __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["loadFromStorage"](__TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["STORAGE_KEYS"].SETTINGS, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["INITIAL_SETTINGS"]),
+                students: __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["loadFromStorage"](__TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["STORAGE_KEYS"].STUDENTS, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SEED_STUDENTS"]),
+                teachers: __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["loadFromStorage"](__TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["STORAGE_KEYS"].TEACHERS, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SEED_TEACHERS"]),
+                staff: __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["loadFromStorage"](__TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["STORAGE_KEYS"].STAFF, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SEED_STAFF"]),
+                classes: __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["loadFromStorage"](__TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["STORAGE_KEYS"].CLASSES, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SEED_CLASSES"]),
+                scores: __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["loadFromStorage"](__TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["STORAGE_KEYS"].SCORES, []),
+                fees: __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["loadFromStorage"](__TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["STORAGE_KEYS"].FEES, []),
+                payments: __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["loadFromStorage"](__TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["STORAGE_KEYS"].PAYMENTS, []),
+                expenses: __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["loadFromStorage"](__TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["STORAGE_KEYS"].EXPENSES, []),
+                attendance: __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["loadFromStorage"](__TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["STORAGE_KEYS"].ATTENDANCE, []),
+                isLoaded: true
+            });
+        },
+        setSettings: (settings)=>set({
+                settings
+            }),
+        setView: (view)=>set({
+                view
+            }),
+        login: (role, user = null)=>set({
+                currentRole: role,
+                currentUser: user,
+                view: 'dashboard'
+            }),
+        logout: ()=>set({
+                currentUser: null,
+                currentRole: 'admin',
+                view: 'dashboard'
+            }),
+        switchRole: (role)=>set({
+                currentRole: role,
+                view: 'dashboard'
+            }),
+        addStudent: (student)=>set((state)=>({
+                    students: [
+                        ...state.students,
+                        student
+                    ]
+                })),
+        updateStudent: (student)=>set((state)=>({
+                    students: state.students.map((s)=>s.id === student.id ? student : s)
+                })),
+        deleteStudent: (id)=>set((state)=>({
+                    students: state.students.filter((s)=>s.id !== id)
+                })),
+        addTeacher: (teacher)=>set((state)=>({
+                    teachers: [
+                        ...state.teachers,
+                        teacher
+                    ]
+                })),
+        updateTeacher: (teacher)=>set((state)=>({
+                    teachers: state.teachers.map((t)=>t.id === teacher.id ? teacher : t)
+                })),
+        deleteTeacher: (id)=>set((state)=>({
+                    teachers: state.teachers.filter((t)=>t.id !== id)
+                })),
+        addStaff: (staffMember)=>set((state)=>({
+                    staff: [
+                        ...state.staff,
+                        staffMember
+                    ]
+                })),
+        updateStaff: (staffMember)=>set((state)=>({
+                    staff: state.staff.map((s)=>s.id === staffMember.id ? staffMember : s)
+                })),
+        deleteStaff: (id)=>set((state)=>({
+                    staff: state.staff.filter((s)=>s.id !== id)
+                })),
+        setClasses: (classes)=>set({
+                classes
+            }),
+        updateClass: (cls)=>set((state)=>({
+                    classes: state.classes.map((c)=>c.id === cls.id ? cls : c)
+                })),
+        setScores: (scores)=>set({
+                scores
+            }),
+        setAttendance: (attendance)=>set({
+                attendance
+            }),
+        addPayment: (payment)=>set((state)=>({
+                    payments: [
+                        ...state.payments,
+                        payment
+                    ]
+                })),
+        deletePayment: (id)=>set((state)=>({
+                    payments: state.payments.filter((p)=>p.id !== id)
+                })),
+        addFee: (fee)=>set((state)=>({
+                    fees: [
+                        ...state.fees,
+                        fee
+                    ]
+                })),
+        deleteFee: (id)=>set((state)=>({
+                    fees: state.fees.filter((f)=>f.id !== id)
+                })),
+        addExpense: (expense)=>set((state)=>({
+                    expenses: [
+                        ...state.expenses,
+                        expense
+                    ]
+                })),
+        deleteExpense: (id)=>set((state)=>({
+                    expenses: state.expenses.filter((e)=>e.id !== id)
+                })),
+        // Phase 2: Subject-Teacher Actions
+        addSubjectTeacher: (mapping)=>set((state)=>({
+                    subjectTeachers: [
+                        ...state.subjectTeachers,
+                        mapping
+                    ]
+                })),
+        removeSubjectTeacher: (id)=>set((state)=>({
+                    subjectTeachers: state.subjectTeachers.filter((st)=>st.id !== id)
+                })),
+        // Phase 3: Announcement Actions
+        addAnnouncement: (a)=>set((state)=>({
+                    announcements: [
+                        ...state.announcements,
+                        a
+                    ]
+                })),
+        updateAnnouncement: (a)=>set((state)=>({
+                    announcements: state.announcements.map((ann)=>ann.id === a.id ? a : ann)
+                })),
+        deleteAnnouncement: (id)=>set((state)=>({
+                    announcements: state.announcements.filter((a)=>a.id !== id)
+                })),
+        // Phase 3: Message Actions
+        addMessage: (m)=>set((state)=>({
+                    messages: [
+                        ...state.messages,
+                        m
+                    ]
+                })),
+        markMessageRead: (id)=>set((state)=>({
+                    messages: state.messages.map((m)=>m.id === id ? {
+                            ...m,
+                            is_read: true
+                        } : m)
+                })),
+        deleteMessage: (id)=>set((state)=>({
+                    messages: state.messages.filter((m)=>m.id !== id)
+                })),
+        // Phase 3: Event Actions
+        addEvent: (e)=>set((state)=>({
+                    events: [
+                        ...state.events,
+                        e
+                    ]
+                })),
+        updateEvent: (e)=>set((state)=>({
+                    events: state.events.map((ev)=>ev.id === e.id ? e : ev)
+                })),
+        deleteEvent: (id)=>set((state)=>({
+                    events: state.events.filter((e)=>e.id !== id)
+                }))
+    }), {
+    name: 'ng-school-storage',
+    storage: (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$middleware$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createJSONStorage"])(()=>localStorage)
+}));
+if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
+    __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
+}
+}),
+"[project]/components/features/LoginView.tsx [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "LoginView",
+    ()=>LoginView
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$store$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/lib/store.ts [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$shield$2d$check$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ShieldCheck$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/shield-check.js [app-client] (ecmascript) <export default as ShieldCheck>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$users$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Users$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/users.js [app-client] (ecmascript) <export default as Users>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$graduation$2d$cap$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__GraduationCap$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/graduation-cap.js [app-client] (ecmascript) <export default as GraduationCap>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$heart$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Heart$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/heart.js [app-client] (ecmascript) <export default as Heart>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$right$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ArrowRight$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/arrow-right.js [app-client] (ecmascript) <export default as ArrowRight>");
+;
+var _s = __turbopack_context__.k.signature();
+'use client';
+;
+;
+;
+const LoginView = ()=>{
+    _s();
+    const { login, settings } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$store$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSchoolStore"])();
+    const [selectedRole, setSelectedRole] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
+    const roles = [
+        {
+            id: 'super_admin',
+            name: 'Super Admin',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$shield$2d$check$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ShieldCheck$3e$__["ShieldCheck"],
+            color: 'bg-red-600',
+            desc: 'System owner. Control roles and landing page CMS.'
+        },
+        {
+            id: 'admin',
+            name: 'Principal / Admin',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$shield$2d$check$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ShieldCheck$3e$__["ShieldCheck"],
+            color: 'bg-blue-500',
+            desc: 'Academic and administrative oversight.'
+        },
+        {
+            id: 'teacher',
+            name: 'Teacher',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$users$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Users$3e$__["Users"],
+            color: 'bg-green-500',
+            desc: 'Manage grades, attendance, and class records.'
+        },
+        {
+            id: 'student',
+            name: 'Student / Parent',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$graduation$2d$cap$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__GraduationCap$3e$__["GraduationCap"],
+            color: 'bg-purple-500',
+            desc: 'View results, check fees, and profile.'
+        },
+        {
+            id: 'staff',
+            name: 'Operations / Staff',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$users$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Users$3e$__["Users"],
+            color: 'bg-amber-500',
+            desc: 'Non-teaching staff dashboard & tasks.'
+        }
+    ];
+    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+        className: "min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6",
+        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "w-full max-w-4xl space-y-8",
+            children: [
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "text-center space-y-2",
+                    children: [
+                        settings.logo_media ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+                            src: settings.logo_media,
+                            alt: "Logo",
+                            className: "h-20 mx-auto mb-4 object-contain"
+                        }, void 0, false, {
+                            fileName: "[project]/components/features/LoginView.tsx",
+                            lineNumber: 61,
+                            columnNumber: 25
+                        }, ("TURBOPACK compile-time value", void 0)) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "h-20 w-20 bg-brand-600 rounded-2xl flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4 shadow-xl",
+                            children: "NG"
+                        }, void 0, false, {
+                            fileName: "[project]/components/features/LoginView.tsx",
+                            lineNumber: 63,
+                            columnNumber: 25
+                        }, ("TURBOPACK compile-time value", void 0)),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
+                            className: "text-3xl font-black text-gray-900 uppercase tracking-tight",
+                            children: settings.school_name
+                        }, void 0, false, {
+                            fileName: "[project]/components/features/LoginView.tsx",
+                            lineNumber: 65,
+                            columnNumber: 21
+                        }, ("TURBOPACK compile-time value", void 0)),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                            className: "text-gray-500 font-medium",
+                            children: "Welcome back! Please select your portal to continue."
+                        }, void 0, false, {
+                            fileName: "[project]/components/features/LoginView.tsx",
+                            lineNumber: 66,
+                            columnNumber: 21
+                        }, ("TURBOPACK compile-time value", void 0))
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/components/features/LoginView.tsx",
+                    lineNumber: 59,
+                    columnNumber: 17
+                }, ("TURBOPACK compile-time value", void 0)),
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4",
+                    children: roles.map((role)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                            onClick: ()=>setSelectedRole(role.id),
+                            className: `relative group bg-white p-8 rounded-3xl border-2 transition-all duration-300 text-left hover:shadow-2xl hover:-translate-y-1 ${selectedRole === role.id ? 'border-brand-500 ring-4 ring-brand-50' : 'border-transparent shadow-sm'}`,
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    className: `${role.color} w-16 h-16 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg group-hover:scale-110 transition-transform`,
+                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(role.icon, {
+                                        size: 32
+                                    }, void 0, false, {
+                                        fileName: "[project]/components/features/LoginView.tsx",
+                                        lineNumber: 80,
+                                        columnNumber: 33
+                                    }, ("TURBOPACK compile-time value", void 0))
+                                }, void 0, false, {
+                                    fileName: "[project]/components/features/LoginView.tsx",
+                                    lineNumber: 79,
+                                    columnNumber: 29
+                                }, ("TURBOPACK compile-time value", void 0)),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                    className: "text-xl font-bold text-gray-900 mb-2",
+                                    children: role.name
+                                }, void 0, false, {
+                                    fileName: "[project]/components/features/LoginView.tsx",
+                                    lineNumber: 82,
+                                    columnNumber: 29
+                                }, ("TURBOPACK compile-time value", void 0)),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                    className: "text-sm text-gray-500 leading-relaxed mb-8",
+                                    children: role.desc
+                                }, void 0, false, {
+                                    fileName: "[project]/components/features/LoginView.tsx",
+                                    lineNumber: 83,
+                                    columnNumber: 29
+                                }, ("TURBOPACK compile-time value", void 0)),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    className: `flex items-center gap-2 text-sm font-bold transition-colors ${selectedRole === role.id ? 'text-brand-600' : 'text-gray-400 group-hover:text-brand-500'}`,
+                                    children: [
+                                        "Click to Select ",
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$right$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ArrowRight$3e$__["ArrowRight"], {
+                                            size: 16
+                                        }, void 0, false, {
+                                            fileName: "[project]/components/features/LoginView.tsx",
+                                            lineNumber: 87,
+                                            columnNumber: 49
+                                        }, ("TURBOPACK compile-time value", void 0))
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/components/features/LoginView.tsx",
+                                    lineNumber: 85,
+                                    columnNumber: 29
+                                }, ("TURBOPACK compile-time value", void 0))
+                            ]
+                        }, role.id, true, {
+                            fileName: "[project]/components/features/LoginView.tsx",
+                            lineNumber: 71,
+                            columnNumber: 25
+                        }, ("TURBOPACK compile-time value", void 0)))
+                }, void 0, false, {
+                    fileName: "[project]/components/features/LoginView.tsx",
+                    lineNumber: 69,
+                    columnNumber: 17
+                }, ("TURBOPACK compile-time value", void 0)),
+                selectedRole && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "flex justify-center pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                        onClick: ()=>login(selectedRole, {
+                                role: selectedRole,
+                                name: 'Demo User'
+                            }),
+                        className: "bg-brand-600 hover:bg-brand-700 text-white px-12 py-4 rounded-2xl font-black text-lg shadow-xl shadow-brand-200 flex items-center gap-3 transition-all hover:scale-105 active:scale-95",
+                        children: [
+                            "Enter Portal ",
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$right$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ArrowRight$3e$__["ArrowRight"], {}, void 0, false, {
+                                fileName: "[project]/components/features/LoginView.tsx",
+                                lineNumber: 99,
+                                columnNumber: 42
+                            }, ("TURBOPACK compile-time value", void 0))
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/components/features/LoginView.tsx",
+                        lineNumber: 95,
+                        columnNumber: 25
+                    }, ("TURBOPACK compile-time value", void 0))
+                }, void 0, false, {
+                    fileName: "[project]/components/features/LoginView.tsx",
+                    lineNumber: 94,
+                    columnNumber: 21
+                }, ("TURBOPACK compile-time value", void 0)),
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "text-center pt-8",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                        className: "text-xs text-gray-400 font-medium flex items-center justify-center gap-1",
+                        children: [
+                            "Made with ",
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$heart$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Heart$3e$__["Heart"], {
+                                size: 12,
+                                className: "text-red-400 fill-current"
+                            }, void 0, false, {
+                                fileName: "[project]/components/features/LoginView.tsx",
+                                lineNumber: 106,
+                                columnNumber: 35
+                            }, ("TURBOPACK compile-time value", void 0)),
+                            " by NG School Management System"
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/components/features/LoginView.tsx",
+                        lineNumber: 105,
+                        columnNumber: 21
+                    }, ("TURBOPACK compile-time value", void 0))
+                }, void 0, false, {
+                    fileName: "[project]/components/features/LoginView.tsx",
+                    lineNumber: 104,
+                    columnNumber: 17
+                }, ("TURBOPACK compile-time value", void 0))
+            ]
+        }, void 0, true, {
+            fileName: "[project]/components/features/LoginView.tsx",
+            lineNumber: 58,
+            columnNumber: 13
+        }, ("TURBOPACK compile-time value", void 0))
+    }, void 0, false, {
+        fileName: "[project]/components/features/LoginView.tsx",
+        lineNumber: 57,
+        columnNumber: 9
+    }, ("TURBOPACK compile-time value", void 0));
+};
+_s(LoginView, "6nc/YW98t3UVLcCcWFZsXQfvBQs=", false, function() {
+    return [
+        __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$store$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSchoolStore"]
+    ];
+});
+_c = LoginView;
+var _c;
+__turbopack_context__.k.register(_c, "LoginView");
+if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
+    __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
+}
+}),
+"[project]/app/(dashboard)/layout.tsx [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>DashboardLayout
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$layout$2d$dashboard$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__LayoutDashboard$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/layout-dashboard.js [app-client] (ecmascript) <export default as LayoutDashboard>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$users$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Users$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/users.js [app-client] (ecmascript) <export default as Users>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$book$2d$open$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__BookOpen$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/book-open.js [app-client] (ecmascript) <export default as BookOpen>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$graduation$2d$cap$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__GraduationCap$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/graduation-cap.js [app-client] (ecmascript) <export default as GraduationCap>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$calendar$2d$check$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__CalendarCheck$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/calendar-check.js [app-client] (ecmascript) <export default as CalendarCheck>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$credit$2d$card$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__CreditCard$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/credit-card.js [app-client] (ecmascript) <export default as CreditCard>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$database$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Database$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/database.js [app-client] (ecmascript) <export default as Database>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$settings$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Settings$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/settings.js [app-client] (ecmascript) <export default as Settings>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$log$2d$out$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__LogOut$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/log-out.js [app-client] (ecmascript) <export default as LogOut>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$menu$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Menu$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/menu.js [app-client] (ecmascript) <export default as Menu>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$clipboard$2d$list$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ClipboardList$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/clipboard-list.js [app-client] (ecmascript) <export default as ClipboardList>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$badge$2d$check$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__BadgeCheck$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/badge-check.js [app-client] (ecmascript) <export default as BadgeCheck>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$user$2d$cog$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__UserCog$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/user-cog.js [app-client] (ecmascript) <export default as UserCog>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$megaphone$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Megaphone$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/megaphone.js [app-client] (ecmascript) <export default as Megaphone>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$calendar$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Calendar$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/calendar.js [app-client] (ecmascript) <export default as Calendar>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chart$2d$column$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__BarChart3$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/chart-column.js [app-client] (ecmascript) <export default as BarChart3>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/client/app-dir/link.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/navigation.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$store$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/lib/store.ts [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$features$2f$LoginView$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/components/features/LoginView.tsx [app-client] (ecmascript)");
+;
+var _s = __turbopack_context__.k.signature();
+'use client';
+;
+;
+;
+;
+;
+;
+function DashboardLayout({ children }) {
+    _s();
+    const { settings, initStore, isLoaded } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$store$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSchoolStore"])();
+    const [isSidebarOpen, setIsSidebarOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(true);
+    const pathname = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["usePathname"])();
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "DashboardLayout.useEffect": ()=>{
+            initStore();
+        }
+    }["DashboardLayout.useEffect"], [
+        initStore
+    ]);
+    const navigation = [
+        {
+            id: 'dashboard',
+            name: 'Dashboard',
+            href: '/dashboard',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$layout$2d$dashboard$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__LayoutDashboard$3e$__["LayoutDashboard"]
+        },
+        {
+            id: 'students',
+            name: 'Students',
+            href: '/students',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$graduation$2d$cap$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__GraduationCap$3e$__["GraduationCap"]
+        },
+        {
+            id: 'teachers',
+            name: 'Teachers',
+            href: '/teachers',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$users$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Users$3e$__["Users"]
+        },
+        {
+            id: 'staff',
+            name: 'Non-Academic',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$user$2d$cog$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__UserCog$3e$__["UserCog"],
+            href: '/staff'
+        },
+        {
+            id: 'classes',
+            name: 'Classes',
+            href: '/classes',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$book$2d$open$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__BookOpen$3e$__["BookOpen"]
+        },
+        {
+            id: 'grading',
+            name: 'Grading',
+            href: '/grading',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$clipboard$2d$list$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ClipboardList$3e$__["ClipboardList"]
+        },
+        {
+            id: 'attendance',
+            name: 'Attendance',
+            href: '/attendance',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$calendar$2d$check$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__CalendarCheck$3e$__["CalendarCheck"]
+        },
+        {
+            id: 'bursary',
+            name: 'Bursary',
+            href: '/bursary',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$credit$2d$card$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__CreditCard$3e$__["CreditCard"]
+        },
+        {
+            id: 'announcements',
+            name: 'Announcements',
+            href: '/announcements',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$megaphone$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Megaphone$3e$__["Megaphone"]
+        },
+        {
+            id: 'calendar',
+            name: 'Calendar',
+            href: '/calendar',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$calendar$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Calendar$3e$__["Calendar"]
+        },
+        {
+            id: 'analytics',
+            name: 'Analytics',
+            href: '/analytics',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chart$2d$column$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__BarChart3$3e$__["BarChart3"]
+        },
+        {
+            id: 'id_cards',
+            name: 'ID Cards',
+            href: '/id_cards',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$badge$2d$check$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__BadgeCheck$3e$__["BadgeCheck"]
+        },
+        {
+            id: 'broadsheet',
+            name: 'Broadsheet',
+            href: '/broadsheet',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$layout$2d$dashboard$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__LayoutDashboard$3e$__["LayoutDashboard"]
+        },
+        {
+            id: 'data',
+            name: 'System Data',
+            href: '/data',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$database$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Database$3e$__["Database"]
+        },
+        {
+            id: 'settings',
+            name: 'Settings',
+            href: '/settings',
+            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$settings$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Settings$3e$__["Settings"]
+        }
+    ];
+    const { currentRole, currentUser, logout, switchRole } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$store$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSchoolStore"])();
+    // Get allowed navigation from role permissions (fallback to all for super_admin)
+    const rolePermissions = settings.role_permissions?.[currentRole];
+    const allowedNavIds = currentRole === 'super_admin' ? navigation.map((n)=>n.id) : rolePermissions?.navigation || [
+        'dashboard'
+    ];
+    const filteredNavigation = navigation.filter((item)=>allowedNavIds.includes(item.id));
+    if (!isLoaded) {
+        return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "h-screen w-full flex items-center justify-center bg-gray-50",
+            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"
+            }, void 0, false, {
+                fileName: "[project]/app/(dashboard)/layout.tsx",
+                lineNumber: 53,
+                columnNumber: 93
+            }, this)
+        }, void 0, false, {
+            fileName: "[project]/app/(dashboard)/layout.tsx",
+            lineNumber: 53,
+            columnNumber: 16
+        }, this);
+    }
+    if (!currentUser) {
+        return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$features$2f$LoginView$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["LoginView"], {}, void 0, false, {
+            fileName: "[project]/app/(dashboard)/layout.tsx",
+            lineNumber: 57,
+            columnNumber: 16
+        }, this);
+    }
+    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+        className: "h-screen bg-gray-50 flex overflow-hidden",
+        children: [
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("aside", {
+                className: `${isSidebarOpen ? 'w-64' : 'w-20'} h-full bg-brand-900 transition-all duration-300 flex flex-col fixed inset-y-0 z-40 lg:relative no-print`,
+                children: [
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "h-20 flex items-center px-6 border-b border-white/10 shrink-0",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "h-10 w-10 bg-white rounded-lg flex items-center justify-center text-brand-600 font-bold shrink-0",
+                                children: "NG"
+                            }, void 0, false, {
+                                fileName: "[project]/app/(dashboard)/layout.tsx",
+                                lineNumber: 65,
+                                columnNumber: 21
+                            }, this),
+                            isSidebarOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                className: "ml-3 text-white font-bold text-xl truncate tracking-tight",
+                                children: settings.school_name.split(' ')[0]
+                            }, void 0, false, {
+                                fileName: "[project]/app/(dashboard)/layout.tsx",
+                                lineNumber: 66,
+                                columnNumber: 39
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/app/(dashboard)/layout.tsx",
+                        lineNumber: 64,
+                        columnNumber: 17
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("nav", {
+                        className: "flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar text-white",
+                        children: filteredNavigation.map((item)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
+                                href: item.href,
+                                className: `w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${pathname === item.href ? 'bg-white/10 text-white' : 'text-brand-100 hover:bg-white/5 hover:text-white'}`,
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(item.icon, {
+                                        className: "h-5 w-5 shrink-0"
+                                    }, void 0, false, {
+                                        fileName: "[project]/app/(dashboard)/layout.tsx",
+                                        lineNumber: 79,
+                                        columnNumber: 29
+                                    }, this),
+                                    isSidebarOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        className: "ml-3",
+                                        children: item.name
+                                    }, void 0, false, {
+                                        fileName: "[project]/app/(dashboard)/layout.tsx",
+                                        lineNumber: 80,
+                                        columnNumber: 47
+                                    }, this)
+                                ]
+                            }, item.id, true, {
+                                fileName: "[project]/app/(dashboard)/layout.tsx",
+                                lineNumber: 71,
+                                columnNumber: 25
+                            }, this))
+                    }, void 0, false, {
+                        fileName: "[project]/app/(dashboard)/layout.tsx",
+                        lineNumber: 69,
+                        columnNumber: 17
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "p-4 border-t border-white/10 shrink-0",
+                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                            onClick: ()=>logout(),
+                            className: "w-full flex items-center px-4 py-3 text-sm font-medium text-brand-100 hover:bg-white/5 hover:text-white rounded-lg transition-colors",
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$log$2d$out$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__LogOut$3e$__["LogOut"], {
+                                    className: "h-5 w-5 shrink-0"
+                                }, void 0, false, {
+                                    fileName: "[project]/app/(dashboard)/layout.tsx",
+                                    lineNumber: 90,
+                                    columnNumber: 25
+                                }, this),
+                                isSidebarOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                    className: "ml-3",
+                                    children: "Log Out"
+                                }, void 0, false, {
+                                    fileName: "[project]/app/(dashboard)/layout.tsx",
+                                    lineNumber: 91,
+                                    columnNumber: 43
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/app/(dashboard)/layout.tsx",
+                            lineNumber: 86,
+                            columnNumber: 21
+                        }, this)
+                    }, void 0, false, {
+                        fileName: "[project]/app/(dashboard)/layout.tsx",
+                        lineNumber: 85,
+                        columnNumber: 17
+                    }, this)
+                ]
+            }, void 0, true, {
+                fileName: "[project]/app/(dashboard)/layout.tsx",
+                lineNumber: 63,
+                columnNumber: 13
+            }, this),
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("main", {
+                className: "flex-1 flex flex-col min-w-0 h-full overflow-hidden",
+                children: [
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("header", {
+                        className: "h-20 bg-white border-b sticky top-0 z-30 flex items-center justify-between px-6 no-print shadow-sm shrink-0",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                onClick: ()=>setIsSidebarOpen(!isSidebarOpen),
+                                className: "p-2 rounded-md transition-colors hover:bg-gray-100",
+                                children: isSidebarOpen ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$menu$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Menu$3e$__["Menu"], {
+                                    className: "h-6 w-6 text-gray-600"
+                                }, void 0, false, {
+                                    fileName: "[project]/app/(dashboard)/layout.tsx",
+                                    lineNumber: 100,
+                                    columnNumber: 42
+                                }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$menu$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Menu$3e$__["Menu"], {
+                                    className: "h-6 w-6 text-gray-600 rotate-90 transition-transform"
+                                }, void 0, false, {
+                                    fileName: "[project]/app/(dashboard)/layout.tsx",
+                                    lineNumber: 100,
+                                    columnNumber: 87
+                                }, this)
+                            }, void 0, false, {
+                                fileName: "[project]/app/(dashboard)/layout.tsx",
+                                lineNumber: 99,
+                                columnNumber: 21
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "flex items-center gap-4",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "text-right hidden sm:block",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                className: "text-sm font-bold text-gray-900 uppercase tracking-tight",
+                                                children: currentRole
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/(dashboard)/layout.tsx",
+                                                lineNumber: 104,
+                                                columnNumber: 29
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                className: "text-xs text-brand-600 font-medium",
+                                                children: settings.current_term
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/(dashboard)/layout.tsx",
+                                                lineNumber: 105,
+                                                columnNumber: 29
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/app/(dashboard)/layout.tsx",
+                                        lineNumber: 103,
+                                        columnNumber: 25
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "h-10 w-10 bg-brand-50 rounded-full border-2 border-brand-100 flex items-center justify-center font-bold text-brand-700 uppercase",
+                                        children: currentRole.substring(0, 2)
+                                    }, void 0, false, {
+                                        fileName: "[project]/app/(dashboard)/layout.tsx",
+                                        lineNumber: 107,
+                                        columnNumber: 25
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/app/(dashboard)/layout.tsx",
+                                lineNumber: 102,
+                                columnNumber: 21
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/app/(dashboard)/layout.tsx",
+                        lineNumber: 98,
+                        columnNumber: 17
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "flex-1 overflow-y-auto p-6 md:p-8",
+                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "max-w-7xl mx-auto",
+                            children: children
+                        }, void 0, false, {
+                            fileName: "[project]/app/(dashboard)/layout.tsx",
+                            lineNumber: 114,
+                            columnNumber: 21
+                        }, this)
+                    }, void 0, false, {
+                        fileName: "[project]/app/(dashboard)/layout.tsx",
+                        lineNumber: 113,
+                        columnNumber: 17
+                    }, this)
+                ]
+            }, void 0, true, {
+                fileName: "[project]/app/(dashboard)/layout.tsx",
+                lineNumber: 97,
+                columnNumber: 13
+            }, this)
+        ]
+    }, void 0, true, {
+        fileName: "[project]/app/(dashboard)/layout.tsx",
+        lineNumber: 61,
+        columnNumber: 9
+    }, this);
+}
+_s(DashboardLayout, "4JB8t6NpgPudsQc4ZiE+JQHr+v8=", false, function() {
+    return [
+        __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$store$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSchoolStore"],
+        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["usePathname"],
+        __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$store$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSchoolStore"]
+    ];
+});
+_c = DashboardLayout;
+var _c;
+__turbopack_context__.k.register(_c, "DashboardLayout");
+if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
+    __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
+}
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/layout-dashboard.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>LayoutDashboard
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "rect",
+        {
+            width: "7",
+            height: "9",
+            x: "3",
+            y: "3",
+            rx: "1",
+            key: "10lvy0"
+        }
+    ],
+    [
+        "rect",
+        {
+            width: "7",
+            height: "5",
+            x: "14",
+            y: "3",
+            rx: "1",
+            key: "16une8"
+        }
+    ],
+    [
+        "rect",
+        {
+            width: "7",
+            height: "9",
+            x: "14",
+            y: "12",
+            rx: "1",
+            key: "1hutg5"
+        }
+    ],
+    [
+        "rect",
+        {
+            width: "7",
+            height: "5",
+            x: "3",
+            y: "16",
+            rx: "1",
+            key: "ldoo1y"
+        }
+    ]
+];
+const LayoutDashboard = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("layout-dashboard", __iconNode);
+;
+ //# sourceMappingURL=layout-dashboard.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/layout-dashboard.js [app-client] (ecmascript) <export default as LayoutDashboard>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "LayoutDashboard",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$layout$2d$dashboard$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$layout$2d$dashboard$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/layout-dashboard.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/users.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>Users
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2",
+            key: "1yyitq"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M16 3.128a4 4 0 0 1 0 7.744",
+            key: "16gr8j"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M22 21v-2a4 4 0 0 0-3-3.87",
+            key: "kshegd"
+        }
+    ],
+    [
+        "circle",
+        {
+            cx: "9",
+            cy: "7",
+            r: "4",
+            key: "nufk8"
+        }
+    ]
+];
+const Users = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("users", __iconNode);
+;
+ //# sourceMappingURL=users.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/users.js [app-client] (ecmascript) <export default as Users>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Users",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$users$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$users$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/users.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/book-open.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>BookOpen
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "M12 7v14",
+            key: "1akyts"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z",
+            key: "ruj8y"
+        }
+    ]
+];
+const BookOpen = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("book-open", __iconNode);
+;
+ //# sourceMappingURL=book-open.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/book-open.js [app-client] (ecmascript) <export default as BookOpen>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "BookOpen",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$book$2d$open$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$book$2d$open$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/book-open.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/graduation-cap.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>GraduationCap
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z",
+            key: "j76jl0"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M22 10v6",
+            key: "1lu8f3"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M6 12.5V16a6 3 0 0 0 12 0v-3.5",
+            key: "1r8lef"
+        }
+    ]
+];
+const GraduationCap = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("graduation-cap", __iconNode);
+;
+ //# sourceMappingURL=graduation-cap.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/graduation-cap.js [app-client] (ecmascript) <export default as GraduationCap>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "GraduationCap",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$graduation$2d$cap$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$graduation$2d$cap$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/graduation-cap.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/calendar-check.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>CalendarCheck
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "M8 2v4",
+            key: "1cmpym"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M16 2v4",
+            key: "4m81vk"
+        }
+    ],
+    [
+        "rect",
+        {
+            width: "18",
+            height: "18",
+            x: "3",
+            y: "4",
+            rx: "2",
+            key: "1hopcy"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M3 10h18",
+            key: "8toen8"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m9 16 2 2 4-4",
+            key: "19s6y9"
+        }
+    ]
+];
+const CalendarCheck = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("calendar-check", __iconNode);
+;
+ //# sourceMappingURL=calendar-check.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/calendar-check.js [app-client] (ecmascript) <export default as CalendarCheck>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "CalendarCheck",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$calendar$2d$check$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$calendar$2d$check$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/calendar-check.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/credit-card.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>CreditCard
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "rect",
+        {
+            width: "20",
+            height: "14",
+            x: "2",
+            y: "5",
+            rx: "2",
+            key: "ynyp8z"
+        }
+    ],
+    [
+        "line",
+        {
+            x1: "2",
+            x2: "22",
+            y1: "10",
+            y2: "10",
+            key: "1b3vmo"
+        }
+    ]
+];
+const CreditCard = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("credit-card", __iconNode);
+;
+ //# sourceMappingURL=credit-card.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/credit-card.js [app-client] (ecmascript) <export default as CreditCard>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "CreditCard",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$credit$2d$card$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$credit$2d$card$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/credit-card.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/database.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>Database
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "ellipse",
+        {
+            cx: "12",
+            cy: "5",
+            rx: "9",
+            ry: "3",
+            key: "msslwz"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M3 5V19A9 3 0 0 0 21 19V5",
+            key: "1wlel7"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M3 12A9 3 0 0 0 21 12",
+            key: "mv7ke4"
+        }
+    ]
+];
+const Database = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("database", __iconNode);
+;
+ //# sourceMappingURL=database.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/database.js [app-client] (ecmascript) <export default as Database>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Database",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$database$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$database$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/database.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/settings.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>Settings
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915",
+            key: "1i5ecw"
+        }
+    ],
+    [
+        "circle",
+        {
+            cx: "12",
+            cy: "12",
+            r: "3",
+            key: "1v7zrd"
+        }
+    ]
+];
+const Settings = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("settings", __iconNode);
+;
+ //# sourceMappingURL=settings.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/settings.js [app-client] (ecmascript) <export default as Settings>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Settings",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$settings$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$settings$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/settings.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/log-out.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>LogOut
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "m16 17 5-5-5-5",
+            key: "1bji2h"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M21 12H9",
+            key: "dn1m92"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4",
+            key: "1uf3rs"
+        }
+    ]
+];
+const LogOut = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("log-out", __iconNode);
+;
+ //# sourceMappingURL=log-out.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/log-out.js [app-client] (ecmascript) <export default as LogOut>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "LogOut",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$log$2d$out$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$log$2d$out$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/log-out.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/menu.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>Menu
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "M4 5h16",
+            key: "1tepv9"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M4 12h16",
+            key: "1lakjw"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M4 19h16",
+            key: "1djgab"
+        }
+    ]
+];
+const Menu = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("menu", __iconNode);
+;
+ //# sourceMappingURL=menu.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/menu.js [app-client] (ecmascript) <export default as Menu>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Menu",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$menu$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$menu$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/menu.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/clipboard-list.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>ClipboardList
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "rect",
+        {
+            width: "8",
+            height: "4",
+            x: "8",
+            y: "2",
+            rx: "1",
+            ry: "1",
+            key: "tgr4d6"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2",
+            key: "116196"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M12 11h4",
+            key: "1jrz19"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M12 16h4",
+            key: "n85exb"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M8 11h.01",
+            key: "1dfujw"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M8 16h.01",
+            key: "18s6g9"
+        }
+    ]
+];
+const ClipboardList = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("clipboard-list", __iconNode);
+;
+ //# sourceMappingURL=clipboard-list.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/clipboard-list.js [app-client] (ecmascript) <export default as ClipboardList>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "ClipboardList",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$clipboard$2d$list$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$clipboard$2d$list$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/clipboard-list.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/badge-check.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>BadgeCheck
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z",
+            key: "3c2336"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m9 12 2 2 4-4",
+            key: "dzmm74"
+        }
+    ]
+];
+const BadgeCheck = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("badge-check", __iconNode);
+;
+ //# sourceMappingURL=badge-check.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/badge-check.js [app-client] (ecmascript) <export default as BadgeCheck>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "BadgeCheck",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$badge$2d$check$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$badge$2d$check$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/badge-check.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/user-cog.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>UserCog
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "M10 15H6a4 4 0 0 0-4 4v2",
+            key: "1nfge6"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m14.305 16.53.923-.382",
+            key: "1itpsq"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m15.228 13.852-.923-.383",
+            key: "eplpkm"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m16.852 12.228-.383-.923",
+            key: "13v3q0"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m16.852 17.772-.383.924",
+            key: "1i8mnm"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m19.148 12.228.383-.923",
+            key: "1q8j1v"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m19.53 18.696-.382-.924",
+            key: "vk1qj3"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m20.772 13.852.924-.383",
+            key: "n880s0"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m20.772 16.148.924.383",
+            key: "1g6xey"
+        }
+    ],
+    [
+        "circle",
+        {
+            cx: "18",
+            cy: "15",
+            r: "3",
+            key: "gjjjvw"
+        }
+    ],
+    [
+        "circle",
+        {
+            cx: "9",
+            cy: "7",
+            r: "4",
+            key: "nufk8"
+        }
+    ]
+];
+const UserCog = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("user-cog", __iconNode);
+;
+ //# sourceMappingURL=user-cog.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/user-cog.js [app-client] (ecmascript) <export default as UserCog>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "UserCog",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$user$2d$cog$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$user$2d$cog$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/user-cog.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/megaphone.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>Megaphone
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "M11 6a13 13 0 0 0 8.4-2.8A1 1 0 0 1 21 4v12a1 1 0 0 1-1.6.8A13 13 0 0 0 11 14H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z",
+            key: "q8bfy3"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M6 14a12 12 0 0 0 2.4 7.2 2 2 0 0 0 3.2-2.4A8 8 0 0 1 10 14",
+            key: "1853fq"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M8 6v8",
+            key: "15ugcq"
+        }
+    ]
+];
+const Megaphone = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("megaphone", __iconNode);
+;
+ //# sourceMappingURL=megaphone.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/megaphone.js [app-client] (ecmascript) <export default as Megaphone>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Megaphone",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$megaphone$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$megaphone$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/megaphone.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/calendar.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>Calendar
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "M8 2v4",
+            key: "1cmpym"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M16 2v4",
+            key: "4m81vk"
+        }
+    ],
+    [
+        "rect",
+        {
+            width: "18",
+            height: "18",
+            x: "3",
+            y: "4",
+            rx: "2",
+            key: "1hopcy"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M3 10h18",
+            key: "8toen8"
+        }
+    ]
+];
+const Calendar = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("calendar", __iconNode);
+;
+ //# sourceMappingURL=calendar.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/calendar.js [app-client] (ecmascript) <export default as Calendar>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Calendar",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$calendar$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$calendar$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/calendar.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/chart-column.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>ChartColumn
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "M3 3v16a2 2 0 0 0 2 2h16",
+            key: "c24i48"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M18 17V9",
+            key: "2bz60n"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M13 17V5",
+            key: "1frdt8"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "M8 17v-3",
+            key: "17ska0"
+        }
+    ]
+];
+const ChartColumn = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("chart-column", __iconNode);
+;
+ //# sourceMappingURL=chart-column.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/chart-column.js [app-client] (ecmascript) <export default as BarChart3>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "BarChart3",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chart$2d$column$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chart$2d$column$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/chart-column.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/next/dist/shared/lib/router/utils/querystring.js [app-client] (ecmascript)", ((__turbopack_context__, module, exports) => {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+0 && (module.exports = {
+    assign: null,
+    searchParamsToUrlQuery: null,
+    urlQueryToSearchParams: null
+});
+function _export(target, all) {
+    for(var name in all)Object.defineProperty(target, name, {
+        enumerable: true,
+        get: all[name]
+    });
+}
+_export(exports, {
+    assign: function() {
+        return assign;
+    },
+    searchParamsToUrlQuery: function() {
+        return searchParamsToUrlQuery;
+    },
+    urlQueryToSearchParams: function() {
+        return urlQueryToSearchParams;
+    }
+});
+function searchParamsToUrlQuery(searchParams) {
+    const query = {};
+    for (const [key, value] of searchParams.entries()){
+        const existing = query[key];
+        if (typeof existing === 'undefined') {
+            query[key] = value;
+        } else if (Array.isArray(existing)) {
+            existing.push(value);
+        } else {
+            query[key] = [
+                existing,
+                value
+            ];
+        }
+    }
+    return query;
+}
+function stringifyUrlQueryParam(param) {
+    if (typeof param === 'string') {
+        return param;
+    }
+    if (typeof param === 'number' && !isNaN(param) || typeof param === 'boolean') {
+        return String(param);
+    } else {
+        return '';
+    }
+}
+function urlQueryToSearchParams(query) {
+    const searchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)){
+        if (Array.isArray(value)) {
+            for (const item of value){
+                searchParams.append(key, stringifyUrlQueryParam(item));
+            }
+        } else {
+            searchParams.set(key, stringifyUrlQueryParam(value));
+        }
+    }
+    return searchParams;
+}
+function assign(target, ...searchParamsList) {
+    for (const searchParams of searchParamsList){
+        for (const key of searchParams.keys()){
+            target.delete(key);
+        }
+        for (const [key, value] of searchParams.entries()){
+            target.append(key, value);
+        }
+    }
+    return target;
+} //# sourceMappingURL=querystring.js.map
+}),
+"[project]/node_modules/next/dist/shared/lib/router/utils/format-url.js [app-client] (ecmascript)", ((__turbopack_context__, module, exports) => {
+"use strict";
+
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = /*#__PURE__*/ __turbopack_context__.i("[project]/node_modules/next/dist/build/polyfills/process.js [app-client] (ecmascript)");
+// Format function modified from nodejs
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+0 && (module.exports = {
+    formatUrl: null,
+    formatWithValidation: null,
+    urlObjectKeys: null
+});
+function _export(target, all) {
+    for(var name in all)Object.defineProperty(target, name, {
+        enumerable: true,
+        get: all[name]
+    });
+}
+_export(exports, {
+    formatUrl: function() {
+        return formatUrl;
+    },
+    formatWithValidation: function() {
+        return formatWithValidation;
+    },
+    urlObjectKeys: function() {
+        return urlObjectKeys;
+    }
+});
+const _interop_require_wildcard = __turbopack_context__.r("[project]/node_modules/@swc/helpers/cjs/_interop_require_wildcard.cjs [app-client] (ecmascript)");
+const _querystring = /*#__PURE__*/ _interop_require_wildcard._(__turbopack_context__.r("[project]/node_modules/next/dist/shared/lib/router/utils/querystring.js [app-client] (ecmascript)"));
+const slashedProtocols = /https?|ftp|gopher|file/;
+function formatUrl(urlObj) {
+    let { auth, hostname } = urlObj;
+    let protocol = urlObj.protocol || '';
+    let pathname = urlObj.pathname || '';
+    let hash = urlObj.hash || '';
+    let query = urlObj.query || '';
+    let host = false;
+    auth = auth ? encodeURIComponent(auth).replace(/%3A/i, ':') + '@' : '';
+    if (urlObj.host) {
+        host = auth + urlObj.host;
+    } else if (hostname) {
+        host = auth + (~hostname.indexOf(':') ? `[${hostname}]` : hostname);
+        if (urlObj.port) {
+            host += ':' + urlObj.port;
+        }
+    }
+    if (query && typeof query === 'object') {
+        query = String(_querystring.urlQueryToSearchParams(query));
+    }
+    let search = urlObj.search || query && `?${query}` || '';
+    if (protocol && !protocol.endsWith(':')) protocol += ':';
+    if (urlObj.slashes || (!protocol || slashedProtocols.test(protocol)) && host !== false) {
+        host = '//' + (host || '');
+        if (pathname && pathname[0] !== '/') pathname = '/' + pathname;
+    } else if (!host) {
+        host = '';
+    }
+    if (hash && hash[0] !== '#') hash = '#' + hash;
+    if (search && search[0] !== '?') search = '?' + search;
+    pathname = pathname.replace(/[?#]/g, encodeURIComponent);
+    search = search.replace('#', '%23');
+    return `${protocol}${host}${pathname}${search}${hash}`;
+}
+const urlObjectKeys = [
+    'auth',
+    'hash',
+    'host',
+    'hostname',
+    'href',
+    'path',
+    'pathname',
+    'port',
+    'protocol',
+    'query',
+    'search',
+    'slashes'
+];
+function formatWithValidation(url) {
+    if ("TURBOPACK compile-time truthy", 1) {
+        if (url !== null && typeof url === 'object') {
+            Object.keys(url).forEach((key)=>{
+                if (!urlObjectKeys.includes(key)) {
+                    console.warn(`Unknown key passed via urlObject into url.format: ${key}`);
+                }
+            });
+        }
+    }
+    return formatUrl(url);
+} //# sourceMappingURL=format-url.js.map
+}),
+"[project]/node_modules/next/dist/client/use-merged-ref.js [app-client] (ecmascript)", ((__turbopack_context__, module, exports) => {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+Object.defineProperty(exports, "useMergedRef", {
+    enumerable: true,
+    get: function() {
+        return useMergedRef;
+    }
+});
+const _react = __turbopack_context__.r("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+function useMergedRef(refA, refB) {
+    const cleanupA = (0, _react.useRef)(null);
+    const cleanupB = (0, _react.useRef)(null);
+    // NOTE: In theory, we could skip the wrapping if only one of the refs is non-null.
+    // (this happens often if the user doesn't pass a ref to Link/Form/Image)
+    // But this can cause us to leak a cleanup-ref into user code (previously via `<Link legacyBehavior>`),
+    // and the user might pass that ref into ref-merging library that doesn't support cleanup refs
+    // (because it hasn't been updated for React 19)
+    // which can then cause things to blow up, because a cleanup-returning ref gets called with `null`.
+    // So in practice, it's safer to be defensive and always wrap the ref, even on React 19.
+    return (0, _react.useCallback)((current)=>{
+        if (current === null) {
+            const cleanupFnA = cleanupA.current;
+            if (cleanupFnA) {
+                cleanupA.current = null;
+                cleanupFnA();
+            }
+            const cleanupFnB = cleanupB.current;
+            if (cleanupFnB) {
+                cleanupB.current = null;
+                cleanupFnB();
+            }
+        } else {
+            if (refA) {
+                cleanupA.current = applyRef(refA, current);
+            }
+            if (refB) {
+                cleanupB.current = applyRef(refB, current);
+            }
+        }
+    }, [
+        refA,
+        refB
+    ]);
+}
+function applyRef(refA, current) {
+    if (typeof refA === 'function') {
+        const cleanup = refA(current);
+        if (typeof cleanup === 'function') {
+            return cleanup;
+        } else {
+            return ()=>refA(null);
+        }
+    } else {
+        refA.current = current;
+        return ()=>{
+            refA.current = null;
+        };
+    }
+}
+if ((typeof exports.default === 'function' || typeof exports.default === 'object' && exports.default !== null) && typeof exports.default.__esModule === 'undefined') {
+    Object.defineProperty(exports.default, '__esModule', {
+        value: true
+    });
+    Object.assign(exports.default, exports);
+    module.exports = exports.default;
+} //# sourceMappingURL=use-merged-ref.js.map
+}),
+"[project]/node_modules/next/dist/shared/lib/utils.js [app-client] (ecmascript)", ((__turbopack_context__, module, exports) => {
+"use strict";
+
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = /*#__PURE__*/ __turbopack_context__.i("[project]/node_modules/next/dist/build/polyfills/process.js [app-client] (ecmascript)");
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+0 && (module.exports = {
+    DecodeError: null,
+    MiddlewareNotFoundError: null,
+    MissingStaticPage: null,
+    NormalizeError: null,
+    PageNotFoundError: null,
+    SP: null,
+    ST: null,
+    WEB_VITALS: null,
+    execOnce: null,
+    getDisplayName: null,
+    getLocationOrigin: null,
+    getURL: null,
+    isAbsoluteUrl: null,
+    isResSent: null,
+    loadGetInitialProps: null,
+    normalizeRepeatedSlashes: null,
+    stringifyError: null
+});
+function _export(target, all) {
+    for(var name in all)Object.defineProperty(target, name, {
+        enumerable: true,
+        get: all[name]
+    });
+}
+_export(exports, {
+    DecodeError: function() {
+        return DecodeError;
+    },
+    MiddlewareNotFoundError: function() {
+        return MiddlewareNotFoundError;
+    },
+    MissingStaticPage: function() {
+        return MissingStaticPage;
+    },
+    NormalizeError: function() {
+        return NormalizeError;
+    },
+    PageNotFoundError: function() {
+        return PageNotFoundError;
+    },
+    SP: function() {
+        return SP;
+    },
+    ST: function() {
+        return ST;
+    },
+    WEB_VITALS: function() {
+        return WEB_VITALS;
+    },
+    execOnce: function() {
+        return execOnce;
+    },
+    getDisplayName: function() {
+        return getDisplayName;
+    },
+    getLocationOrigin: function() {
+        return getLocationOrigin;
+    },
+    getURL: function() {
+        return getURL;
+    },
+    isAbsoluteUrl: function() {
+        return isAbsoluteUrl;
+    },
+    isResSent: function() {
+        return isResSent;
+    },
+    loadGetInitialProps: function() {
+        return loadGetInitialProps;
+    },
+    normalizeRepeatedSlashes: function() {
+        return normalizeRepeatedSlashes;
+    },
+    stringifyError: function() {
+        return stringifyError;
+    }
+});
+const WEB_VITALS = [
+    'CLS',
+    'FCP',
+    'FID',
+    'INP',
+    'LCP',
+    'TTFB'
+];
+function execOnce(fn) {
+    let used = false;
+    let result;
+    return (...args)=>{
+        if (!used) {
+            used = true;
+            result = fn(...args);
+        }
+        return result;
+    };
+}
+// Scheme: https://tools.ietf.org/html/rfc3986#section-3.1
+// Absolute URL: https://tools.ietf.org/html/rfc3986#section-4.3
+const ABSOLUTE_URL_REGEX = /^[a-zA-Z][a-zA-Z\d+\-.]*?:/;
+const isAbsoluteUrl = (url)=>ABSOLUTE_URL_REGEX.test(url);
+function getLocationOrigin() {
+    const { protocol, hostname, port } = window.location;
+    return `${protocol}//${hostname}${port ? ':' + port : ''}`;
+}
+function getURL() {
+    const { href } = window.location;
+    const origin = getLocationOrigin();
+    return href.substring(origin.length);
+}
+function getDisplayName(Component) {
+    return typeof Component === 'string' ? Component : Component.displayName || Component.name || 'Unknown';
+}
+function isResSent(res) {
+    return res.finished || res.headersSent;
+}
+function normalizeRepeatedSlashes(url) {
+    const urlParts = url.split('?');
+    const urlNoQuery = urlParts[0];
+    return urlNoQuery // first we replace any non-encoded backslashes with forward
+    // then normalize repeated forward slashes
+    .replace(/\\/g, '/').replace(/\/\/+/g, '/') + (urlParts[1] ? `?${urlParts.slice(1).join('?')}` : '');
+}
+async function loadGetInitialProps(App, ctx) {
+    if ("TURBOPACK compile-time truthy", 1) {
+        if (App.prototype?.getInitialProps) {
+            const message = `"${getDisplayName(App)}.getInitialProps()" is defined as an instance method - visit https://nextjs.org/docs/messages/get-initial-props-as-an-instance-method for more information.`;
+            throw Object.defineProperty(new Error(message), "__NEXT_ERROR_CODE", {
+                value: "E394",
+                enumerable: false,
+                configurable: true
+            });
+        }
+    }
+    // when called from _app `ctx` is nested in `ctx`
+    const res = ctx.res || ctx.ctx && ctx.ctx.res;
+    if (!App.getInitialProps) {
+        if (ctx.ctx && ctx.Component) {
+            // @ts-ignore pageProps default
+            return {
+                pageProps: await loadGetInitialProps(ctx.Component, ctx.ctx)
+            };
+        }
+        return {};
+    }
+    const props = await App.getInitialProps(ctx);
+    if (res && isResSent(res)) {
+        return props;
+    }
+    if (!props) {
+        const message = `"${getDisplayName(App)}.getInitialProps()" should resolve to an object. But found "${props}" instead.`;
+        throw Object.defineProperty(new Error(message), "__NEXT_ERROR_CODE", {
+            value: "E394",
+            enumerable: false,
+            configurable: true
+        });
+    }
+    if ("TURBOPACK compile-time truthy", 1) {
+        if (Object.keys(props).length === 0 && !ctx.ctx) {
+            console.warn(`${getDisplayName(App)} returned an empty object from \`getInitialProps\`. This de-optimizes and prevents automatic static optimization. https://nextjs.org/docs/messages/empty-object-getInitialProps`);
+        }
+    }
+    return props;
+}
+const SP = typeof performance !== 'undefined';
+const ST = SP && [
+    'mark',
+    'measure',
+    'getEntriesByName'
+].every((method)=>typeof performance[method] === 'function');
+class DecodeError extends Error {
+}
+class NormalizeError extends Error {
+}
+class PageNotFoundError extends Error {
+    constructor(page){
+        super();
+        this.code = 'ENOENT';
+        this.name = 'PageNotFoundError';
+        this.message = `Cannot find module for page: ${page}`;
+    }
+}
+class MissingStaticPage extends Error {
+    constructor(page, message){
+        super();
+        this.message = `Failed to load static file for page: ${page} ${message}`;
+    }
+}
+class MiddlewareNotFoundError extends Error {
+    constructor(){
+        super();
+        this.code = 'ENOENT';
+        this.message = `Cannot find the middleware module`;
+    }
+}
+function stringifyError(error) {
+    return JSON.stringify({
+        message: error.message,
+        stack: error.stack
+    });
+} //# sourceMappingURL=utils.js.map
+}),
+"[project]/node_modules/next/dist/shared/lib/router/utils/is-local-url.js [app-client] (ecmascript)", ((__turbopack_context__, module, exports) => {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+Object.defineProperty(exports, "isLocalURL", {
+    enumerable: true,
+    get: function() {
+        return isLocalURL;
+    }
+});
+const _utils = __turbopack_context__.r("[project]/node_modules/next/dist/shared/lib/utils.js [app-client] (ecmascript)");
+const _hasbasepath = __turbopack_context__.r("[project]/node_modules/next/dist/client/has-base-path.js [app-client] (ecmascript)");
+function isLocalURL(url) {
+    // prevent a hydration mismatch on href for url with anchor refs
+    if (!(0, _utils.isAbsoluteUrl)(url)) return true;
+    try {
+        // absolute urls can be local if they are on the same origin
+        const locationOrigin = (0, _utils.getLocationOrigin)();
+        const resolved = new URL(url, locationOrigin);
+        return resolved.origin === locationOrigin && (0, _hasbasepath.hasBasePath)(resolved.pathname);
+    } catch (_) {
+        return false;
+    }
+} //# sourceMappingURL=is-local-url.js.map
+}),
+"[project]/node_modules/next/dist/shared/lib/utils/error-once.js [app-client] (ecmascript)", ((__turbopack_context__, module, exports) => {
+"use strict";
+
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = /*#__PURE__*/ __turbopack_context__.i("[project]/node_modules/next/dist/build/polyfills/process.js [app-client] (ecmascript)");
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+Object.defineProperty(exports, "errorOnce", {
+    enumerable: true,
+    get: function() {
+        return errorOnce;
+    }
+});
+let errorOnce = (_)=>{};
+if ("TURBOPACK compile-time truthy", 1) {
+    const errors = new Set();
+    errorOnce = (msg)=>{
+        if (!errors.has(msg)) {
+            console.error(msg);
+        }
+        errors.add(msg);
+    };
+} //# sourceMappingURL=error-once.js.map
+}),
+"[project]/node_modules/next/dist/client/app-dir/link.js [app-client] (ecmascript)", ((__turbopack_context__, module, exports) => {
+"use strict";
+
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = /*#__PURE__*/ __turbopack_context__.i("[project]/node_modules/next/dist/build/polyfills/process.js [app-client] (ecmascript)");
+'use client';
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+0 && (module.exports = {
+    default: null,
+    useLinkStatus: null
+});
+function _export(target, all) {
+    for(var name in all)Object.defineProperty(target, name, {
+        enumerable: true,
+        get: all[name]
+    });
+}
+_export(exports, {
+    /**
+ * A React component that extends the HTML `<a>` element to provide
+ * [prefetching](https://nextjs.org/docs/app/building-your-application/routing/linking-and-navigating#2-prefetching)
+ * and client-side navigation. This is the primary way to navigate between routes in Next.js.
+ *
+ * @remarks
+ * - Prefetching is only enabled in production.
+ *
+ * @see https://nextjs.org/docs/app/api-reference/components/link
+ */ default: function() {
+        return LinkComponent;
+    },
+    useLinkStatus: function() {
+        return useLinkStatus;
+    }
+});
+const _interop_require_wildcard = __turbopack_context__.r("[project]/node_modules/@swc/helpers/cjs/_interop_require_wildcard.cjs [app-client] (ecmascript)");
+const _jsxruntime = __turbopack_context__.r("[project]/node_modules/next/dist/compiled/react/jsx-runtime.js [app-client] (ecmascript)");
+const _react = /*#__PURE__*/ _interop_require_wildcard._(__turbopack_context__.r("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)"));
+const _formaturl = __turbopack_context__.r("[project]/node_modules/next/dist/shared/lib/router/utils/format-url.js [app-client] (ecmascript)");
+const _approutercontextsharedruntime = __turbopack_context__.r("[project]/node_modules/next/dist/shared/lib/app-router-context.shared-runtime.js [app-client] (ecmascript)");
+const _usemergedref = __turbopack_context__.r("[project]/node_modules/next/dist/client/use-merged-ref.js [app-client] (ecmascript)");
+const _utils = __turbopack_context__.r("[project]/node_modules/next/dist/shared/lib/utils.js [app-client] (ecmascript)");
+const _addbasepath = __turbopack_context__.r("[project]/node_modules/next/dist/client/add-base-path.js [app-client] (ecmascript)");
+const _warnonce = __turbopack_context__.r("[project]/node_modules/next/dist/shared/lib/utils/warn-once.js [app-client] (ecmascript)");
+const _links = __turbopack_context__.r("[project]/node_modules/next/dist/client/components/links.js [app-client] (ecmascript)");
+const _islocalurl = __turbopack_context__.r("[project]/node_modules/next/dist/shared/lib/router/utils/is-local-url.js [app-client] (ecmascript)");
+const _types = __turbopack_context__.r("[project]/node_modules/next/dist/client/components/segment-cache/types.js [app-client] (ecmascript)");
+const _erroronce = __turbopack_context__.r("[project]/node_modules/next/dist/shared/lib/utils/error-once.js [app-client] (ecmascript)");
+function isModifiedEvent(event) {
+    const eventTarget = event.currentTarget;
+    const target = eventTarget.getAttribute('target');
+    return target && target !== '_self' || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || // triggers resource download
+    event.nativeEvent && event.nativeEvent.which === 2;
+}
+function linkClicked(e, href, as, linkInstanceRef, replace, scroll, onNavigate) {
+    if (typeof window !== 'undefined') {
+        const { nodeName } = e.currentTarget;
+        // anchors inside an svg have a lowercase nodeName
+        const isAnchorNodeName = nodeName.toUpperCase() === 'A';
+        if (isAnchorNodeName && isModifiedEvent(e) || e.currentTarget.hasAttribute('download')) {
+            // ignore click for browser’s default behavior
+            return;
+        }
+        if (!(0, _islocalurl.isLocalURL)(href)) {
+            if (replace) {
+                // browser default behavior does not replace the history state
+                // so we need to do it manually
+                e.preventDefault();
+                location.replace(href);
+            }
+            // ignore click for browser’s default behavior
+            return;
+        }
+        e.preventDefault();
+        if (onNavigate) {
+            let isDefaultPrevented = false;
+            onNavigate({
+                preventDefault: ()=>{
+                    isDefaultPrevented = true;
+                }
+            });
+            if (isDefaultPrevented) {
+                return;
+            }
+        }
+        const { dispatchNavigateAction } = __turbopack_context__.r("[project]/node_modules/next/dist/client/components/app-router-instance.js [app-client] (ecmascript)");
+        _react.default.startTransition(()=>{
+            dispatchNavigateAction(as || href, replace ? 'replace' : 'push', scroll ?? true, linkInstanceRef.current);
+        });
+    }
+}
+function formatStringOrUrl(urlObjOrString) {
+    if (typeof urlObjOrString === 'string') {
+        return urlObjOrString;
+    }
+    return (0, _formaturl.formatUrl)(urlObjOrString);
+}
+function LinkComponent(props) {
+    const [linkStatus, setOptimisticLinkStatus] = (0, _react.useOptimistic)(_links.IDLE_LINK_STATUS);
+    let children;
+    const linkInstanceRef = (0, _react.useRef)(null);
+    const { href: hrefProp, as: asProp, children: childrenProp, prefetch: prefetchProp = null, passHref, replace, shallow, scroll, onClick, onMouseEnter: onMouseEnterProp, onTouchStart: onTouchStartProp, legacyBehavior = false, onNavigate, ref: forwardedRef, unstable_dynamicOnHover, ...restProps } = props;
+    children = childrenProp;
+    if (legacyBehavior && (typeof children === 'string' || typeof children === 'number')) {
+        children = /*#__PURE__*/ (0, _jsxruntime.jsx)("a", {
+            children: children
+        });
+    }
+    const router = _react.default.useContext(_approutercontextsharedruntime.AppRouterContext);
+    const prefetchEnabled = prefetchProp !== false;
+    const fetchStrategy = prefetchProp !== false ? getFetchStrategyFromPrefetchProp(prefetchProp) : _types.FetchStrategy.PPR;
+    if ("TURBOPACK compile-time truthy", 1) {
+        function createPropError(args) {
+            return Object.defineProperty(new Error(`Failed prop type: The prop \`${args.key}\` expects a ${args.expected} in \`<Link>\`, but got \`${args.actual}\` instead.` + (typeof window !== 'undefined' ? "\nOpen your browser's console to view the Component stack trace." : '')), "__NEXT_ERROR_CODE", {
+                value: "E319",
+                enumerable: false,
+                configurable: true
+            });
+        }
+        // TypeScript trick for type-guarding:
+        const requiredPropsGuard = {
+            href: true
+        };
+        const requiredProps = Object.keys(requiredPropsGuard);
+        requiredProps.forEach((key)=>{
+            if (key === 'href') {
+                if (props[key] == null || typeof props[key] !== 'string' && typeof props[key] !== 'object') {
+                    throw createPropError({
+                        key,
+                        expected: '`string` or `object`',
+                        actual: props[key] === null ? 'null' : typeof props[key]
+                    });
+                }
+            } else {
+                // TypeScript trick for type-guarding:
+                const _ = key;
+            }
+        });
+        // TypeScript trick for type-guarding:
+        const optionalPropsGuard = {
+            as: true,
+            replace: true,
+            scroll: true,
+            shallow: true,
+            passHref: true,
+            prefetch: true,
+            unstable_dynamicOnHover: true,
+            onClick: true,
+            onMouseEnter: true,
+            onTouchStart: true,
+            legacyBehavior: true,
+            onNavigate: true
+        };
+        const optionalProps = Object.keys(optionalPropsGuard);
+        optionalProps.forEach((key)=>{
+            const valType = typeof props[key];
+            if (key === 'as') {
+                if (props[key] && valType !== 'string' && valType !== 'object') {
+                    throw createPropError({
+                        key,
+                        expected: '`string` or `object`',
+                        actual: valType
+                    });
+                }
+            } else if (key === 'onClick' || key === 'onMouseEnter' || key === 'onTouchStart' || key === 'onNavigate') {
+                if (props[key] && valType !== 'function') {
+                    throw createPropError({
+                        key,
+                        expected: '`function`',
+                        actual: valType
+                    });
+                }
+            } else if (key === 'replace' || key === 'scroll' || key === 'shallow' || key === 'passHref' || key === 'legacyBehavior' || key === 'unstable_dynamicOnHover') {
+                if (props[key] != null && valType !== 'boolean') {
+                    throw createPropError({
+                        key,
+                        expected: '`boolean`',
+                        actual: valType
+                    });
+                }
+            } else if (key === 'prefetch') {
+                if (props[key] != null && valType !== 'boolean' && props[key] !== 'auto') {
+                    throw createPropError({
+                        key,
+                        expected: '`boolean | "auto"`',
+                        actual: valType
+                    });
+                }
+            } else {
+                // TypeScript trick for type-guarding:
+                const _ = key;
+            }
+        });
+    }
+    if ("TURBOPACK compile-time truthy", 1) {
+        if (props.locale) {
+            (0, _warnonce.warnOnce)('The `locale` prop is not supported in `next/link` while using the `app` router. Read more about app router internalization: https://nextjs.org/docs/app/building-your-application/routing/internationalization');
+        }
+        if (!asProp) {
+            let href;
+            if (typeof hrefProp === 'string') {
+                href = hrefProp;
+            } else if (typeof hrefProp === 'object' && typeof hrefProp.pathname === 'string') {
+                href = hrefProp.pathname;
+            }
+            if (href) {
+                const hasDynamicSegment = href.split('/').some((segment)=>segment.startsWith('[') && segment.endsWith(']'));
+                if (hasDynamicSegment) {
+                    throw Object.defineProperty(new Error(`Dynamic href \`${href}\` found in <Link> while using the \`/app\` router, this is not supported. Read more: https://nextjs.org/docs/messages/app-dir-dynamic-href`), "__NEXT_ERROR_CODE", {
+                        value: "E267",
+                        enumerable: false,
+                        configurable: true
+                    });
+                }
+            }
+        }
+    }
+    const { href, as } = _react.default.useMemo({
+        "LinkComponent.useMemo": ()=>{
+            const resolvedHref = formatStringOrUrl(hrefProp);
+            return {
+                href: resolvedHref,
+                as: asProp ? formatStringOrUrl(asProp) : resolvedHref
+            };
+        }
+    }["LinkComponent.useMemo"], [
+        hrefProp,
+        asProp
+    ]);
+    // This will return the first child, if multiple are provided it will throw an error
+    let child;
+    if (legacyBehavior) {
+        if (children?.$$typeof === Symbol.for('react.lazy')) {
+            throw Object.defineProperty(new Error(`\`<Link legacyBehavior>\` received a direct child that is either a Server Component, or JSX that was loaded with React.lazy(). This is not supported. Either remove legacyBehavior, or make the direct child a Client Component that renders the Link's \`<a>\` tag.`), "__NEXT_ERROR_CODE", {
+                value: "E863",
+                enumerable: false,
+                configurable: true
+            });
+        }
+        if ("TURBOPACK compile-time truthy", 1) {
+            if (onClick) {
+                console.warn(`"onClick" was passed to <Link> with \`href\` of \`${hrefProp}\` but "legacyBehavior" was set. The legacy behavior requires onClick be set on the child of next/link`);
+            }
+            if (onMouseEnterProp) {
+                console.warn(`"onMouseEnter" was passed to <Link> with \`href\` of \`${hrefProp}\` but "legacyBehavior" was set. The legacy behavior requires onMouseEnter be set on the child of next/link`);
+            }
+            try {
+                child = _react.default.Children.only(children);
+            } catch (err) {
+                if (!children) {
+                    throw Object.defineProperty(new Error(`No children were passed to <Link> with \`href\` of \`${hrefProp}\` but one child is required https://nextjs.org/docs/messages/link-no-children`), "__NEXT_ERROR_CODE", {
+                        value: "E320",
+                        enumerable: false,
+                        configurable: true
+                    });
+                }
+                throw Object.defineProperty(new Error(`Multiple children were passed to <Link> with \`href\` of \`${hrefProp}\` but only one child is supported https://nextjs.org/docs/messages/link-multiple-children` + (typeof window !== 'undefined' ? " \nOpen your browser's console to view the Component stack trace." : '')), "__NEXT_ERROR_CODE", {
+                    value: "E266",
+                    enumerable: false,
+                    configurable: true
+                });
+            }
+        } else //TURBOPACK unreachable
+        ;
+    } else {
+        if ("TURBOPACK compile-time truthy", 1) {
+            if (children?.type === 'a') {
+                throw Object.defineProperty(new Error('Invalid <Link> with <a> child. Please remove <a> or use <Link legacyBehavior>.\nLearn more: https://nextjs.org/docs/messages/invalid-new-link-with-extra-anchor'), "__NEXT_ERROR_CODE", {
+                    value: "E209",
+                    enumerable: false,
+                    configurable: true
+                });
+            }
+        }
+    }
+    const childRef = legacyBehavior ? child && typeof child === 'object' && child.ref : forwardedRef;
+    // Use a callback ref to attach an IntersectionObserver to the anchor tag on
+    // mount. In the future we will also use this to keep track of all the
+    // currently mounted <Link> instances, e.g. so we can re-prefetch them after
+    // a revalidation or refresh.
+    const observeLinkVisibilityOnMount = _react.default.useCallback({
+        "LinkComponent.useCallback[observeLinkVisibilityOnMount]": (element)=>{
+            if (router !== null) {
+                linkInstanceRef.current = (0, _links.mountLinkInstance)(element, href, router, fetchStrategy, prefetchEnabled, setOptimisticLinkStatus);
+            }
+            return ({
+                "LinkComponent.useCallback[observeLinkVisibilityOnMount]": ()=>{
+                    if (linkInstanceRef.current) {
+                        (0, _links.unmountLinkForCurrentNavigation)(linkInstanceRef.current);
+                        linkInstanceRef.current = null;
+                    }
+                    (0, _links.unmountPrefetchableInstance)(element);
+                }
+            })["LinkComponent.useCallback[observeLinkVisibilityOnMount]"];
+        }
+    }["LinkComponent.useCallback[observeLinkVisibilityOnMount]"], [
+        prefetchEnabled,
+        href,
+        router,
+        fetchStrategy,
+        setOptimisticLinkStatus
+    ]);
+    const mergedRef = (0, _usemergedref.useMergedRef)(observeLinkVisibilityOnMount, childRef);
+    const childProps = {
+        ref: mergedRef,
+        onClick (e) {
+            if ("TURBOPACK compile-time truthy", 1) {
+                if (!e) {
+                    throw Object.defineProperty(new Error(`Component rendered inside next/link has to pass click event to "onClick" prop.`), "__NEXT_ERROR_CODE", {
+                        value: "E312",
+                        enumerable: false,
+                        configurable: true
+                    });
+                }
+            }
+            if (!legacyBehavior && typeof onClick === 'function') {
+                onClick(e);
+            }
+            if (legacyBehavior && child.props && typeof child.props.onClick === 'function') {
+                child.props.onClick(e);
+            }
+            if (!router) {
+                return;
+            }
+            if (e.defaultPrevented) {
+                return;
+            }
+            linkClicked(e, href, as, linkInstanceRef, replace, scroll, onNavigate);
+        },
+        onMouseEnter (e) {
+            if (!legacyBehavior && typeof onMouseEnterProp === 'function') {
+                onMouseEnterProp(e);
+            }
+            if (legacyBehavior && child.props && typeof child.props.onMouseEnter === 'function') {
+                child.props.onMouseEnter(e);
+            }
+            if (!router) {
+                return;
+            }
+            if ("TURBOPACK compile-time truthy", 1) {
+                return;
+            }
+            //TURBOPACK unreachable
+            ;
+            const upgradeToDynamicPrefetch = undefined;
+        },
+        onTouchStart: ("TURBOPACK compile-time falsy", 0) ? "TURBOPACK unreachable" : function onTouchStart(e) {
+            if (!legacyBehavior && typeof onTouchStartProp === 'function') {
+                onTouchStartProp(e);
+            }
+            if (legacyBehavior && child.props && typeof child.props.onTouchStart === 'function') {
+                child.props.onTouchStart(e);
+            }
+            if (!router) {
+                return;
+            }
+            if (!prefetchEnabled) {
+                return;
+            }
+            const upgradeToDynamicPrefetch = unstable_dynamicOnHover === true;
+            (0, _links.onNavigationIntent)(e.currentTarget, upgradeToDynamicPrefetch);
+        }
+    };
+    // If the url is absolute, we can bypass the logic to prepend the basePath.
+    if ((0, _utils.isAbsoluteUrl)(as)) {
+        childProps.href = as;
+    } else if (!legacyBehavior || passHref || child.type === 'a' && !('href' in child.props)) {
+        childProps.href = (0, _addbasepath.addBasePath)(as);
+    }
+    let link;
+    if (legacyBehavior) {
+        if ("TURBOPACK compile-time truthy", 1) {
+            (0, _erroronce.errorOnce)('`legacyBehavior` is deprecated and will be removed in a future ' + 'release. A codemod is available to upgrade your components:\n\n' + 'npx @next/codemod@latest new-link .\n\n' + 'Learn more: https://nextjs.org/docs/app/building-your-application/upgrading/codemods#remove-a-tags-from-link-components');
+        }
+        link = /*#__PURE__*/ _react.default.cloneElement(child, childProps);
+    } else {
+        link = /*#__PURE__*/ (0, _jsxruntime.jsx)("a", {
+            ...restProps,
+            ...childProps,
+            children: children
+        });
+    }
+    return /*#__PURE__*/ (0, _jsxruntime.jsx)(LinkStatusContext.Provider, {
+        value: linkStatus,
+        children: link
+    });
+}
+const LinkStatusContext = /*#__PURE__*/ (0, _react.createContext)(_links.IDLE_LINK_STATUS);
+const useLinkStatus = ()=>{
+    return (0, _react.useContext)(LinkStatusContext);
+};
+function getFetchStrategyFromPrefetchProp(prefetchProp) {
+    if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+    ;
+    else {
+        return prefetchProp === null || prefetchProp === 'auto' ? _types.FetchStrategy.PPR : // (although invalid values should've been filtered out by prop validation in dev)
+        _types.FetchStrategy.Full;
+    }
+}
+if ((typeof exports.default === 'function' || typeof exports.default === 'object' && exports.default !== null) && typeof exports.default.__esModule === 'undefined') {
+    Object.defineProperty(exports.default, '__esModule', {
+        value: true
+    });
+    Object.assign(exports.default, exports);
+    module.exports = exports.default;
+} //# sourceMappingURL=link.js.map
+}),
+"[project]/node_modules/next/navigation.js [app-client] (ecmascript)", ((__turbopack_context__, module, exports) => {
+
+module.exports = __turbopack_context__.r("[project]/node_modules/next/dist/client/components/navigation.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/zustand/esm/vanilla.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "createStore",
+    ()=>createStore
+]);
+const createStoreImpl = (createState)=>{
+    let state;
+    const listeners = /* @__PURE__ */ new Set();
+    const setState = (partial, replace)=>{
+        const nextState = typeof partial === "function" ? partial(state) : partial;
+        if (!Object.is(nextState, state)) {
+            const previousState = state;
+            state = (replace != null ? replace : typeof nextState !== "object" || nextState === null) ? nextState : Object.assign({}, state, nextState);
+            listeners.forEach((listener)=>listener(state, previousState));
+        }
+    };
+    const getState = ()=>state;
+    const getInitialState = ()=>initialState;
+    const subscribe = (listener)=>{
+        listeners.add(listener);
+        return ()=>listeners.delete(listener);
+    };
+    const api = {
+        setState,
+        getState,
+        getInitialState,
+        subscribe
+    };
+    const initialState = state = createState(setState, getState, api);
+    return api;
+};
+const createStore = (createState)=>createState ? createStoreImpl(createState) : createStoreImpl;
+;
+}),
+"[project]/node_modules/zustand/esm/react.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "create",
+    ()=>create,
+    "useStore",
+    ()=>useStore
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$vanilla$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/zustand/esm/vanilla.mjs [app-client] (ecmascript)");
+;
+;
+const identity = (arg)=>arg;
+function useStore(api, selector = identity) {
+    const slice = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].useSyncExternalStore(api.subscribe, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].useCallback({
+        "useStore.useSyncExternalStore[slice]": ()=>selector(api.getState())
+    }["useStore.useSyncExternalStore[slice]"], [
+        api,
+        selector
+    ]), __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].useCallback({
+        "useStore.useSyncExternalStore[slice]": ()=>selector(api.getInitialState())
+    }["useStore.useSyncExternalStore[slice]"], [
+        api,
+        selector
+    ]));
+    __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].useDebugValue(slice);
+    return slice;
+}
+const createImpl = (createState)=>{
+    const api = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zustand$2f$esm$2f$vanilla$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createStore"])(createState);
+    const useBoundStore = (selector)=>useStore(api, selector);
+    Object.assign(useBoundStore, api);
+    return useBoundStore;
+};
+const create = (createState)=>createState ? createImpl(createState) : createImpl;
+;
+}),
+"[project]/node_modules/zustand/esm/middleware.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "combine",
+    ()=>combine,
+    "createJSONStorage",
+    ()=>createJSONStorage,
+    "devtools",
+    ()=>devtools,
+    "persist",
+    ()=>persist,
+    "redux",
+    ()=>redux,
+    "subscribeWithSelector",
+    ()=>subscribeWithSelector,
+    "unstable_ssrSafe",
+    ()=>ssrSafe
+]);
+const __TURBOPACK__import$2e$meta__ = {
+    get url () {
+        return `file://${__turbopack_context__.P("node_modules/zustand/esm/middleware.mjs")}`;
+    }
+};
+const reduxImpl = (reducer, initial)=>(set, _get, api)=>{
+        api.dispatch = (action)=>{
+            set((state)=>reducer(state, action), false, action);
+            return action;
+        };
+        api.dispatchFromDevtools = true;
+        return {
+            dispatch: (...args)=>api.dispatch(...args),
+            ...initial
+        };
+    };
+const redux = reduxImpl;
+const trackedConnections = /* @__PURE__ */ new Map();
+const getTrackedConnectionState = (name)=>{
+    const api = trackedConnections.get(name);
+    if (!api) return {};
+    return Object.fromEntries(Object.entries(api.stores).map(([key, api2])=>[
+            key,
+            api2.getState()
+        ]));
+};
+const extractConnectionInformation = (store, extensionConnector, options)=>{
+    if (store === void 0) {
+        return {
+            type: "untracked",
+            connection: extensionConnector.connect(options)
+        };
+    }
+    const existingConnection = trackedConnections.get(options.name);
+    if (existingConnection) {
+        return {
+            type: "tracked",
+            store,
+            ...existingConnection
+        };
+    }
+    const newConnection = {
+        connection: extensionConnector.connect(options),
+        stores: {}
+    };
+    trackedConnections.set(options.name, newConnection);
+    return {
+        type: "tracked",
+        store,
+        ...newConnection
+    };
+};
+const removeStoreFromTrackedConnections = (name, store)=>{
+    if (store === void 0) return;
+    const connectionInfo = trackedConnections.get(name);
+    if (!connectionInfo) return;
+    delete connectionInfo.stores[store];
+    if (Object.keys(connectionInfo.stores).length === 0) {
+        trackedConnections.delete(name);
+    }
+};
+const findCallerName = (stack)=>{
+    var _a, _b;
+    if (!stack) return void 0;
+    const traceLines = stack.split("\n");
+    const apiSetStateLineIndex = traceLines.findIndex((traceLine)=>traceLine.includes("api.setState"));
+    if (apiSetStateLineIndex < 0) return void 0;
+    const callerLine = ((_a = traceLines[apiSetStateLineIndex + 1]) == null ? void 0 : _a.trim()) || "";
+    return (_b = /.+ (.+) .+/.exec(callerLine)) == null ? void 0 : _b[1];
+};
+const devtoolsImpl = (fn, devtoolsOptions = {})=>(set, get, api)=>{
+        const { enabled, anonymousActionType, store, ...options } = devtoolsOptions;
+        let extensionConnector;
+        try {
+            extensionConnector = (enabled != null ? enabled : (__TURBOPACK__import$2e$meta__.env ? __TURBOPACK__import$2e$meta__.env.MODE : void 0) !== "production") && window.__REDUX_DEVTOOLS_EXTENSION__;
+        } catch (e) {}
+        if (!extensionConnector) {
+            return fn(set, get, api);
+        }
+        const { connection, ...connectionInformation } = extractConnectionInformation(store, extensionConnector, options);
+        let isRecording = true;
+        api.setState = (state, replace, nameOrAction)=>{
+            const r = set(state, replace);
+            if (!isRecording) return r;
+            const action = nameOrAction === void 0 ? {
+                type: anonymousActionType || findCallerName(new Error().stack) || "anonymous"
+            } : typeof nameOrAction === "string" ? {
+                type: nameOrAction
+            } : nameOrAction;
+            if (store === void 0) {
+                connection == null ? void 0 : connection.send(action, get());
+                return r;
+            }
+            connection == null ? void 0 : connection.send({
+                ...action,
+                type: `${store}/${action.type}`
+            }, {
+                ...getTrackedConnectionState(options.name),
+                [store]: api.getState()
+            });
+            return r;
+        };
+        api.devtools = {
+            cleanup: ()=>{
+                if (connection && typeof connection.unsubscribe === "function") {
+                    connection.unsubscribe();
+                }
+                removeStoreFromTrackedConnections(options.name, store);
+            }
+        };
+        const setStateFromDevtools = (...a)=>{
+            const originalIsRecording = isRecording;
+            isRecording = false;
+            set(...a);
+            isRecording = originalIsRecording;
+        };
+        const initialState = fn(api.setState, get, api);
+        if (connectionInformation.type === "untracked") {
+            connection == null ? void 0 : connection.init(initialState);
+        } else {
+            connectionInformation.stores[connectionInformation.store] = api;
+            connection == null ? void 0 : connection.init(Object.fromEntries(Object.entries(connectionInformation.stores).map(([key, store2])=>[
+                    key,
+                    key === connectionInformation.store ? initialState : store2.getState()
+                ])));
+        }
+        if (api.dispatchFromDevtools && typeof api.dispatch === "function") {
+            let didWarnAboutReservedActionType = false;
+            const originalDispatch = api.dispatch;
+            api.dispatch = (...args)=>{
+                if ((__TURBOPACK__import$2e$meta__.env ? __TURBOPACK__import$2e$meta__.env.MODE : void 0) !== "production" && args[0].type === "__setState" && !didWarnAboutReservedActionType) {
+                    console.warn('[zustand devtools middleware] "__setState" action type is reserved to set state from the devtools. Avoid using it.');
+                    didWarnAboutReservedActionType = true;
+                }
+                originalDispatch(...args);
+            };
+        }
+        connection.subscribe((message)=>{
+            var _a;
+            switch(message.type){
+                case "ACTION":
+                    if (typeof message.payload !== "string") {
+                        console.error("[zustand devtools middleware] Unsupported action format");
+                        return;
+                    }
+                    return parseJsonThen(message.payload, (action)=>{
+                        if (action.type === "__setState") {
+                            if (store === void 0) {
+                                setStateFromDevtools(action.state);
+                                return;
+                            }
+                            if (Object.keys(action.state).length !== 1) {
+                                console.error(`
+                    [zustand devtools middleware] Unsupported __setState action format.
+                    When using 'store' option in devtools(), the 'state' should have only one key, which is a value of 'store' that was passed in devtools(),
+                    and value of this only key should be a state object. Example: { "type": "__setState", "state": { "abc123Store": { "foo": "bar" } } }
+                    `);
+                            }
+                            const stateFromDevtools = action.state[store];
+                            if (stateFromDevtools === void 0 || stateFromDevtools === null) {
+                                return;
+                            }
+                            if (JSON.stringify(api.getState()) !== JSON.stringify(stateFromDevtools)) {
+                                setStateFromDevtools(stateFromDevtools);
+                            }
+                            return;
+                        }
+                        if (!api.dispatchFromDevtools) return;
+                        if (typeof api.dispatch !== "function") return;
+                        api.dispatch(action);
+                    });
+                case "DISPATCH":
+                    switch(message.payload.type){
+                        case "RESET":
+                            setStateFromDevtools(initialState);
+                            if (store === void 0) {
+                                return connection == null ? void 0 : connection.init(api.getState());
+                            }
+                            return connection == null ? void 0 : connection.init(getTrackedConnectionState(options.name));
+                        case "COMMIT":
+                            if (store === void 0) {
+                                connection == null ? void 0 : connection.init(api.getState());
+                                return;
+                            }
+                            return connection == null ? void 0 : connection.init(getTrackedConnectionState(options.name));
+                        case "ROLLBACK":
+                            return parseJsonThen(message.state, (state)=>{
+                                if (store === void 0) {
+                                    setStateFromDevtools(state);
+                                    connection == null ? void 0 : connection.init(api.getState());
+                                    return;
+                                }
+                                setStateFromDevtools(state[store]);
+                                connection == null ? void 0 : connection.init(getTrackedConnectionState(options.name));
+                            });
+                        case "JUMP_TO_STATE":
+                        case "JUMP_TO_ACTION":
+                            return parseJsonThen(message.state, (state)=>{
+                                if (store === void 0) {
+                                    setStateFromDevtools(state);
+                                    return;
+                                }
+                                if (JSON.stringify(api.getState()) !== JSON.stringify(state[store])) {
+                                    setStateFromDevtools(state[store]);
+                                }
+                            });
+                        case "IMPORT_STATE":
+                            {
+                                const { nextLiftedState } = message.payload;
+                                const lastComputedState = (_a = nextLiftedState.computedStates.slice(-1)[0]) == null ? void 0 : _a.state;
+                                if (!lastComputedState) return;
+                                if (store === void 0) {
+                                    setStateFromDevtools(lastComputedState);
+                                } else {
+                                    setStateFromDevtools(lastComputedState[store]);
+                                }
+                                connection == null ? void 0 : connection.send(null, // FIXME no-any
+                                nextLiftedState);
+                                return;
+                            }
+                        case "PAUSE_RECORDING":
+                            return isRecording = !isRecording;
+                    }
+                    return;
+            }
+        });
+        return initialState;
+    };
+const devtools = devtoolsImpl;
+const parseJsonThen = (stringified, fn)=>{
+    let parsed;
+    try {
+        parsed = JSON.parse(stringified);
+    } catch (e) {
+        console.error("[zustand devtools middleware] Could not parse the received json", e);
+    }
+    if (parsed !== void 0) fn(parsed);
+};
+const subscribeWithSelectorImpl = (fn)=>(set, get, api)=>{
+        const origSubscribe = api.subscribe;
+        api.subscribe = (selector, optListener, options)=>{
+            let listener = selector;
+            if (optListener) {
+                const equalityFn = (options == null ? void 0 : options.equalityFn) || Object.is;
+                let currentSlice = selector(api.getState());
+                listener = (state)=>{
+                    const nextSlice = selector(state);
+                    if (!equalityFn(currentSlice, nextSlice)) {
+                        const previousSlice = currentSlice;
+                        optListener(currentSlice = nextSlice, previousSlice);
+                    }
+                };
+                if (options == null ? void 0 : options.fireImmediately) {
+                    optListener(currentSlice, currentSlice);
+                }
+            }
+            return origSubscribe(listener);
+        };
+        const initialState = fn(set, get, api);
+        return initialState;
+    };
+const subscribeWithSelector = subscribeWithSelectorImpl;
+function combine(initialState, create) {
+    return (...args)=>Object.assign({}, initialState, create(...args));
+}
+function createJSONStorage(getStorage, options) {
+    let storage;
+    try {
+        storage = getStorage();
+    } catch (e) {
+        return;
+    }
+    const persistStorage = {
+        getItem: (name)=>{
+            var _a;
+            const parse = (str2)=>{
+                if (str2 === null) {
+                    return null;
+                }
+                return JSON.parse(str2, options == null ? void 0 : options.reviver);
+            };
+            const str = (_a = storage.getItem(name)) != null ? _a : null;
+            if (str instanceof Promise) {
+                return str.then(parse);
+            }
+            return parse(str);
+        },
+        setItem: (name, newValue)=>storage.setItem(name, JSON.stringify(newValue, options == null ? void 0 : options.replacer)),
+        removeItem: (name)=>storage.removeItem(name)
+    };
+    return persistStorage;
+}
+const toThenable = (fn)=>(input)=>{
+        try {
+            const result = fn(input);
+            if (result instanceof Promise) {
+                return result;
+            }
+            return {
+                then (onFulfilled) {
+                    return toThenable(onFulfilled)(result);
+                },
+                catch (_onRejected) {
+                    return this;
+                }
+            };
+        } catch (e) {
+            return {
+                then (_onFulfilled) {
+                    return this;
+                },
+                catch (onRejected) {
+                    return toThenable(onRejected)(e);
+                }
+            };
+        }
+    };
+const persistImpl = (config, baseOptions)=>(set, get, api)=>{
+        let options = {
+            storage: createJSONStorage(()=>localStorage),
+            partialize: (state)=>state,
+            version: 0,
+            merge: (persistedState, currentState)=>({
+                    ...currentState,
+                    ...persistedState
+                }),
+            ...baseOptions
+        };
+        let hasHydrated = false;
+        const hydrationListeners = /* @__PURE__ */ new Set();
+        const finishHydrationListeners = /* @__PURE__ */ new Set();
+        let storage = options.storage;
+        if (!storage) {
+            return config((...args)=>{
+                console.warn(`[zustand persist middleware] Unable to update item '${options.name}', the given storage is currently unavailable.`);
+                set(...args);
+            }, get, api);
+        }
+        const setItem = ()=>{
+            const state = options.partialize({
+                ...get()
+            });
+            return storage.setItem(options.name, {
+                state,
+                version: options.version
+            });
+        };
+        const savedSetState = api.setState;
+        api.setState = (state, replace)=>{
+            savedSetState(state, replace);
+            return setItem();
+        };
+        const configResult = config((...args)=>{
+            set(...args);
+            return setItem();
+        }, get, api);
+        api.getInitialState = ()=>configResult;
+        let stateFromStorage;
+        const hydrate = ()=>{
+            var _a, _b;
+            if (!storage) return;
+            hasHydrated = false;
+            hydrationListeners.forEach((cb)=>{
+                var _a2;
+                return cb((_a2 = get()) != null ? _a2 : configResult);
+            });
+            const postRehydrationCallback = ((_b = options.onRehydrateStorage) == null ? void 0 : _b.call(options, (_a = get()) != null ? _a : configResult)) || void 0;
+            return toThenable(storage.getItem.bind(storage))(options.name).then((deserializedStorageValue)=>{
+                if (deserializedStorageValue) {
+                    if (typeof deserializedStorageValue.version === "number" && deserializedStorageValue.version !== options.version) {
+                        if (options.migrate) {
+                            const migration = options.migrate(deserializedStorageValue.state, deserializedStorageValue.version);
+                            if (migration instanceof Promise) {
+                                return migration.then((result)=>[
+                                        true,
+                                        result
+                                    ]);
+                            }
+                            return [
+                                true,
+                                migration
+                            ];
+                        }
+                        console.error(`State loaded from storage couldn't be migrated since no migrate function was provided`);
+                    } else {
+                        return [
+                            false,
+                            deserializedStorageValue.state
+                        ];
+                    }
+                }
+                return [
+                    false,
+                    void 0
+                ];
+            }).then((migrationResult)=>{
+                var _a2;
+                const [migrated, migratedState] = migrationResult;
+                stateFromStorage = options.merge(migratedState, (_a2 = get()) != null ? _a2 : configResult);
+                set(stateFromStorage, true);
+                if (migrated) {
+                    return setItem();
+                }
+            }).then(()=>{
+                postRehydrationCallback == null ? void 0 : postRehydrationCallback(stateFromStorage, void 0);
+                stateFromStorage = get();
+                hasHydrated = true;
+                finishHydrationListeners.forEach((cb)=>cb(stateFromStorage));
+            }).catch((e)=>{
+                postRehydrationCallback == null ? void 0 : postRehydrationCallback(void 0, e);
+            });
+        };
+        api.persist = {
+            setOptions: (newOptions)=>{
+                options = {
+                    ...options,
+                    ...newOptions
+                };
+                if (newOptions.storage) {
+                    storage = newOptions.storage;
+                }
+            },
+            clearStorage: ()=>{
+                storage == null ? void 0 : storage.removeItem(options.name);
+            },
+            getOptions: ()=>options,
+            rehydrate: ()=>hydrate(),
+            hasHydrated: ()=>hasHydrated,
+            onHydrate: (cb)=>{
+                hydrationListeners.add(cb);
+                return ()=>{
+                    hydrationListeners.delete(cb);
+                };
+            },
+            onFinishHydration: (cb)=>{
+                finishHydrationListeners.add(cb);
+                return ()=>{
+                    finishHydrationListeners.delete(cb);
+                };
+            }
+        };
+        if (!options.skipHydration) {
+            hydrate();
+        }
+        return stateFromStorage || configResult;
+    };
+const persist = persistImpl;
+function ssrSafe(config, isSSR = typeof window === "undefined") {
+    return (set, get, api)=>{
+        if (!isSSR) {
+            return config(set, get, api);
+        }
+        const ssrSet = ()=>{
+            throw new Error("Cannot set state of Zustand store in SSR");
+        };
+        api.setState = ssrSet;
+        return config(ssrSet, get, api);
+    };
+}
+;
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/shield-check.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>ShieldCheck
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
+            key: "oel41y"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m9 12 2 2 4-4",
+            key: "dzmm74"
+        }
+    ]
+];
+const ShieldCheck = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("shield-check", __iconNode);
+;
+ //# sourceMappingURL=shield-check.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/shield-check.js [app-client] (ecmascript) <export default as ShieldCheck>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "ShieldCheck",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$shield$2d$check$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$shield$2d$check$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/shield-check.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/heart.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>Heart
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5",
+            key: "mvr1a0"
+        }
+    ]
+];
+const Heart = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("heart", __iconNode);
+;
+ //# sourceMappingURL=heart.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/heart.js [app-client] (ecmascript) <export default as Heart>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Heart",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$heart$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$heart$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/heart.js [app-client] (ecmascript)");
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/arrow-right.js [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "__iconNode",
+    ()=>__iconNode,
+    "default",
+    ()=>ArrowRight
+]);
+/**
+ * @license lucide-react v0.555.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/createLucideIcon.js [app-client] (ecmascript)");
+;
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "M5 12h14",
+            key: "1ays0h"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m12 5 7 7-7 7",
+            key: "xquz4c"
+        }
+    ]
+];
+const ArrowRight = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$createLucideIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])("arrow-right", __iconNode);
+;
+ //# sourceMappingURL=arrow-right.js.map
+}),
+"[project]/node_modules/lucide-react/dist/esm/icons/arrow-right.js [app-client] (ecmascript) <export default as ArrowRight>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "ArrowRight",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$right$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"]
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$right$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/arrow-right.js [app-client] (ecmascript)");
+}),
+]);
+
+//# sourceMappingURL=_4ca68918._.js.map

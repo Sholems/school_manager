@@ -1,0 +1,9 @@
+{
+  "[project]/node_modules/recharts/es6/index.js [app-client] (ecmascript, next/dynamic entry)": {
+    "id": "[project]/node_modules/recharts/es6/index.js [app-client] (ecmascript, next/dynamic entry)",
+    "files": [
+      "static/chunks/node_modules_cab4d1ee._.js",
+      "static/chunks/node_modules_recharts_es6_index_f162c7e9.js"
+    ]
+  }
+}

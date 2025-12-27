@@ -1,0 +1,17 @@
+{
+  "/(dashboard)/attendance/page": "/attendance",
+  "/(dashboard)/broadsheet/page": "/broadsheet",
+  "/(dashboard)/bursary/page": "/bursary",
+  "/(dashboard)/classes/page": "/classes",
+  "/(dashboard)/dashboard/page": "/dashboard",
+  "/(dashboard)/data/page": "/data",
+  "/(dashboard)/grading/page": "/grading",
+  "/(dashboard)/id_cards/page": "/id_cards",
+  "/(dashboard)/settings/page": "/settings",
+  "/(dashboard)/staff/page": "/staff",
+  "/(dashboard)/students/page": "/students",
+  "/(dashboard)/teachers/page": "/teachers",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/page": "/"
+}

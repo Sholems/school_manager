@@ -1,0 +1,3 @@
+{
+  "/(dashboard)/grading/page": "app/(dashboard)/grading/page.js"
+}

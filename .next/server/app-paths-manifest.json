@@ -1,0 +1,17 @@
+{
+  "/(dashboard)/attendance/page": "app/(dashboard)/attendance/page.js",
+  "/(dashboard)/broadsheet/page": "app/(dashboard)/broadsheet/page.js",
+  "/(dashboard)/bursary/page": "app/(dashboard)/bursary/page.js",
+  "/(dashboard)/classes/page": "app/(dashboard)/classes/page.js",
+  "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
+  "/(dashboard)/data/page": "app/(dashboard)/data/page.js",
+  "/(dashboard)/grading/page": "app/(dashboard)/grading/page.js",
+  "/(dashboard)/id_cards/page": "app/(dashboard)/id_cards/page.js",
+  "/(dashboard)/settings/page": "app/(dashboard)/settings/page.js",
+  "/(dashboard)/staff/page": "app/(dashboard)/staff/page.js",
+  "/(dashboard)/students/page": "app/(dashboard)/students/page.js",
+  "/(dashboard)/teachers/page": "app/(dashboard)/teachers/page.js",
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/page": "app/page.js"
+}
