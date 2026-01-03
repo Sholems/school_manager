@@ -12,7 +12,11 @@ import {
     Line, Bar, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from '@/components/ui/charts';
-import { useSchoolStore } from '@/lib/store';
+import { useSchoolStore } from '@/lib/store'; // For Auth if needed
+import {
+    useStudents, useClasses, useScores, useAttendance,
+    usePayments, useExpenses, useFees, useSettings
+} from '@/lib/hooks/use-data';
 import { Card } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
 import * as Utils from '@/lib/utils';
@@ -20,10 +24,15 @@ import * as Utils from '@/lib/utils';
 const COLORS = ['#16a34a', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
 export const AnalyticsView: React.FC = () => {
-    const {
-        students, classes, scores, attendance,
-        payments, expenses, fees, settings
-    } = useSchoolStore();
+    // Data Hooks
+    const { data: settings = Utils.INITIAL_SETTINGS } = useSettings();
+    const { data: students = [] } = useStudents();
+    const { data: classes = [] } = useClasses();
+    const { data: scores = [] } = useScores();
+    const { data: attendance = [] } = useAttendance();
+    const { data: payments = [] } = usePayments();
+    const { data: expenses = [] } = useExpenses();
+    const { data: fees = [] } = useFees();
     const [activeTab, setActiveTab] = useState<'performance' | 'financial' | 'attendance'>('performance');
     const [selectedSession, setSelectedSession] = useState(settings.current_session);
 

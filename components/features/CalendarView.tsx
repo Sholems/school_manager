@@ -14,14 +14,29 @@ import { Modal } from '@/components/ui/modal';
 import { useToast } from '@/components/providers/toast-provider';
 import * as Utils from '@/lib/utils';
 import * as Types from '@/lib/types';
+import {
+    useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent
+} from '@/lib/hooks/use-data';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export const CalendarView: React.FC = () => {
-    const { events, addEvent, updateEvent, deleteEvent } = useSchoolStore();
+    // Auth
+    const { currentRole } = useSchoolStore();
     const { addToast } = useToast();
+
+    // Data Hooks
+    const { data: events = [] } = useEvents();
+
+    // Mutations
+    const { mutate: addEvent } = useCreateEvent();
+    const { mutate: updateEvent } = useUpdateEvent();
+    const { mutate: deleteEvent } = useDeleteEvent();
+
+    // Role-based access control
+    const isReadOnlyRole = currentRole === 'student' || currentRole === 'parent';
 
     const [currentDate, setCurrentDate] = useState(new Date());
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,6 +62,7 @@ export const CalendarView: React.FC = () => {
     };
 
     const handleOpenModal = (event?: Types.SchoolEvent, date?: string) => {
+        if (isReadOnlyRole) return; // Prevent modal for read-only users
         if (event) {
             setEditingEvent(event);
             setTitle(event.title);
@@ -81,7 +97,7 @@ export const CalendarView: React.FC = () => {
         };
 
         if (editingEvent) {
-            updateEvent(eventData);
+            updateEvent({ id: eventData.id, updates: eventData });
             addToast('Event updated', 'success');
         } else {
             addEvent(eventData);
@@ -96,6 +112,17 @@ export const CalendarView: React.FC = () => {
         deleteEvent(id);
         addToast('Event deleted', 'info');
     };
+
+    // Filter events based on role
+    const filteredEvents = useMemo(() => {
+        if (!isReadOnlyRole) return events;
+        // For students/parents, show events targeted at all, students, or parents
+        return events.filter(e =>
+            e.target_audience === 'all' ||
+            e.target_audience === 'students' ||
+            e.target_audience === 'parents'
+        );
+    }, [events, isReadOnlyRole]);
 
     // Calendar calculations
     const year = currentDate.getFullYear();
@@ -140,7 +167,7 @@ export const CalendarView: React.FC = () => {
 
     const getEventsForDate = (date: Date) => {
         const dateStr = date.toISOString().split('T')[0];
-        return events.filter(e => {
+        return filteredEvents.filter(e => {
             if (e.start_date === dateStr) return true;
             if (e.end_date) {
                 return dateStr >= e.start_date && dateStr <= e.end_date;
@@ -179,12 +206,16 @@ export const CalendarView: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Event Calendar</h1>
-                    <p className="text-sm text-gray-500 mt-1">Manage school events and academic calendar</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                        {isReadOnlyRole ? 'View school events and important dates' : 'Manage school events and academic calendar'}
+                    </p>
                 </div>
-                <Button onClick={() => handleOpenModal()}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    New Event
-                </Button>
+                {!isReadOnlyRole && (
+                    <Button onClick={() => handleOpenModal()}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        New Event
+                    </Button>
+                )}
             </div>
 
             <Card className="p-4">
@@ -233,14 +264,14 @@ export const CalendarView: React.FC = () => {
                         return (
                             <div
                                 key={index}
-                                className={`min-h-[100px] p-1 border rounded-lg cursor-pointer transition-colors ${day.isCurrentMonth ? 'bg-white' : 'bg-gray-50'
+                                className={`min-h-[100px] p-1 border rounded-lg transition-colors ${day.isCurrentMonth ? 'bg-white' : 'bg-gray-50'
                                     } ${isToday(day.date) ? 'border-brand-500 border-2' : 'border-gray-200'} 
-                                hover:bg-gray-50`}
-                                onClick={() => handleOpenModal(undefined, dateStr)}
+                                ${!isReadOnlyRole ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+                                onClick={() => !isReadOnlyRole && handleOpenModal(undefined, dateStr)}
                             >
                                 <div className={`text-sm font-medium mb-1 ${day.isCurrentMonth
-                                        ? isToday(day.date) ? 'text-brand-600' : 'text-gray-900'
-                                        : 'text-gray-400'
+                                    ? isToday(day.date) ? 'text-brand-600' : 'text-gray-900'
+                                    : 'text-gray-400'
                                     }`}>
                                     {day.date.getDate()}
                                 </div>
@@ -252,7 +283,7 @@ export const CalendarView: React.FC = () => {
                                                 }`}
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                handleOpenModal(event);
+                                                if (!isReadOnlyRole) handleOpenModal(event);
                                             }}
                                         >
                                             {getEventTypeIcon(event.event_type)}
@@ -273,103 +304,106 @@ export const CalendarView: React.FC = () => {
 
             {/* Upcoming Events Sidebar could be added here */}
 
-            {/* Event Modal */}
-            <Modal
-                isOpen={isModalOpen}
-                onClose={() => { setIsModalOpen(false); resetForm(); }}
-                title={editingEvent ? 'Edit Event' : 'New Event'}
-            >
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-                        <Input
-                            value={title}
-                            onChange={e => setTitle(e.target.value)}
-                            placeholder="Event title"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                        <textarea
-                            value={description}
-                            onChange={e => setDescription(e.target.value)}
-                            placeholder="Event details..."
-                            className="w-full p-3 border rounded-md focus:ring-2 focus:ring-brand-500 focus:outline-none min-h-[80px]"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
+            {/* Event Modal - Only for admin/teacher roles */}
+            {!isReadOnlyRole && (
+                <Modal
+                    isOpen={isModalOpen}
+                    onClose={() => { setIsModalOpen(false); resetForm(); }}
+                    title={editingEvent ? 'Edit Event' : 'New Event'}
+                >
+                    <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Start Date *</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
                             <Input
-                                type="date"
-                                value={startDate}
-                                onChange={e => setStartDate(e.target.value)}
+                                value={title}
+                                onChange={e => setTitle(e.target.value)}
+                                placeholder="Event title"
                             />
                         </div>
+
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                            <Input
-                                type="date"
-                                value={endDate}
-                                onChange={e => setEndDate(e.target.value)}
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea
+                                value={description}
+                                onChange={e => setDescription(e.target.value)}
+                                placeholder="Event details..."
+                                className="w-full p-3 border rounded-md focus:ring-2 focus:ring-brand-500 focus:outline-none min-h-[80px]"
                             />
                         </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <Select
-                            label="Event Type"
-                            value={eventType}
-                            onChange={e => setEventType(e.target.value as Types.SchoolEvent['event_type'])}
-                        >
-                            <option value="academic">Academic</option>
-                            <option value="holiday">Holiday</option>
-                            <option value="exam">Examination</option>
-                            <option value="meeting">Meeting</option>
-                            <option value="other">Other</option>
-                        </Select>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Start Date *</label>
+                                <Input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={e => setStartDate(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                                <Input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={e => setEndDate(e.target.value)}
+                                />
+                            </div>
+                        </div>
 
-                        <Select
-                            label="Target Audience"
-                            value={targetAudience}
-                            onChange={e => setTargetAudience(e.target.value as Types.SchoolEvent['target_audience'])}
-                        >
-                            <option value="all">Everyone</option>
-                            <option value="teachers">Teachers Only</option>
-                            <option value="students">Students Only</option>
-                            <option value="parents">Parents Only</option>
-                        </Select>
-                    </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Select
+                                label="Event Type"
+                                value={eventType}
+                                onChange={e => setEventType(e.target.value as Types.SchoolEvent['event_type'])}
+                            >
+                                <option value="academic">Academic</option>
+                                <option value="holiday">Holiday</option>
+                                <option value="exam">Examination</option>
+                                <option value="meeting">Meeting</option>
+                                <option value="other">Other</option>
+                            </Select>
 
-                    <div className="flex justify-between pt-4">
-                        <div>
-                            {editingEvent && (
-                                <Button
-                                    variant="danger"
-                                    onClick={() => {
-                                        handleDelete(editingEvent.id);
-                                        setIsModalOpen(false);
-                                        resetForm();
-                                    }}
-                                >
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Delete
+                            <Select
+                                label="Target Audience"
+                                value={targetAudience}
+                                onChange={e => setTargetAudience(e.target.value as Types.SchoolEvent['target_audience'])}
+                            >
+                                <option value="all">Everyone</option>
+                                <option value="teachers">Teachers Only</option>
+                                <option value="students">Students Only</option>
+                                <option value="parents">Parents Only</option>
+                            </Select>
+                        </div>
+
+                        <div className="flex justify-between pt-4">
+                            <div>
+                                {editingEvent && (
+                                    <Button
+                                        variant="danger"
+                                        onClick={() => {
+                                            handleDelete(editingEvent.id);
+                                            setIsModalOpen(false);
+                                            resetForm();
+                                        }}
+                                    >
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Delete
+                                    </Button>
+                                )}
+                            </div>
+                            <div className="flex gap-3">
+                                <Button variant="secondary" onClick={() => { setIsModalOpen(false); resetForm(); }}>
+                                    Cancel
                                 </Button>
-                            )}
-                        </div>
-                        <div className="flex gap-3">
-                            <Button variant="secondary" onClick={() => { setIsModalOpen(false); resetForm(); }}>
-                                Cancel
-                            </Button>
-                            <Button onClick={handleSave}>
-                                {editingEvent ? 'Update' : 'Create'} Event
-                            </Button>
+                                <Button onClick={handleSave}>
+                                    {editingEvent ? 'Update' : 'Create'} Event
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </Modal>
+                </Modal>
+            )}
         </div>
     );
 };
+

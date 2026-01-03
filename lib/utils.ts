@@ -26,11 +26,13 @@ export const STORAGE_KEYS = {
   PAYMENTS: 'ng_school_payments',
   EXPENSES: 'ng_school_expenses',
   SCORES: 'ng_school_scores',
-  ATTENDANCE: 'ng_school_attendance'
+  ATTENDANCE: 'ng_school_attendance',
+  ADMISSIONS: 'ng_school_admissions'
 };
 
 // Generic Load/Save
 export const loadFromStorage = <T>(key: string, fallback: T): T => {
+  if (typeof window === 'undefined') return fallback;
   try {
     const item = localStorage.getItem(key);
     if (!item) return fallback;
@@ -49,6 +51,7 @@ export const loadFromStorage = <T>(key: string, fallback: T): T => {
 };
 
 export const saveToStorage = (key: string, data: any) => {
+  if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(key, JSON.stringify(data));
   } catch (e) {
@@ -56,73 +59,19 @@ export const saveToStorage = (key: string, data: any) => {
   }
 };
 
-export const INITIAL_SETTINGS: Settings = {
-  id: 'singleton',
-  created_at: Date.now(),
-  updated_at: Date.now(),
-  school_name: 'Bright Future Academy',
-  school_address: '123 Education Lane, Lagos, Nigeria',
-  school_email: 'info@brightfuture.ng',
-  school_phone: '08012345678',
-  school_tagline: 'Knowledge for a brighter tomorrow',
-  current_session: '2025/2026',
-  current_term: 'First Term',
+// Debounce utility for performance optimization
+export const debounce = <T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): ((...args: Parameters<T>) => void) => {
+  let timeout: NodeJS.Timeout | null = null;
 
-  logo_media: null,
-  watermark_media: null,
-
-  director_name: 'Godspower Arthur',
-  director_signature: null,
-  head_of_school_name: 'Oluwaseun Arthur',
-  head_of_school_signature: null,
-
-  subjects_global: ['Mathematics', 'English', 'Science'],
-  terms: ['First Term', 'Second Term', 'Third Term'],
-  show_position: true,
-  show_skills: true,
-  tiled_watermark: false,
-  next_term_begins: '2025-05-04',
-  class_teacher_label: 'Class Teacher',
-  head_teacher_label: 'Head of School',
-  report_font_family: 'inherit',
-  report_scale: 100,
-  landing_hero_title: 'Excellence in Education',
-  landing_hero_subtitle: 'Nurturing the leaders of tomorrow with a world-class educational experience.',
-  landing_features: 'Academic Excellence, Modern Facilities, Expert Teachers, Safe Environment, Holistic Development, Affordable Fees',
-  landing_hero_image: null,
-  landing_about_text: 'We are committed to providing quality education that prepares students for the challenges of tomorrow. Our experienced teachers, modern facilities, and comprehensive curriculum ensure every child reaches their full potential.',
-  landing_gallery_images: [],
-  landing_primary_color: '#16a34a',
-  landing_show_stats: true,
-  landing_cta_text: 'Start Your Journey',
-  promotion_threshold: 50,
-  promotion_rules: 'manual',
-  role_permissions: {
-    super_admin: {
-      navigation: ['dashboard', 'students', 'teachers', 'staff', 'classes', 'grading', 'attendance', 'bursary', 'announcements', 'calendar', 'analytics', 'id_cards', 'broadsheet', 'data', 'settings'],
-      dashboardWidgets: ['stats', 'finance_chart', 'student_population', 'quick_actions', 'recent_transactions']
-    },
-    admin: {
-      navigation: ['dashboard', 'students', 'teachers', 'staff', 'classes', 'grading', 'attendance', 'bursary', 'announcements', 'calendar', 'analytics', 'id_cards', 'broadsheet', 'data', 'settings'],
-      dashboardWidgets: ['stats', 'finance_chart', 'student_population', 'quick_actions', 'recent_transactions']
-    },
-    teacher: {
-      navigation: ['dashboard', 'grading', 'attendance', 'announcements', 'calendar'],
-      dashboardWidgets: ['stats', 'quick_actions', 'my_classes']
-    },
-    student: {
-      navigation: ['dashboard', 'bursary', 'calendar', 'id_cards'],
-      dashboardWidgets: ['my_scores', 'my_attendance', 'my_fees']
-    },
-    parent: {
-      navigation: ['dashboard', 'bursary', 'calendar', 'id_cards'],
-      dashboardWidgets: ['my_scores', 'my_attendance', 'my_fees']
-    },
-    staff: {
-      navigation: ['dashboard', 'calendar'],
-      dashboardWidgets: ['quick_actions', 'my_tasks']
-    }
-  }
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      func(...args);
+    }, wait);
+  };
 };
 
 export const PRESET_PRESCHOOL_SUBJECTS = [
@@ -138,18 +87,96 @@ export const PRESET_PRESCHOOL_SUBJECTS = [
 
 export const PRESET_PRIMARY_SUBJECTS = [
   'Mathematics',
-  'English Language',
-  'Basic Science',
+  'Phonics/Spellings',
+  'Comprehension',
+  'Creative Writing',
+  'Poetry',
+  'Grammar',
+  'Library and Information Science',
+  'Creative Science',
+  'Christian Religious Studies',
+  'Information Communication Technology',
+  'Home Economics',
   'Social Studies',
-  'Civic Education',
-  'C.R.S',
-  'Verbal Reasoning',
-  'Quantitative Reasoning',
-  'ICT',
   'Creative Art',
-  'Vocational Aptitude',
-  'Writing'
+  'Verbal Reasoning',
+  'Non-Verbal Reasoning',
+  'Quantitative Reasoning'
 ];
+
+export const INITIAL_SETTINGS: Settings = {
+  id: 'singleton',
+  created_at: Date.now(),
+  updated_at: Date.now(),
+  school_name: 'Fruitful Vine Heritage Schools',
+  school_address: '21, Agric Road, James Estate, Ajara-Topa, Badagry, Lagos State',
+  school_email: 'info@fruitfulvineheritageschools.org.ng',
+  school_phone: '0803 483 2855, 0806 475 0268',
+  school_tagline: '...reaching the highest height',
+  current_session: '2025/2026',
+  current_term: 'First Term',
+
+  logo_media: '/fruitful_logo_main.png',
+  watermark_media: null,
+
+  director_name: 'Godspower Arthur',
+  director_signature: null,
+  head_of_school_name: 'Oluwaseun Arthur',
+  head_of_school_signature: null,
+
+  subjects_global: PRESET_PRIMARY_SUBJECTS,
+  terms: ['First Term', 'Second Term', 'Third Term'],
+  show_position: true,
+  show_skills: true,
+  tiled_watermark: false,
+  next_term_begins: '2025-05-04',
+  class_teacher_label: 'Class Teacher',
+  head_teacher_label: 'Head of School',
+  report_font_family: 'inherit',
+  report_scale: 100,
+  landing_hero_title: 'Welcome to Fruitful Vine Heritage Schools',
+  landing_hero_subtitle: 'Faith-Based Excellence in Education',
+  landing_features: 'Faith-Based Education, Modern Facilities, Expert Teachers, Safe Environment, Holistic Development, Academic Excellence',
+  landing_hero_image: null,
+  landing_about_text: 'We are a faith-based school dedicated to training and raising a total child with godly values and excellent character, who will excel through the grace and the wisdom of God, by blending biblical principles with modern scholarship, educating children to thrive and reach their highest height in life.',
+  landing_gallery_images: [],
+  landing_primary_color: '#1A3A5C',
+  landing_show_stats: true,
+  landing_cta_text: 'Start Your Journey',
+  promotion_threshold: 50,
+  promotion_rules: 'manual',
+  role_permissions: {
+
+    admin: {
+      navigation: ['dashboard', 'students', 'teachers', 'staff', 'classes', 'grading', 'attendance', 'bursary', 'announcements', 'calendar', 'analytics', 'id_cards', 'broadsheet', 'data', 'settings'],
+      dashboardWidgets: ['stats', 'finance_chart', 'student_population', 'quick_actions', 'recent_transactions']
+    },
+    teacher: {
+      navigation: ['dashboard', 'grading', 'attendance', 'announcements', 'calendar'],
+      dashboardWidgets: ['stats', 'quick_actions', 'my_classes']
+    },
+    student: {
+      navigation: ['dashboard', 'grading', 'attendance', 'announcements', 'bursary', 'calendar', 'id_cards', 'newsletter'],
+      dashboardWidgets: ['my_scores', 'my_attendance', 'my_fees', 'class_info']
+    },
+    parent: {
+      navigation: ['dashboard', 'grading', 'attendance', 'announcements', 'bursary', 'calendar', 'id_cards', 'newsletter'],
+      dashboardWidgets: ['my_scores', 'my_attendance', 'my_fees', 'class_info']
+    },
+    staff: {
+      navigation: ['dashboard', 'calendar'],
+      dashboardWidgets: ['quick_actions', 'my_tasks']
+    }
+  },
+  // Invoice & Payment Settings
+  show_bank_details: true,
+  bank_name: 'First Bank of Nigeria',
+  bank_account_name: 'Fruitful Vine Heritage Schools',
+  bank_account_number: '0123456789',
+  bank_sort_code: '',
+  invoice_notes: 'Please ensure payment is made before the due date to avoid late fees.',
+  invoice_due_days: 14
+};
 
 export const getSubjectsForClass = (cls: Class | undefined) => {
   if (!cls) return [];
@@ -175,31 +202,87 @@ export const DOMAINS_PSYCHOMOTOR = [
   'Handwriting', 'Verbal Fluency', 'Sports/Games', 'Handling Tools', 'Drawing/Painting', 'Music/Dance'
 ];
 
-// Mock Initial Data (Seeds)
-export const SEED_TEACHERS: Teacher[] = [
-  { id: 't1', name: 'Mr. John Doe', address: 'Lagos', email: 'john@school.ng', phone: '08012345678', created_at: Date.now(), updated_at: Date.now() },
-  { id: 't2', name: 'Mrs. Jane Smith', address: 'Abuja', email: 'jane@school.ng', phone: '08087654321', created_at: Date.now(), updated_at: Date.now() },
+// Mock Initial Data (Seeds) - EMPTY FOR PRODUCTION
+export const SEED_TEACHERS: Teacher[] = [];
+
+export const SEED_STAFF: Staff[] = [];
+
+export const SEED_CLASSES: Class[] = [
+  {
+    id: 'class-playschool',
+    name: 'Playschool',
+    class_teacher_id: null,
+    subjects: PRESET_PRESCHOOL_SUBJECTS,
+    created_at: Date.now(),
+    updated_at: Date.now()
+  },
+  {
+    id: 'class-reception',
+    name: 'Reception',
+    class_teacher_id: null,
+    subjects: PRESET_PRESCHOOL_SUBJECTS,
+    created_at: Date.now(),
+    updated_at: Date.now()
+  },
+  {
+    id: 'class-kindergarten',
+    name: 'Kindergarten',
+    class_teacher_id: null,
+    subjects: PRESET_PRESCHOOL_SUBJECTS,
+    created_at: Date.now(),
+    updated_at: Date.now()
+  },
+  {
+    id: 'class-year-1',
+    name: 'Year 1',
+    class_teacher_id: null,
+    subjects: PRESET_PRIMARY_SUBJECTS,
+    created_at: Date.now(),
+    updated_at: Date.now()
+  },
+  {
+    id: 'class-year-2',
+    name: 'Year 2',
+    class_teacher_id: null,
+    subjects: PRESET_PRIMARY_SUBJECTS,
+    created_at: Date.now(),
+    updated_at: Date.now()
+  },
+  {
+    id: 'class-year-3',
+    name: 'Year 3',
+    class_teacher_id: null,
+    subjects: PRESET_PRIMARY_SUBJECTS,
+    created_at: Date.now(),
+    updated_at: Date.now()
+  },
+  {
+    id: 'class-year-4',
+    name: 'Year 4',
+    class_teacher_id: null,
+    subjects: PRESET_PRIMARY_SUBJECTS,
+    created_at: Date.now(),
+    updated_at: Date.now()
+  },
+  {
+    id: 'class-year-5',
+    name: 'Year 5',
+    class_teacher_id: null,
+    subjects: PRESET_PRIMARY_SUBJECTS,
+    created_at: Date.now(),
+    updated_at: Date.now()
+  },
+  {
+    id: 'class-year-6',
+    name: 'Year 6',
+    class_teacher_id: null,
+    subjects: PRESET_PRIMARY_SUBJECTS,
+    created_at: Date.now(),
+    updated_at: Date.now()
+  }
 ];
 
-export const SEED_STAFF: Staff[] = [
-  { id: 'st1', name: 'Mrs. Grace Okoro', role: 'Bursar', tasks: 'Collect fees, manage accounts', email: 'bursar@school.ng', phone: '08099999999', address: 'Lagos', created_at: Date.now(), updated_at: Date.now() },
-  { id: 'st2', name: 'Mr. Ahmed Musa', role: 'Security', tasks: 'Gate security, patrol', email: '', phone: '08088888888', address: 'Lagos', created_at: Date.now(), updated_at: Date.now() },
-];
-
-export const SEED_CLASSES: Class[] = PRESET_CLASSES.map((name, i) => ({
-  id: `c-${i}`,
-  name,
-  class_teacher_id: i === 0 ? 't1' : (i === 3 ? 't2' : null),
-  subjects: null,
-  created_at: Date.now(),
-  updated_at: Date.now(),
-}));
-
-export const SEED_STUDENTS: Student[] = [
-  { id: 's1', student_no: 'ST001', names: 'Chinedu Eze', gender: 'Male', class_id: 'c-3', dob: '2015-05-12', parent_name: 'Mr. Eze', parent_phone: '08000000001', address: 'Ikeja', created_at: Date.now(), updated_at: Date.now() },
-  { id: 's2', student_no: 'ST002', names: 'Amina Bello', gender: 'Female', class_id: 'c-3', dob: '2015-08-23', parent_name: 'Mrs. Bello', parent_phone: '08000000002', address: 'Lekki', created_at: Date.now(), updated_at: Date.now() },
-  { id: 's3', student_no: 'ST003', names: 'Funke Akindele', gender: 'Female', class_id: 'c-0', dob: '2019-02-10', parent_name: 'Mr. Akindele', parent_phone: '08000000003', address: 'Yaba', created_at: Date.now(), updated_at: Date.now() },
-];
+export const SEED_STUDENTS: Student[] = [];
 
 export const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(amount);

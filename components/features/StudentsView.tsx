@@ -18,6 +18,12 @@ interface StudentsViewProps {
     onDelete: (id: string) => void;
 }
 
+const getPassportUrl = (student: Types.Student | any): string | null => {
+    if (student.passport_url) return student.passport_url;
+    if (student.passport_media) return student.passport_media;
+    return null;
+};
+
 export const StudentsView: React.FC<StudentsViewProps> = ({
     students, classes, onAdd, onUpdate, onDelete
 }) => {
@@ -103,12 +109,13 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filteredStudents.map(s => {
                     const cls = classes.find(c => c.id === s.class_id)?.name || 'Unknown';
+                    const passportUrl = getPassportUrl(s);
                     return (
                         <Card key={s.id} className="hover:border-brand-300 transition-colors group relative overflow-hidden">
                             <div className="flex flex-col items-center text-center p-2">
                                 <div className="h-20 w-20 rounded-full bg-gray-200 mb-4 flex items-center justify-center overflow-hidden border-4 border-white shadow-sm">
-                                    {s.passport_media ? (
-                                        <img src={s.passport_media} alt={s.names} className="h-full w-full object-cover" />
+                                    {passportUrl ? (
+                                        <img src={passportUrl} alt={s.names} className="h-full w-full object-cover" />
                                     ) : (
                                         <User className="h-10 w-10 text-gray-400" />
                                     )}
@@ -156,8 +163,8 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                     <div className="border-t pt-4 mt-2">
                         <h4 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Passport Photo</h4>
                         <PhotoUpload
-                            value={formData.passport_media}
-                            onChange={photo => setFormData({ ...formData, passport_media: photo })}
+                            value={formData.passport_url}
+                            onChange={photo => setFormData({ ...formData, passport_url: photo })}
                             label=""
                             size="lg"
                         />
@@ -169,10 +176,24 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                             <Input label="Parent Name" value={formData.parent_name} onChange={e => setFormData({ ...formData, parent_name: e.target.value })} />
                             <Input label="Phone Number" value={formData.parent_phone} onChange={e => setFormData({ ...formData, parent_phone: e.target.value })} />
                         </div>
-                        <div className="mt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <Input label="Parent Email" type="email" value={formData.parent_email || ''} onChange={e => setFormData({ ...formData, parent_email: e.target.value })} placeholder="For password recovery" />
                             <Input label="Residential Address" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
                         </div>
                     </div>
+
+                    <div className="border-t pt-4 mt-2">
+                        <h4 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Portal Access</h4>
+                        <Input
+                            label="Portal Password"
+                            type="text"
+                            value={formData.password || ''}
+                            onChange={e => setFormData({ ...formData, password: e.target.value })}
+                            placeholder="Set password for student/parent portal login"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">This password allows the student/parent to login using the Student Number + Password.</p>
+                    </div>
+
                     <Button type="submit" className="w-full mt-4">{editingId ? 'Update Record' : 'Complete Registration'}</Button>
                 </form>
             </Modal>

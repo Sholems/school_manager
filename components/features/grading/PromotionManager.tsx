@@ -10,17 +10,24 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/providers/toast-provider';
 import * as Utils from '@/lib/utils';
 import * as Types from '@/lib/types';
+import {
+    useStudents, useClasses, useScores, useSettings, useUpdateSettings, useUpdateScore
+} from '@/lib/hooks/use-data';
 
 export const PromotionManager: React.FC = () => {
-    const {
-        students,
-        classes,
-        scores,
-        settings,
-        setSettings,
-        setScores
-    } = useSchoolStore();
+    // Auth
     const { addToast } = useToast();
+
+    // Data Hooks
+    const { data: students = [] } = useStudents();
+    const { data: classes = [] } = useClasses();
+    const { data: scores = [] } = useScores();
+    const { data: settings = Utils.INITIAL_SETTINGS } = useSettings();
+
+    // Mutations
+    const { mutate: updateSettings } = useUpdateSettings();
+    const { mutate: updateScore } = useUpdateScore();
+    const setSettings = (newSettings: Types.Settings) => updateSettings(newSettings); // Adapter for state setter style
 
     const [selectedClass, setSelectedClass] = useState(classes[0]?.id || '');
     const [localThreshold, setLocalThreshold] = useState(settings.promotion_threshold);
@@ -106,17 +113,24 @@ export const PromotionManager: React.FC = () => {
     };
 
     const handleSavePromotions = () => {
-        // Update the Score records with promoted_to field
-        const updatedScores = scores.map(score => {
+        // Update ONLY the Score records that have a specific promotion result
+        let updateCount = 0;
+
+        scores.forEach(score => {
             const promotedTo = promotionResults.get(score.student_id);
-            if (promotedTo && score.session === settings.current_session) {
-                return { ...score, promoted_to: promotedTo };
+            // If student has a promotion result, and this score is for the current session (to record promotion status)
+            // And the status is actually new/different
+            if (promotedTo && score.session === settings.current_session && score.promoted_to !== promotedTo) {
+                updateScore({ id: score.id, updates: { promoted_to: promotedTo } });
+                updateCount++;
             }
-            return score;
         });
 
-        setScores(updatedScores);
-        addToast('Promotions saved to student records', 'success');
+        if (updateCount > 0) {
+            addToast(`Promotions saved for ${updateCount} student records`, 'success');
+        } else {
+            addToast('No changes to save', 'info');
+        }
     };
 
     const handleSaveThreshold = () => {

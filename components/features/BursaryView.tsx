@@ -7,6 +7,8 @@ import { FeeManagement } from './bursary/FeeManagement';
 import { ExpenseManagement } from './bursary/ExpenseManagement';
 import { FeeStructureManagement } from './bursary/FeeStructureManagement';
 import { BursaryModals } from './bursary/BursaryModals';
+import { FinancialDashboard } from './bursary/FinancialDashboard';
+import { DebtorReport } from './bursary/DebtorReport';
 
 interface BursaryViewProps {
     students: Types.Student[];
@@ -20,12 +22,15 @@ interface BursaryViewProps {
     onAddExpense: (e: Types.Expense) => void;
     onDeletePayment: (id: string) => void;
     onDeleteFee: (id: string) => void;
+    onDeleteExpense?: (id: string) => void;
 }
 
+type TabType = 'dashboard' | 'fees' | 'debtors' | 'expenses' | 'structure';
+
 export const BursaryView: React.FC<BursaryViewProps> = ({
-    students, classes, fees, payments, expenses, settings, onAddPayment, onAddFee, onAddExpense, onDeletePayment, onDeleteFee
+    students, classes, fees, payments, expenses, settings, onAddPayment, onAddFee, onAddExpense, onDeletePayment, onDeleteFee, onDeleteExpense
 }) => {
-    const [activeTab, setActiveTab] = useState<'fees' | 'expenses' | 'structure'>('fees');
+    const [activeTab, setActiveTab] = useState<TabType>('dashboard');
     const [selectedClass, setSelectedClass] = useState(classes[0]?.id || '');
     const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
 
@@ -34,18 +39,47 @@ export const BursaryView: React.FC<BursaryViewProps> = ({
     const [showExpenseModal, setShowExpenseModal] = useState(false);
     const [showFeeModal, setShowFeeModal] = useState(false);
     const [receiptPayment, setReceiptPayment] = useState<Types.Payment | null>(null);
+    const [invoiceStudent, setInvoiceStudent] = useState<Types.Student | null>(null);
     const { addToast } = useToast();
+
+    const tabs: { key: TabType; label: string }[] = [
+        { key: 'dashboard', label: 'Dashboard' },
+        { key: 'fees', label: 'Fee Collection' },
+        { key: 'debtors', label: 'Debtors' },
+        { key: 'expenses', label: 'Expenses' },
+        { key: 'structure', label: 'Fee Structure' },
+    ];
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h1 className="text-2xl font-bold text-gray-900">Bursary & Finance</h1>
-                <div className="flex bg-gray-100 p-1 rounded-lg">
-                    {(['fees', 'expenses', 'structure'] as const).map(tab => (
-                        <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 text-sm font-medium rounded-md capitalize ${activeTab === tab ? 'bg-white shadow-sm text-brand-700' : 'text-gray-600 hover:text-gray-900'}`}>{tab}</button>
+                <div className="flex bg-gray-100 p-1 rounded-lg overflow-x-auto">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab.key}
+                            onClick={() => setActiveTab(tab.key)}
+                            className={`px-3 py-2 text-sm font-medium rounded-md whitespace-nowrap ${activeTab === tab.key
+                                    ? 'bg-white shadow-sm text-brand-700'
+                                    : 'text-gray-600 hover:text-gray-900'
+                                }`}
+                        >
+                            {tab.label}
+                        </button>
                     ))}
                 </div>
             </div>
+
+            {activeTab === 'dashboard' && (
+                <FinancialDashboard
+                    students={students}
+                    classes={classes}
+                    fees={fees}
+                    payments={payments}
+                    expenses={expenses}
+                    settings={settings}
+                />
+            )}
 
             {activeTab === 'fees' && (
                 <FeeManagement
@@ -61,13 +95,26 @@ export const BursaryView: React.FC<BursaryViewProps> = ({
                     onRecordPayment={() => setShowPayModal(true)}
                     onPrintReceipt={(p) => setReceiptPayment(p)}
                     onDeletePayment={onDeletePayment}
+                    onPrintInvoice={(student) => setInvoiceStudent(student)}
+                />
+            )}
+
+            {activeTab === 'debtors' && (
+                <DebtorReport
+                    students={students}
+                    classes={classes}
+                    fees={fees}
+                    payments={payments}
+                    settings={settings}
                 />
             )}
 
             {activeTab === 'expenses' && (
                 <ExpenseManagement
                     expenses={expenses}
+                    settings={settings}
                     onAddExpense={() => setShowExpenseModal(true)}
+                    onDeleteExpense={onDeleteExpense}
                 />
             )}
 
@@ -95,6 +142,8 @@ export const BursaryView: React.FC<BursaryViewProps> = ({
                 setShowFeeModal={setShowFeeModal}
                 receiptPayment={receiptPayment}
                 setReceiptPayment={setReceiptPayment}
+                invoiceStudent={invoiceStudent}
+                setInvoiceStudent={setInvoiceStudent}
                 selectedStudent={selectedStudent}
                 onAddPayment={onAddPayment}
                 onAddExpense={onAddExpense}

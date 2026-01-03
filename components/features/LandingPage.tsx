@@ -1,10 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import {
-    GraduationCap,
-    Users,
     Award,
     BookOpen,
     Shield,
@@ -15,9 +13,18 @@ import {
     ArrowRight,
     Star,
     CheckCircle,
-    Clock,
-    Calendar
+    Building,
+    ChevronDown,
+    Sparkles,
+    Target,
+    Cross,
+    Globe,
+    Users,
+    GraduationCap,
+    Clock
 } from 'lucide-react';
+import SiteHeader from './SiteHeader';
+import SiteFooter from './SiteFooter';
 
 interface LandingPageProps {
     settings: {
@@ -43,329 +50,409 @@ interface LandingPageProps {
     };
 }
 
-const FeatureIcon = ({ name }: { name: string }) => {
-    const lowerName = name.toLowerCase();
-    if (lowerName.includes('academic') || lowerName.includes('excellence')) return <Award className="h-8 w-8" />;
-    if (lowerName.includes('teacher') || lowerName.includes('expert')) return <Users className="h-8 w-8" />;
-    if (lowerName.includes('facilit') || lowerName.includes('modern')) return <BookOpen className="h-8 w-8" />;
-    if (lowerName.includes('safe') || lowerName.includes('secure')) return <Shield className="h-8 w-8" />;
-    if (lowerName.includes('holistic') || lowerName.includes('develop')) return <Heart className="h-8 w-8" />;
-    if (lowerName.includes('afford') || lowerName.includes('fee')) return <CheckCircle className="h-8 w-8" />;
-    return <Star className="h-8 w-8" />;
-};
-
-export const LandingPage: React.FC<LandingPageProps> = ({ settings, stats }) => {
-    const [isScrolled, setIsScrolled] = useState(false);
-    const features = settings.landing_features.split(',').map(f => f.trim()).filter(f => f);
+// Animated Counter Component
+const AnimatedCounter = ({ target, suffix = '', duration = 2000 }: { target: number; suffix?: string; duration?: number }) => {
+    const [count, setCount] = useState(0);
+    const [isVisible, setIsVisible] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 50);
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setIsVisible(true);
+                }
+            },
+            { threshold: 0.3 }
+        );
+
+        if (ref.current) {
+            observer.observe(ref.current);
+        }
+
+        return () => observer.disconnect();
     }, []);
 
+    useEffect(() => {
+        if (!isVisible) return;
+
+        let startTime: number;
+        const animate = (currentTime: number) => {
+            if (!startTime) startTime = currentTime;
+            const progress = Math.min((currentTime - startTime) / duration, 1);
+            setCount(Math.floor(progress * target));
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+        requestAnimationFrame(animate);
+    }, [isVisible, target, duration]);
+
+    return <div ref={ref} className="tabular-nums">{count}{suffix}</div>;
+};
+
+// Feature Icon Component Helper
+const getFeatureIcon = (name: string) => {
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes('faith') || lowerName.includes('biblical')) return Cross;
+    if (lowerName.includes('academic') || lowerName.includes('excellence')) return Award;
+    if (lowerName.includes('teacher') || lowerName.includes('expert') || lowerName.includes('staff')) return Users;
+    if (lowerName.includes('facilit') || lowerName.includes('modern')) return Building;
+    if (lowerName.includes('safe') || lowerName.includes('secure')) return Shield;
+    if (lowerName.includes('holistic') || lowerName.includes('develop')) return Heart;
+    if (lowerName.includes('afford') || lowerName.includes('fee')) return CheckCircle;
+    return Star;
+};
+
+// Core Value Card Component
+const CoreValueCard = ({ icon: Icon, title, description, delay }: { icon: React.ElementType; title: string; description: string; delay: string }) => (
+    <div
+        className="group bg-white rounded-2xl p-8 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-gray-100 relative overflow-hidden"
+        style={{ animationDelay: delay }}
+    >
+        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Icon size={120} />
+        </div>
+        <div className="h-14 w-14 bg-brand-50 rounded-xl flex items-center justify-center text-brand-600 mb-6 group-hover:bg-brand-600 group-hover:text-white transition-colors duration-300">
+            <Icon size={28} />
+        </div>
+        <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-brand-600 transition-colors">{title}</h3>
+        <p className="text-gray-600 text-sm leading-relaxed">{description}</p>
+    </div>
+);
+
+export const LandingPage: React.FC<LandingPageProps> = ({ settings, stats }) => {
+    const features = (settings.landing_features || '').split(',').map(f => f.trim()).filter(f => f);
+
     return (
-        <div className="min-h-screen bg-white">
-            {/* Navigation */}
-            <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-transparent'
-                }`}>
-                <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            {settings.logo_media ? (
-                                <img src={settings.logo_media} alt="Logo" className="h-12 w-12 rounded-xl object-contain" />
-                            ) : (
-                                <div className="h-12 w-12 bg-brand-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                                    {settings.school_name.substring(0, 2).toUpperCase()}
-                                </div>
-                            )}
-                            <div className="hidden sm:block">
-                                <h1 className={`font-bold text-lg transition-colors ${isScrolled ? 'text-gray-900' : 'text-white'}`}>
-                                    {settings.school_name}
-                                </h1>
-                            </div>
-                        </div>
-                        <Link
-                            href="/dashboard"
-                            className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-brand-200 transition-all hover:scale-105 flex items-center gap-2"
-                        >
-                            Portal Login <ArrowRight size={16} />
-                        </Link>
+        <div className="min-h-screen bg-white overflow-x-hidden font-sans">
+            <SiteHeader settings={settings} />
+
+            {/* ===================== HERO SECTION ===================== */}
+            <section id="home" className="relative min-h-[75vh] flex items-center justify-center overflow-hidden">
+                {/* Background Image with Overlay */}
+                <div className="absolute inset-0 z-0">
+                    <div className="absolute inset-0 bg-brand-950/80 z-10"></div>
+                    <img
+                        src="/hero1.jpg"
+                        alt="School Campus"
+                        className="w-full h-full object-cover"
+                    />
+                </div>
+
+                <div className="relative z-20 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-20">
+                    {/* School Logo */}
+                    <div className="mx-auto mb-8 w-28 h-28 bg-white rounded-2xl shadow-2xl p-3 flex items-center justify-center">
+                        {settings.logo_media ? (
+                            <img src={settings.logo_media} alt="School Logo" className="w-full h-full object-contain" />
+                        ) : (
+                            <GraduationCap size={48} className="text-brand-600" />
+                        )}
                     </div>
-                </div>
-            </nav>
 
-            {/* Hero Section */}
-            <section
-                className="relative min-h-screen flex items-center justify-center overflow-hidden"
-                style={{
-                    background: settings.landing_hero_image
-                        ? `linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.8)), url(${settings.landing_hero_image})`
-                        : `linear-gradient(135deg, ${settings.landing_primary_color}dd 0%, #14532d 100%)`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                }}
-            >
-                {/* Animated Background Elements */}
-                <div className="absolute inset-0 overflow-hidden">
-                    <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
-                    <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/5 rounded-full blur-3xl"></div>
-                </div>
-
-                <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
-                    {settings.logo_media ? (
-                        <img src={settings.logo_media} alt="Logo" className="h-28 w-28 mx-auto mb-8 rounded-3xl shadow-2xl object-contain bg-white/10 p-2" />
-                    ) : (
-                        <div className="h-28 w-28 mx-auto mb-8 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center text-white font-black text-4xl shadow-2xl">
-                            <GraduationCap size={56} />
-                        </div>
-                    )}
-
-                    <h1 className="text-5xl md:text-7xl font-black text-white mb-6 tracking-tight leading-tight">
-                        {settings.landing_hero_title}
+                    {/* Main Heading */}
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white mb-4 tracking-tight">
+                        {settings.school_name || "Fruitful Vine Heritage Schools"}
                     </h1>
 
-                    <p className="text-xl md:text-2xl text-white/80 mb-4 font-medium max-w-3xl mx-auto">
-                        {settings.landing_hero_subtitle}
+                    {/* Tagline */}
+                    <p className="text-xl md:text-2xl text-accent-400 font-semibold italic mb-6">
+                        {settings.school_tagline || "...reaching the highest height"}
                     </p>
 
-                    <p className="text-lg text-white/60 mb-10 italic">
-                        {settings.school_tagline}
+                    {/* Description */}
+                    <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-10 leading-relaxed">
+                        A faith-based school dedicated to nurturing academic excellence, moral integrity, and godly character in every child.
                     </p>
 
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    {/* CTA Buttons */}
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <Link
+                            href="/admission"
+                            className="px-8 py-4 bg-accent-500 hover:bg-accent-400 text-brand-950 text-lg font-bold rounded-lg transition-all shadow-lg hover:shadow-accent-500/30 flex items-center justify-center gap-2 group"
+                        >
+                            Apply for Admission
+                            <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                        </Link>
                         <Link
                             href="/dashboard"
-                            className="bg-white text-gray-900 px-10 py-4 rounded-2xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all hover:scale-105 flex items-center gap-3"
+                            className="px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white text-lg font-bold rounded-lg transition-all border border-white/20"
                         >
-                            {settings.landing_cta_text} <ArrowRight size={20} />
+                            Parent/Student Portal
                         </Link>
-                        <a
-                            href="#contact"
-                            className="bg-white/10 backdrop-blur-sm text-white border-2 border-white/30 px-10 py-4 rounded-2xl font-bold text-lg hover:bg-white/20 transition-all flex items-center gap-3"
-                        >
-                            Contact Us <Phone size={18} />
-                        </a>
-                    </div>
-                </div>
-
-                {/* Scroll Indicator */}
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-                    <div className="w-8 h-14 rounded-full border-2 border-white/30 flex items-start justify-center p-2">
-                        <div className="w-2 h-3 bg-white/60 rounded-full animate-pulse"></div>
                     </div>
                 </div>
             </section>
 
-            {/* Stats Section */}
-            {settings.landing_show_stats && (
-                <section className="py-12 bg-gray-50 border-b">
-                    <div className="max-w-7xl mx-auto px-6">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                            <div className="text-center">
-                                <div className="text-4xl md:text-5xl font-black text-brand-600">{stats.studentsCount}+</div>
-                                <div className="text-gray-500 font-medium mt-1">Students</div>
+            {/* Decorative Curved Divider */}
+            <div className="relative -mt-16 z-30">
+                <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto">
+                    <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0V120Z" fill="white" />
+                </svg>
+            </div>
+
+            {/* ===================== SECTION 3: ABOUT (Split) ===================== */}
+            <section id="about" className="py-24 bg-white relative overflow-hidden -mt-1">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid lg:grid-cols-2 gap-20 items-center">
+                        {/* Image Composition - Two Images */}
+                        <div className="relative">
+                            {/* Main Image */}
+                            <div className="relative rounded-3xl overflow-hidden shadow-2xl">
+                                <img src="/fruitful1.jpg.jpg" alt="Students Learning" className="w-full h-80 object-cover" />
                             </div>
-                            <div className="text-center">
-                                <div className="text-4xl md:text-5xl font-black text-brand-600">{stats.teachersCount}+</div>
-                                <div className="text-gray-500 font-medium mt-1">Teachers</div>
+                            {/* Secondary Image - Overlapping */}
+                            <div className="absolute -bottom-12 -right-8 w-2/3 rounded-2xl overflow-hidden shadow-xl border-4 border-white">
+                                <img src="/fruitfulnew.jpg" alt="School Activities" className="w-full h-48 object-cover" />
                             </div>
-                            <div className="text-center">
-                                <div className="text-4xl md:text-5xl font-black text-brand-600">{stats.classesCount}</div>
-                                <div className="text-gray-500 font-medium mt-1">Classes</div>
+                            {/* Decorative Background */}
+                            <div className="absolute top-8 left-8 w-full h-full bg-brand-100 rounded-3xl -z-10"></div>
+                        </div>
+
+                        {/* Content */}
+                        <div>
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-50 text-brand-600 rounded-full text-sm font-bold tracking-wide mb-6">
+                                <span className="w-2 h-2 rounded-full bg-brand-600"></span>
+                                WHO WE ARE
                             </div>
-                            <div className="text-center">
-                                <div className="text-4xl md:text-5xl font-black text-brand-600">15+</div>
-                                <div className="text-gray-500 font-medium mt-1">Years Experience</div>
+                            <h2 className="text-4xl font-bold text-gray-900 mb-6 leading-tight">
+                                A Tradition of Excellence & <span className="text-brand-600">Godly Values</span>
+                            </h2>
+                            <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                                {settings.landing_about_text || "Fruitful Vine Heritage Schools provides a comprehensive education that balances academic rigour with spiritual growth. We are dedicated to raising children who are not only intellectually sound but also morally upright."}
+                            </p>
+
+                            <div className="grid sm:grid-cols-2 gap-8 mb-10">
+                                <div className="flex gap-4">
+                                    <div className="shrink-0 h-10 w-10 bg-brand-100 rounded-lg flex items-center justify-center text-brand-600 mt-1">
+                                        <CheckCircle size={20} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-gray-900">Holistic Education</h4>
+                                        <p className="text-sm text-gray-500 mt-1">Focusing on the total child: spirit, soul, and body.</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-4">
+                                    <div className="shrink-0 h-10 w-10 bg-brand-100 rounded-lg flex items-center justify-center text-brand-600 mt-1">
+                                        <CheckCircle size={20} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-gray-900">Expert Faculty</h4>
+                                        <p className="text-sm text-gray-500 mt-1">Qualified & experienced teachers who mentor.</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-4">
+                                    <div className="shrink-0 h-10 w-10 bg-brand-100 rounded-lg flex items-center justify-center text-brand-600 mt-1">
+                                        <CheckCircle size={20} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-gray-900">Safe Environment</h4>
+                                        <p className="text-sm text-gray-500 mt-1">Secure, conducive learning atmosphere.</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-4">
+                                    <div className="shrink-0 h-10 w-10 bg-brand-100 rounded-lg flex items-center justify-center text-brand-600 mt-1">
+                                        <CheckCircle size={20} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-gray-900">Modern Facilities</h4>
+                                        <p className="text-sm text-gray-500 mt-1">Labs, ICT, Library, and Sports fields.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </section>
-            )}
+                </div>
+            </section>
 
-            {/* Features Section */}
-            <section className="py-24 bg-white" id="features">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <span className="text-brand-600 font-bold text-sm uppercase tracking-wider">Why Choose Us</span>
-                        <h2 className="text-4xl md:text-5xl font-black text-gray-900 mt-4 mb-6">
-                            What Makes Us Different
-                        </h2>
-                        <p className="text-xl text-gray-500 max-w-2xl mx-auto">
-                            We provide a nurturing environment where every child can thrive and reach their full potential.
+            {/* ===================== SECTION 4: CORE VALUES ===================== */}
+            <section id="features" className="py-24 bg-gradient-to-br from-brand-50 via-white to-accent-50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center max-w-3xl mx-auto mb-16">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-brand-100 text-brand-700 rounded-full text-sm font-bold tracking-wide mb-4">
+                            <Sparkles size={16} />
+                            OUR CORE VALUES
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">What We Stand For</h2>
+                        <p className="text-lg text-gray-600">
+                            At Fruitful Vine, these values guide everything we do — shaping character and inspiring excellence.
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {features.map((feature, index) => (
-                            <div
-                                key={index}
-                                className="group bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-2xl hover:border-brand-100 transition-all duration-300 hover:-translate-y-2"
-                            >
-                                <div className="h-16 w-16 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-brand-600 group-hover:text-white transition-colors">
-                                    <FeatureIcon name={feature} />
+                    <div className="grid md:grid-cols-3 gap-8">
+                        {/* CARE */}
+                        <div className="group bg-gradient-to-br from-pink-500 to-rose-600 rounded-3xl p-8 text-white shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-6 opacity-10">
+                                <Heart size={150} />
+                            </div>
+                            <div className="relative z-10">
+                                <div className="h-16 w-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6">
+                                    <Heart size={32} className="text-white" />
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">{feature}</h3>
-                                <p className="text-gray-500 leading-relaxed">
-                                    We are dedicated to providing the best in {feature.toLowerCase()} for all our students.
+                                <h3 className="text-3xl font-extrabold mb-4">CARE</h3>
+                                <p className="text-white/90 leading-relaxed">
+                                    We nurture every child with love, compassion, and individual attention, ensuring they feel valued and supported in their journey.
                                 </p>
+                            </div>
+                        </div>
+
+                        {/* RESPECT */}
+                        <div className="group bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl p-8 text-white shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-6 opacity-10">
+                                <Users size={150} />
+                            </div>
+                            <div className="relative z-10">
+                                <div className="h-16 w-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6">
+                                    <Users size={32} className="text-white" />
+                                </div>
+                                <h3 className="text-3xl font-extrabold mb-4">RESPECT</h3>
+                                <p className="text-white/90 leading-relaxed">
+                                    We foster an environment of mutual respect, teaching children to honour themselves, others, and their community.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* EXCELLENCE */}
+                        <div className="group bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl p-8 text-white shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-6 opacity-10">
+                                <Award size={150} />
+                            </div>
+                            <div className="relative z-10">
+                                <div className="h-16 w-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6">
+                                    <Award size={32} className="text-white" />
+                                </div>
+                                <h3 className="text-3xl font-extrabold mb-4">EXCELLENCE</h3>
+                                <p className="text-white/90 leading-relaxed">
+                                    We inspire a pursuit of excellence in academics, character, and all endeavours, helping every child reach their highest potential.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ===================== SECTION 6: ACADEMIC PROGRAMS ===================== */}
+            <section id="programs" className="py-24 bg-white">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+                        <div className="max-w-xl">
+                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Our Academic Divisions</h2>
+                            <p className="text-lg text-gray-600">Tailored learning stages designed to meet the developmental needs of every child.</p>
+                        </div>
+                        <Link href="/programs" className="px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-colors">
+                            View Curriculum
+                        </Link>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-8">
+                        {[
+                            { title: "Crèche", image: "/fruitful2.jpg.jpg", age: "Ages 0 - 2", desc: "A safe and nurturing environment for infants and toddlers to explore and grow." },
+                            { title: "Pre-School", image: "/fruitful5.jpg.jpg", age: "Ages 3 - 5", desc: "Play-based learning that builds foundational skills in literacy, numeracy, and social interaction." },
+                            { title: "Primary School", image: "/fruitful3.jpg.jpg", age: "Ages 6 - 11", desc: "A robust curriculum developing critical thinking, creativity, and strong moral values." }
+                        ].map((prog, i) => (
+                            <div key={i} className="group relative rounded-2xl overflow-hidden shadow-lg h-[400px]">
+                                <img src={prog.image} alt={prog.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-brand-950 via-brand-950/40 to-transparent flex flex-col justify-end p-8">
+                                    <span className="inline-block px-3 py-1 bg-accent-500 text-brand-950 text-xs font-bold rounded-lg mb-3 self-start">
+                                        {prog.age}
+                                    </span>
+                                    <h3 className="text-2xl font-bold text-white mb-2">{prog.title}</h3>
+                                    <p className="text-gray-300 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-4 group-hover:translate-y-0">
+                                        {prog.desc}
+                                    </p>
+                                    <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white group-hover:bg-accent-500 group-hover:text-brand-950 transition-colors">
+                                        <ArrowRight size={20} />
+                                    </div>
+                                </div>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* About Section */}
-            <section className="py-24 bg-gray-50" id="about">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                        <div>
-                            <span className="text-brand-600 font-bold text-sm uppercase tracking-wider">About Our School</span>
-                            <h2 className="text-4xl md:text-5xl font-black text-gray-900 mt-4 mb-8">
-                                Building Tomorrow's Leaders Today
-                            </h2>
-                            <p className="text-lg text-gray-600 leading-relaxed mb-8">
-                                {settings.landing_about_text}
-                            </p>
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-12 w-12 bg-brand-100 text-brand-600 rounded-xl flex items-center justify-center">
-                                        <Clock size={24} />
-                                    </div>
-                                    <div>
-                                        <div className="font-bold text-gray-900">7:30 AM - 3:00 PM</div>
-                                        <div className="text-sm text-gray-500">School Hours</div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="h-12 w-12 bg-brand-100 text-brand-600 rounded-xl flex items-center justify-center">
-                                        <Calendar size={24} />
-                                    </div>
-                                    <div>
-                                        <div className="font-bold text-gray-900">Sept - July</div>
-                                        <div className="text-sm text-gray-500">Academic Year</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="relative">
-                            <div className="bg-gradient-to-br from-brand-500 to-brand-700 rounded-3xl p-8 text-white">
-                                <GraduationCap size={64} className="mb-6 opacity-80" />
-                                <h3 className="text-2xl font-bold mb-4">Enroll Your Child Today</h3>
-                                <p className="text-white/80 mb-6">
-                                    Join our community of learners and give your child the best start in education.
-                                </p>
-                                <Link
-                                    href="/dashboard"
-                                    className="inline-flex items-center gap-2 bg-white text-brand-600 px-6 py-3 rounded-xl font-bold hover:bg-gray-100 transition-colors"
-                                >
-                                    Get Started <ArrowRight size={18} />
-                                </Link>
-                            </div>
-                            <div className="absolute -bottom-6 -right-6 h-32 w-32 bg-brand-100 rounded-3xl -z-10"></div>
-                            <div className="absolute -top-6 -left-6 h-24 w-24 bg-brand-50 rounded-3xl -z-10"></div>
-                        </div>
-                    </div>
+            <section className="py-24 relative overflow-hidden">
+                <div className="absolute inset-0 bg-brand-900">
                 </div>
-            </section>
-
-            {/* Contact Section */}
-            <section className="py-24 bg-white" id="contact">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <span className="text-brand-600 font-bold text-sm uppercase tracking-wider">Get In Touch</span>
-                        <h2 className="text-4xl md:text-5xl font-black text-gray-900 mt-4 mb-6">
+                <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
+                    <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Ready to Join the Family?</h2>
+                    <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
+                        Admission for the next academic session is ongoing. Give your child the gift of a quality foundation.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <Link href="/admission" className="px-10 py-4 bg-white text-brand-900 text-lg font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-xl">
+                            Start Application
+                        </Link>
+                        <Link href="#contact" className="px-10 py-4 bg-transparent border-2 border-white/20 text-white text-lg font-bold rounded-xl hover:bg-white/10 transition-colors">
                             Contact Us
-                        </h2>
-                        <p className="text-xl text-gray-500 max-w-2xl mx-auto">
-                            Have questions? We'd love to hear from you. Reach out to us through any of these channels.
-                        </p>
+                        </Link>
                     </div>
+                </div>
+            </section>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                        <a href={`tel:${settings.school_phone}`} className="group bg-gray-50 hover:bg-brand-600 p-8 rounded-3xl text-center transition-all duration-300">
-                            <div className="h-16 w-16 bg-brand-100 group-hover:bg-white/20 text-brand-600 group-hover:text-white rounded-2xl flex items-center justify-center mx-auto mb-6 transition-colors">
-                                <Phone size={28} />
+            {/* ===================== SECTION 8: CONTACT ===================== */}
+            <section id="contact" className="py-24 bg-gray-50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid lg:grid-cols-5 gap-12 bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100">
+                        {/* Contact Info */}
+                        <div className="lg:col-span-2 bg-brand-900 p-10 text-white flex flex-col justify-between relative overflow-hidden">
+                            <div className="absolute bottom-0 right-0 p-8 opacity-10">
+                                <GraduationCap size={200} />
                             </div>
-                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-white mb-2 transition-colors">Phone</h3>
-                            <p className="text-gray-500 group-hover:text-white/80 transition-colors">{settings.school_phone}</p>
-                        </a>
 
-                        <a href={`mailto:${settings.school_email}`} className="group bg-gray-50 hover:bg-brand-600 p-8 rounded-3xl text-center transition-all duration-300">
-                            <div className="h-16 w-16 bg-brand-100 group-hover:bg-white/20 text-brand-600 group-hover:text-white rounded-2xl flex items-center justify-center mx-auto mb-6 transition-colors">
-                                <Mail size={28} />
-                            </div>
-                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-white mb-2 transition-colors">Email</h3>
-                            <p className="text-gray-500 group-hover:text-white/80 transition-colors">{settings.school_email}</p>
-                        </a>
+                            <div>
+                                <h3 className="text-2xl font-bold mb-2">Get in Touch</h3>
+                                <p className="text-brand-100 mb-10">Visit us or send a message.</p>
 
-                        <div className="group bg-gray-50 hover:bg-brand-600 p-8 rounded-3xl text-center transition-all duration-300">
-                            <div className="h-16 w-16 bg-brand-100 group-hover:bg-white/20 text-brand-600 group-hover:text-white rounded-2xl flex items-center justify-center mx-auto mb-6 transition-colors">
-                                <MapPin size={28} />
+                                <div className="space-y-8 relative z-10">
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                                            <Phone className="text-accent-400" size={24} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-brand-200">Phone</p>
+                                            <p className="font-semibold text-lg">{settings.school_phone}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                                            <Mail className="text-accent-400" size={24} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-brand-200">Email</p>
+                                            <p className="font-semibold text-lg break-all">info@fruitfulvineheritageschools.org.ng</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                                            <MapPin className="text-accent-400" size={24} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-brand-200">Address</p>
+                                            <p className="font-semibold text-lg">{settings.school_address}</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-white mb-2 transition-colors">Address</h3>
-                            <p className="text-gray-500 group-hover:text-white/80 transition-colors">{settings.school_address}</p>
+                        </div>
+
+                        {/* Map */}
+                        <div className="lg:col-span-3 min-h-[400px] bg-gray-100 relative">
+                            <iframe
+                                title="School Location"
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15857.472733979875!2d3.2925916!3d6.4760773!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b88b222222223%3A0x2222222222222222!2sFruitful%20Vine%20Heritage%20School!5e0!3m2!1sen!2sng!4v1600000000000!5m2!1sen!2sng"
+                                width="100%"
+                                height="100%"
+                                style={{ border: 0, position: 'absolute', inset: 0 }}
+                                allowFullScreen
+                                loading="lazy"
+                                referrerPolicy="no-referrer-when-downgrade"
+                            ></iframe>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Footer */}
-            <footer className="bg-gray-900 text-white py-16">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-                        <div className="md:col-span-2">
-                            <div className="flex items-center gap-3 mb-6">
-                                {settings.logo_media ? (
-                                    <img src={settings.logo_media} alt="Logo" className="h-14 w-14 rounded-xl object-contain" />
-                                ) : (
-                                    <div className="h-14 w-14 bg-brand-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">
-                                        {settings.school_name.substring(0, 2).toUpperCase()}
-                                    </div>
-                                )}
-                                <h3 className="text-xl font-bold">{settings.school_name}</h3>
-                            </div>
-                            <p className="text-gray-400 leading-relaxed mb-6 max-w-md">
-                                {settings.school_tagline}
-                            </p>
-                            <p className="text-gray-500 text-sm">
-                                © {new Date().getFullYear()} {settings.school_name}. All rights reserved.
-                            </p>
-                        </div>
-
-                        <div>
-                            <h4 className="font-bold text-lg mb-6">Quick Links</h4>
-                            <ul className="space-y-3">
-                                <li><a href="#features" className="text-gray-400 hover:text-white transition-colors">Features</a></li>
-                                <li><a href="#about" className="text-gray-400 hover:text-white transition-colors">About Us</a></li>
-                                <li><a href="#contact" className="text-gray-400 hover:text-white transition-colors">Contact</a></li>
-                                <li><Link href="/dashboard" className="text-gray-400 hover:text-white transition-colors">Portal Login</Link></li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 className="font-bold text-lg mb-6">Contact Info</h4>
-                            <ul className="space-y-3 text-gray-400">
-                                <li className="flex items-center gap-2">
-                                    <Phone size={16} className="text-brand-500" />
-                                    {settings.school_phone}
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <Mail size={16} className="text-brand-500" />
-                                    {settings.school_email}
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <MapPin size={16} className="text-brand-500 mt-1 shrink-0" />
-                                    {settings.school_address}
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </footer>
+            <SiteFooter settings={settings} />
         </div>
     );
 };

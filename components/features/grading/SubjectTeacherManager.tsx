@@ -8,17 +8,24 @@ import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/providers/toast-provider';
 import * as Utils from '@/lib/utils';
+import {
+    useClasses, useTeachers, useSubjectTeachers, useSettings,
+    useCreateSubjectTeacher, useDeleteSubjectTeacher
+} from '@/lib/hooks/use-data';
 
 export const SubjectTeacherManager: React.FC = () => {
-    const {
-        classes,
-        teachers,
-        subjectTeachers,
-        settings,
-        addSubjectTeacher,
-        removeSubjectTeacher
-    } = useSchoolStore();
+    // Auth
     const { addToast } = useToast();
+
+    // Data Hooks
+    const { data: classes = [] } = useClasses();
+    const { data: teachers = [] } = useTeachers();
+    const { data: subjectTeachers = [] } = useSubjectTeachers();
+    const { data: settings = Utils.INITIAL_SETTINGS } = useSettings();
+
+    // Mutations
+    const { mutate: addSubjectTeacher } = useCreateSubjectTeacher();
+    const { mutate: removeSubjectTeacher } = useDeleteSubjectTeacher();
 
     const [selectedClass, setSelectedClass] = useState(classes[0]?.id || '');
     const [selectedTeacher, setSelectedTeacher] = useState('');

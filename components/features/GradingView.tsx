@@ -1,35 +1,69 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ChevronRight, Save, Printer } from 'lucide-react';
 import * as Types from '@/lib/types';
 import * as Utils from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { ReportCardTemplate } from './grading/ReportCardTemplate';
 
-const ScoreInput = ({ value, max, onChange, className }: { value: number, max: number, onChange: (val: number) => void, className?: string }) => (
-    <input type="number" min="0" max={max} value={value || ''} onChange={e => { const v = parseFloat(e.target.value); if (!isNaN(v) && v <= max) onChange(v); if (e.target.value === '') onChange(0); }} className={`w-16 h-8 text-center border rounded focus:ring-2 focus:ring-brand-500 focus:outline-none ${className}`} />
-);
+const ScoreInput = ({ value, max, onChange, className }: { value: number, max: number, onChange: (val: number) => void, className?: string }) => {
+    const [localValue, setLocalValue] = useState(value?.toString() || '');
+
+    useEffect(() => {
+        setLocalValue(value?.toString() || '');
+    }, [value]);
+
+    const handleBlur = () => {
+        let v = parseFloat(localValue);
+        if (isNaN(v)) v = 0;
+        if (v > max) v = max;
+        if (v !== value) {
+            onChange(v);
+        }
+    };
+
+    return (
+        <input
+            type="number"
+            min="0"
+            max={max}
+            value={localValue}
+            onChange={e => setLocalValue(e.target.value)}
+            onBlur={handleBlur}
+            className={`w-16 h-8 text-center border rounded focus:ring-2 focus:ring-brand-500 focus:outline-none ${className}`}
+        />
+    );
+};
 
 interface GradingViewProps {
     students: Types.Student[];
     classes: Types.Class[];
     scores: Types.Score[];
     settings: Types.Settings;
-    onSaveScores: (scores: Types.Score[]) => void;
+    onUpsertScore: (score: Types.Score) => void;
 }
 
 export const GradingView: React.FC<GradingViewProps> = ({
-    students, classes, scores, settings, onSaveScores
+    students, classes, scores, settings, onUpsertScore
 }) => {
+    console.log('GradingView: students length:', students?.length);
+    console.log('GradingView: classes length:', classes?.length);
+    console.log('GradingView: scores length:', scores?.length);
+    console.log('GradingView: settings:', settings);
+
     const [selectedClass, setSelectedClass] = useState(classes[0]?.id || '');
     const currentClass = classes.find(c => c.id === selectedClass);
     const classSubjects = Utils.getSubjectsForClass(currentClass);
+    console.log('GradingView: selectedClass:', selectedClass, 'currentClass:', currentClass, 'classSubjects:', classSubjects);
+
     const [selectedSubject, setSelectedSubject] = useState(classSubjects[0] || '');
     const [activeTab, setActiveTab] = useState<'broadsheet' | 'report' | 'skills'>('broadsheet');
     const [reportStudentId, setReportStudentId] = useState('');
-    const [previewScore, setPreviewScore] = useState<Types.Score | null>(null);
 
     const activeStudents = students.filter(s => s.class_id === selectedClass);
+
+
 
     useEffect(() => {
         if (classSubjects.length > 0 && !classSubjects.includes(selectedSubject)) {
@@ -38,83 +72,80 @@ export const GradingView: React.FC<GradingViewProps> = ({
     }, [selectedClass, classSubjects, selectedSubject]);
 
     const handleScoreChange = (studentId: string, field: 'ca1' | 'ca2' | 'exam', value: number) => {
-        const newScores = [...scores];
-        let score = newScores.find(s => s.student_id === studentId && s.session === settings.current_session && s.term === settings.current_term);
+        let score = scores.find(s => s.student_id === studentId && s.session === settings.current_session && s.term === settings.current_term);
 
-        if (!score) {
-            score = {
-                id: Utils.generateId(),
-                student_id: studentId,
-                class_id: selectedClass,
-                session: settings.current_session,
-                term: settings.current_term,
-                rows: [],
-                average: 0,
-                created_at: Date.now(),
-                updated_at: Date.now(),
-                affective: {},
-                psychomotor: {}
-            };
-            newScores.push(score);
-        }
+        let newScore = score ? JSON.parse(JSON.stringify(score)) : {
+            id: Utils.generateId(),
+            student_id: studentId,
+            class_id: selectedClass,
+            session: settings.current_session,
+            term: settings.current_term,
+            rows: [],
+            average: 0,
+            created_at: Date.now(),
+            updated_at: Date.now(),
+            affective: {},
+            psychomotor: {}
+        };
 
-        let rowIndex = score.rows.findIndex(r => r.subject === selectedSubject);
+        let rowIndex = newScore.rows.findIndex((r: any) => r.subject === selectedSubject);
         if (rowIndex === -1) {
-            score.rows.push({ subject: selectedSubject, ca1: 0, ca2: 0, exam: 0, total: 0, grade: 'F', comment: '' });
-            rowIndex = score.rows.length - 1;
+            newScore.rows.push({ subject: selectedSubject, ca1: 0, ca2: 0, exam: 0, total: 0, grade: 'F', comment: '' });
+            rowIndex = newScore.rows.length - 1;
         }
-        const row = score.rows[rowIndex];
+        const row = newScore.rows[rowIndex];
         (row as any)[field] = value;
         row.total = row.ca1 + row.ca2 + row.exam;
         const { grade, comment } = Utils.calculateGrade(row.total);
         row.grade = grade;
         row.comment = comment;
-        const totalScore = score.rows.reduce((acc, r) => acc + r.total, 0);
-        score.average = totalScore / score.rows.length;
-        score.total_score = totalScore;
-        onSaveScores(newScores);
+        const totalScore = newScore.rows.reduce((acc: number, r: any) => acc + r.total, 0);
+        newScore.average = totalScore / newScore.rows.length;
+        newScore.total_score = totalScore;
+        onUpsertScore(newScore);
     };
 
     const handleTraitChange = (studentId: string, category: 'affective' | 'psychomotor', trait: string, value: number) => {
-        const newScores = [...scores];
-        let score = newScores.find(s => s.student_id === studentId && s.session === settings.current_session && s.term === settings.current_term);
+        let score = scores.find(s => s.student_id === studentId && s.session === settings.current_session && s.term === settings.current_term);
 
-        if (!score) {
-            score = {
-                id: Utils.generateId(),
-                student_id: studentId,
-                class_id: selectedClass,
-                session: settings.current_session,
-                term: settings.current_term,
-                rows: [],
-                average: 0,
-                created_at: Date.now(),
-                updated_at: Date.now(),
-                affective: {},
-                psychomotor: {}
-            };
-            newScores.push(score);
-        }
+        let newScore = score ? { ...score, [category]: { ...score[category] } } : {
+            id: Utils.generateId(),
+            student_id: studentId,
+            class_id: selectedClass,
+            session: settings.current_session,
+            term: settings.current_term,
+            rows: [],
+            average: 0,
+            created_at: Date.now(),
+            updated_at: Date.now(),
+            affective: {},
+            psychomotor: {}
+        };
 
-        if (!score[category]) score[category] = {};
-        score[category][trait] = value;
-        onSaveScores(newScores);
+        if (!newScore[category]) newScore[category] = {};
+        newScore[category][trait] = value;
+        onUpsertScore(newScore);
     };
 
     const handleScoreFieldChange = (studentId: string, field: keyof Types.Score, value: any) => {
-        const newScores = [...scores];
-        let score = newScores.find(s => s.student_id === studentId && s.session === settings.current_session && s.term === settings.current_term);
+        let score = scores.find(s => s.student_id === studentId && s.session === settings.current_session && s.term === settings.current_term);
 
-        if (!score) {
-            score = {
-                id: Utils.generateId(), student_id: studentId, class_id: selectedClass, session: settings.current_session, term: settings.current_term,
-                rows: [], average: 0, created_at: Date.now(), updated_at: Date.now(), affective: {}, psychomotor: {}
-            };
-            newScores.push(score);
-        }
+        let newScore = score ? { ...score } : {
+            id: Utils.generateId(),
+            student_id: studentId,
+            class_id: selectedClass,
+            session: settings.current_session,
+            term: settings.current_term,
+            rows: [],
+            average: 0,
+            created_at: Date.now(),
+            updated_at: Date.now(),
+            affective: {},
+            psychomotor: {}
+        };
 
-        (score as any)[field] = value;
-        onSaveScores(newScores);
+        (newScore as any)[field] = value;
+        onUpsertScore(newScore);
     };
 
     const getRow = (studentId: string) => {
@@ -122,20 +153,137 @@ export const GradingView: React.FC<GradingViewProps> = ({
         return score?.rows.find(r => r.subject === selectedSubject) || { ca1: 0, ca2: 0, exam: 0, total: 0, grade: '-', comment: '-' };
     };
 
-    const generateReport = () => {
-        if (!reportStudentId) return;
-        const score = scores.find(s => s.student_id === reportStudentId && s.session === settings.current_session && s.term === settings.current_term);
+    // Compute preview score for single student view using useMemo for reliable synchronous updates
+    const previewScore = useMemo(() => {
+        if (!reportStudentId || reportStudentId === 'all') return null;
+
+        const score = scores.find(s =>
+            s.student_id === reportStudentId &&
+            s.session === settings.current_session &&
+            s.term === settings.current_term
+        );
+
         if (score) {
-            score.position = Utils.getStudentPosition(reportStudentId, students, scores, settings.current_session, settings.current_term) || undefined;
+            return {
+                ...score,
+                position: Utils.getStudentPosition(reportStudentId, students, scores, settings.current_session, settings.current_term) || undefined
+            };
         }
-        setPreviewScore(score ? { ...score } : null);
-    };
+
+        // Return default empty score for students without scores
+        return {
+            id: 'temp',
+            student_id: reportStudentId,
+            class_id: selectedClass,
+            session: settings.current_session,
+            term: settings.current_term,
+            rows: [],
+            average: 0,
+            created_at: Date.now(),
+            updated_at: Date.now(),
+            affective: {},
+            psychomotor: {},
+        } as Types.Score;
+    }, [reportStudentId, scores, settings.current_session, settings.current_term, selectedClass, students]);
 
     const handlePrint = () => {
-        window.print();
+        const reportCard = document.getElementById('report-card');
+        if (!reportCard) {
+            alert('Report card not found');
+            return;
+        }
+
+        // Open a new window for printing
+        const printWindow = window.open('', '_blank', 'width=900,height=700');
+        if (!printWindow) {
+            alert('Please allow pop-ups to print');
+            return;
+        }
+
+        // Clone the content
+        const content = reportCard.cloneNode(true) as HTMLElement;
+
+        // Get all stylesheets from the current page
+        const allStyles = Array.from(document.styleSheets)
+            .map(sheet => {
+                try {
+                    return Array.from(sheet.cssRules)
+                        .map(rule => rule.cssText)
+                        .join('\n');
+                } catch {
+                    // External stylesheets may throw CORS errors
+                    return '';
+                }
+            })
+            .join('\n');
+
+        // Write the print document with all styles
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Report Card - ${settings.school_name}</title>
+                <link rel="preconnect" href="https://fonts.googleapis.com">
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+                <style>
+                    ${allStyles}
+                    
+                    /* Additional print-specific overrides */
+                    @page { 
+                        size: A4;
+                        margin: 10mm;
+                    }
+                    
+                    body { 
+                        font-family: 'Inter', sans-serif;
+                        background: white !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    
+                    /* Ensure watermark shows */
+                    .absolute { position: absolute !important; }
+                    .inset-0 { top: 0 !important; right: 0 !important; bottom: 0 !important; left: 0 !important; }
+                    .pointer-events-none { pointer-events: none !important; }
+                    [class*="opacity-"] { opacity: inherit !important; }
+                    .opacity-\\[0\\.03\\] { opacity: 0.03 !important; }
+                    .opacity-\\[0\\.05\\] { opacity: 0.05 !important; }
+                    
+                    /* Hide screen-only elements */
+                    .print\\:hidden { display: none !important; }
+                    
+                    /* Ensure images load */
+                    img { 
+                        max-width: 100% !important; 
+                        height: auto !important;
+                    }
+                    
+                    /* Remove shadows and borders for print */
+                    .shadow-lg { box-shadow: none !important; }
+                    .border { border: 1px solid #e5e7eb !important; }
+                </style>
+            </head>
+            <body>
+                ${content.outerHTML}
+            </body>
+            </html>
+        `);
+
+        printWindow.document.close();
+
+        // Wait for images to load, then print
+        printWindow.onload = () => {
+            // Wait a bit longer to ensure images (watermark, logo) are loaded
+            setTimeout(() => {
+                printWindow.print();
+            }, 800);
+        };
     };
 
-    useEffect(() => { generateReport(); }, [reportStudentId, scores, settings]);
+
 
     return (
         <div className="space-y-6">
@@ -324,6 +472,13 @@ export const GradingView: React.FC<GradingViewProps> = ({
                                     {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </Select>
                                 <div className="space-y-1 max-h-[400px] overflow-y-auto border rounded-md">
+                                    <button
+                                        onClick={() => setReportStudentId('all')}
+                                        className={`w-full text-left px-3 py-2 text-sm font-medium border-b flex justify-between ${reportStudentId === 'all' ? 'bg-brand-100 text-brand-700' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'}`}
+                                    >
+                                        📄 All Students ({activeStudents.length})
+                                        <ChevronRight className="h-4 w-4 opacity-50" />
+                                    </button>
                                     {activeStudents.map(s => (
                                         <button key={s.id} onClick={() => setReportStudentId(s.id)} className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex justify-between ${reportStudentId === s.id ? 'bg-brand-50 text-brand-700 font-medium' : 'text-gray-700'}`}>{s.names}<ChevronRight className="h-4 w-4 opacity-50" /></button>
                                     ))}
@@ -331,213 +486,49 @@ export const GradingView: React.FC<GradingViewProps> = ({
                                 {reportStudentId && (
                                     <Button className="w-full mt-4 flex items-center justify-center gap-2" onClick={handlePrint}>
                                         <Printer className="h-4 w-4" />
-                                        Print / Save as PDF
+                                        {reportStudentId === 'all' ? `Print All (${activeStudents.length} students)` : 'Print / Save as PDF'}
                                     </Button>
                                 )}
                             </div>
                         </Card>
                     </div>
-                    <div className="lg:col-span-3 print:w-full">
-                        {previewScore && reportStudentId ? (
-                            <div
-                                className="bg-white border shadow-lg p-8 print:shadow-none print:border-none print:w-full relative overflow-hidden transition-transform duration-300"
-                                id="report-card"
-                                style={{
-                                    fontFamily: settings.report_font_family,
-                                    transform: settings.report_scale < 100 ? `scale(${settings.report_scale / 100})` : 'none',
-                                    transformOrigin: 'top center'
-                                }}
-                            >
-                                {settings.watermark_media && (
-                                    <div className={`absolute inset-0 pointer-events-none ${settings.tiled_watermark ? 'opacity-[0.03]' : 'flex items-center justify-center opacity-[0.05]'}`}>
-                                        {settings.tiled_watermark ? (
-                                            <div
-                                                className="absolute inset-[-50%] rotate-[-30deg]"
-                                                style={{
-                                                    backgroundImage: `url(${settings.watermark_media})`,
-                                                    backgroundSize: '120px',
-                                                    backgroundRepeat: 'repeat'
-                                                }}
-                                            ></div>
-                                        ) : (
-                                            <img src={settings.watermark_media} alt="Watermark" className="w-1/2 object-contain" />
-                                        )}
-                                    </div>
-                                )}
+                    <div className="lg:col-span-3 print:w-full max-h-[80vh] overflow-y-auto print:overflow-visible print:max-h-none">
 
-                                <div className="relative z-10">
-                                    <div className="flex flex-col items-center text-center mb-6">
-                                        {settings.logo_media && (
-                                            <div className="h-24 w-24 mb-4">
-                                                <img src={settings.logo_media} alt="School Logo" className="h-full w-full object-contain" />
-                                            </div>
-                                        )}
-                                        <h1 className="text-4xl font-black text-brand-900 uppercase tracking-tighter leading-none mb-2">{settings.school_name}</h1>
-                                        <p className="text-gray-600 font-medium text-lg">{settings.school_address}</p>
-                                        <p className="text-gray-500 text-sm mt-1 font-mono">{settings.school_email} | {settings.school_phone}</p>
-                                        <div className="w-full h-1 bg-green-600 mt-6 rounded-full"></div>
-                                    </div>
-
-                                    {/* Student Details Section */}
-                                    <div className="grid grid-cols-2 gap-y-4 gap-x-12 mb-8 bg-gray-50/50 p-4 border rounded-xl border-gray-100">
-                                        <div className="flex justify-between border-b pb-1">
-                                            <span className="text-xs font-bold text-gray-500 uppercase">Student Name:</span>
-                                            <span className="text-sm font-black text-gray-900">{students.find(s => s.id === reportStudentId)?.names}</span>
+                        {reportStudentId === 'all' && currentClass ? (
+                            // Print all students with page breaks
+                            <div id="report-card" className="space-y-0">
+                                {activeStudents.map((student, index) => {
+                                    const studentScore = scores.find(s => s.student_id === student.id && s.session === settings.current_session && s.term === settings.current_term);
+                                    console.log('All students: student', student.names, 'score:', studentScore);
+                                    if (studentScore) {
+                                        studentScore.position = Utils.getStudentPosition(student.id, students, scores, settings.current_session, settings.current_term) || undefined;
+                                    }
+                                    return (
+                                        <div key={student.id} className={index > 0 ? 'page-break-before' : ''}>
+                                            <ReportCardTemplate
+                                                student={student}
+                                                currentClass={currentClass}
+                                                score={studentScore || { id: '', student_id: student.id, class_id: selectedClass, session: settings.current_session, term: settings.current_term, rows: [], average: 0, created_at: Date.now(), updated_at: Date.now(), affective: {}, psychomotor: {} }}
+                                                settings={settings}
+                                                subjects={classSubjects}
+                                            />
                                         </div>
-                                        <div className="flex justify-between border-b pb-1">
-                                            <span className="text-xs font-bold text-gray-500 uppercase">Admission No:</span>
-                                            <span className="text-sm font-black text-gray-900">{students.find(s => s.id === reportStudentId)?.student_no}</span>
-                                        </div>
-                                        <div className="flex justify-between border-b pb-1">
-                                            <span className="text-xs font-bold text-gray-500 uppercase">Class:</span>
-                                            <span className="text-sm font-black text-gray-900">{classes.find(c => c.id === selectedClass)?.name}</span>
-                                        </div>
-                                        <div className="flex justify-between border-b pb-1">
-                                            <span className="text-xs font-bold text-gray-500 uppercase">Session / Term:</span>
-                                            <span className="text-sm font-black text-gray-900">{settings.current_session} | {settings.current_term}</span>
-                                        </div>
-                                        <div className="flex justify-between border-b pb-1">
-                                            <span className="text-xs font-bold text-gray-500 uppercase">Attendance:</span>
-                                            <span className="text-sm font-black text-gray-900">{previewScore.attendance_present || 0} / {previewScore.attendance_total || 0}</span>
-                                        </div>
-                                        <div className="flex justify-between border-b pb-1">
-                                            <span className="text-xs font-bold text-gray-500 uppercase">Next Term Resumes:</span>
-                                            <span className="text-sm font-black text-brand-600">{settings.next_term_begins || 'TBA'}</span>
-                                        </div>
-                                    </div>
-
-                                    <table className="w-full border-collapse border border-gray-300 text-sm mb-8">
-                                        <thead className="bg-brand-50 text-brand-900">
-                                            <tr>
-                                                <th className="border border-gray-300 p-2 text-left">Subject</th>
-                                                <th className="border border-gray-300 p-2 text-center w-20">HW/CW</th>
-                                                <th className="border border-gray-300 p-2 text-center w-20">CAT</th>
-                                                <th className="border border-gray-300 p-2 text-center w-20">Exam</th>
-                                                <th className="border border-gray-300 p-2 text-center w-20">Total</th>
-                                                <th className="border border-gray-300 p-2 text-center w-16">Grade</th>
-                                                <th className="border border-gray-300 p-2 text-left">Remark</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {classSubjects.map(subj => {
-                                                const row = previewScore.rows.find(r => r.subject === subj) || { ca1: 0, ca2: 0, exam: 0, total: 0, grade: '-', comment: '-' };
-                                                return (
-                                                    <tr key={subj}>
-                                                        <td className="border border-gray-300 p-2 font-medium">{subj}</td>
-                                                        <td className="border border-gray-300 p-2 text-center">{row.ca1 || '-'}</td>
-                                                        <td className="border border-gray-300 p-2 text-center">{row.ca2 || '-'}</td>
-                                                        <td className="border border-gray-300 p-2 text-center font-medium">{row.exam || '-'}</td>
-                                                        <td className="border border-gray-300 p-2 text-center font-bold bg-gray-50">{row.total || '-'}</td>
-                                                        <td className={`border border-gray-300 p-2 text-center font-bold ${row.grade === 'F' ? 'text-red-600' : 'text-brand-700'}`}>{row.grade}</td>
-                                                        <td className="border border-gray-300 p-2 text-xs italic text-gray-500">{row.comment}</td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-
-                                    {/* Academic Summary on Page 1 */}
-                                    <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg border mb-8">
-                                        <div className="text-center">
-                                            <p className="text-xs text-gray-500 uppercase font-bold">Total Score</p>
-                                            <p className="text-xl font-bold text-gray-900">{previewScore.total_score || '-'}</p>
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="text-xs text-gray-500 uppercase font-bold">Average</p>
-                                            <p className="text-xl font-bold text-gray-900">{(previewScore.average || 0).toFixed(1)}%</p>
-                                        </div>
-                                        {settings.show_position && (
-                                            <div className="text-center">
-                                                <p className="text-xs text-gray-500 uppercase font-bold">Position</p>
-                                                <p className="text-xl font-bold text-brand-600">{previewScore.position ? Utils.ordinalSuffix(previewScore.position) : '-'}</p>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Page Break */}
-                                    <div className="page-break"></div>
-
-                                    {/* Page 2 Header (Minimal) */}
-                                    <div className="mb-6 pt-4 border-t-2 border-brand-900 flex justify-between items-end print:pt-0 print:mt-0">
-                                        <div>
-                                            <h2 className="text-2xl font-black text-brand-900 uppercase">{settings.school_name}</h2>
-                                            <p className="text-xs text-gray-500 uppercase font-bold">Supplemental Report: {students.find(s => s.id === reportStudentId)?.names}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-xs font-bold text-gray-400">{settings.current_session} | {settings.current_term}</p>
-                                        </div>
-                                    </div>
-
-                                    {settings.show_skills && (
-                                        <div className="grid grid-cols-2 gap-8 mb-8">
-                                            <div className="space-y-2">
-                                                <h3 className="text-sm font-bold text-brand-900 border-b border-brand-200 pb-1 mb-2 uppercase">Affective Domain</h3>
-                                                <table className="w-full text-xs border-collapse">
-                                                    <tbody>
-                                                        {Utils.DOMAINS_AFFECTIVE.map(trait => (
-                                                            <tr key={trait}>
-                                                                <td className="border py-1 px-2 text-gray-700">{trait}</td>
-                                                                <td className="border py-1 px-2 text-center font-bold w-8">{previewScore.affective?.[trait] || '-'}</td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <h3 className="text-sm font-bold text-brand-900 border-b border-brand-200 pb-1 mb-2 uppercase">Psychomotor Skills</h3>
-                                                <table className="w-full text-xs border-collapse">
-                                                    <tbody>
-                                                        {Utils.DOMAINS_PSYCHOMOTOR.map(skill => (
-                                                            <tr key={skill}>
-                                                                <td className="border py-1 px-2 text-gray-700">{skill}</td>
-                                                                <td className="border py-1 px-2 text-center font-bold w-8">{previewScore.psychomotor?.[skill] || '-'}</td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Remarks Section */}
-                                    <div className="space-y-4 mb-8">
-                                        <div className="border-l-4 border-brand-500 pl-4 py-1 bg-brand-50/20 rounded-r-lg">
-                                            <h4 className="text-[10px] font-black text-brand-900 uppercase">{(settings.class_teacher_label || '').toUpperCase()}'S REMARK:</h4>
-                                            <p className="text-sm italic text-gray-700">{previewScore.teacher_remark || 'No comment provided.'}</p>
-                                        </div>
-                                        <div className="border-l-4 border-brand-500 pl-4 py-1 bg-brand-50/20 rounded-r-lg">
-                                            <h4 className="text-[10px] font-black text-brand-900 uppercase">{(settings.head_teacher_label || '').toUpperCase()}'S REMARK:</h4>
-                                            <p className="text-sm italic text-gray-700">{previewScore.head_teacher_remark || 'No comment provided.'}</p>
-                                        </div>
-                                    </div>
-
-
-                                    <div className="grid grid-cols-2 gap-12 mt-12 pt-8 border-t border-dashed border-gray-300">
-                                        <div className="text-center">
-                                            <div className="h-16 border-b border-gray-400 mb-2 flex items-end justify-center">
-                                                {/* Optionally show class teacher's signature if uniquely stored */}
-                                            </div>
-                                            <p className="text-xs font-bold uppercase">{settings.class_teacher_label || 'Class Teacher'} Signature</p>
-                                        </div>
-                                        <div className="text-center">
-                                            <div className="h-16 border-b border-gray-400 mb-2 flex items-end justify-center">
-                                                {settings.head_of_school_signature && <img src={settings.head_of_school_signature} className="h-12 object-contain" />}
-                                            </div>
-                                            <p className="text-xs font-bold uppercase">{settings.head_teacher_label || 'Head Teacher'} Signature</p>
-                                        </div>
-                                    </div>
-
-                                    {settings.school_tagline && (
-                                        <div className="mt-12 text-center">
-                                            <div className="w-16 h-1 bg-brand-500 mx-auto mb-4 rounded-full opacity-20"></div>
-                                            <p className="text-sm font-medium text-gray-500 italic">"{settings.school_tagline}"</p>
-                                        </div>
-                                    )}
-                                </div>
+                                    );
+                                })}
                             </div>
+                        ) : previewScore && reportStudentId && currentClass ? (
+                            console.log('Single student: reportStudentId:', reportStudentId, 'previewScore:', previewScore),
+                            <ReportCardTemplate
+                                student={students.find(s => s.id === reportStudentId)!}
+                                currentClass={currentClass}
+                                score={previewScore}
+                                settings={settings}
+                                subjects={classSubjects}
+                            />
                         ) : (
+                            console.log('No report to show: reportStudentId:', reportStudentId, 'previewScore:', previewScore, 'currentClass:', currentClass),
                             <div className="h-full border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center p-12 text-gray-400">
-                                Select a student to preview their report card
+                                Select a student or "All Students" to preview report cards
                             </div>
                         )}
                     </div>

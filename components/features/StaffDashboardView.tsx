@@ -11,9 +11,14 @@ import {
     CheckCircle
 } from 'lucide-react';
 import { useSchoolStore } from '@/lib/store';
+import { useStaff, useSettings, useExpenses } from '@/lib/hooks/use-data';
+import * as Utils from '@/lib/utils';
 
 export const StaffDashboardView = () => {
-    const { staff, settings, expenses } = useSchoolStore();
+    const { currentUser } = useSchoolStore();
+    const { data: staff = [] } = useStaff();
+    const { data: settings = Utils.INITIAL_SETTINGS } = useSettings();
+    const { data: expenses = [] } = useExpenses();
 
     const tasks = [
         { title: 'Process Fee Payments', status: 'Pending', priority: 'High' },
@@ -92,7 +97,7 @@ export const StaffDashboardView = () => {
                                 <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-dashed">
                                     <div className="flex items-center gap-3">
                                         <div className={`h-3 w-3 rounded-full ${task.status === 'Completed' ? 'bg-green-500' :
-                                                task.status === 'In Progress' ? 'bg-amber-500' : 'bg-gray-400'
+                                            task.status === 'In Progress' ? 'bg-amber-500' : 'bg-gray-400'
                                             }`}></div>
                                         <div>
                                             <p className="text-sm font-bold text-gray-900">{task.title}</p>
@@ -100,7 +105,7 @@ export const StaffDashboardView = () => {
                                         </div>
                                     </div>
                                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${task.status === 'Completed' ? 'bg-green-100 text-green-700' :
-                                            task.status === 'In Progress' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
+                                        task.status === 'In Progress' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
                                         }`}>{task.status}</span>
                                 </div>
                             ))}
@@ -116,12 +121,14 @@ export const StaffDashboardView = () => {
                                 Quick Links
                             </h3>
                             <div className="space-y-3">
-                                <a href="/bursary" className="block p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-colors">
-                                    <span className="text-sm font-medium">Go to Bursary</span>
-                                </a>
-                                <a href="/attendance" className="block p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-colors">
-                                    <span className="text-sm font-medium">Log Attendance</span>
-                                </a>
+                                {currentUser && 'assigned_modules' in currentUser && (currentUser as any).assigned_modules?.map((module: string) => (
+                                    <a key={module} href={`/${module}`} className="block p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-colors uppercase text-xs font-bold tracking-wider">
+                                        Go to {module}
+                                    </a>
+                                ))}
+                                {currentUser && (!('assigned_modules' in currentUser) || !(currentUser as any).assigned_modules?.length) && (
+                                    <p className="text-amber-200 text-sm">No specific modules assigned.</p>
+                                )}
                             </div>
                         </div>
                         <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-amber-800 rounded-full blur-3xl opacity-50"></div>

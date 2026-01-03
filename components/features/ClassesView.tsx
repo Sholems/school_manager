@@ -12,14 +12,17 @@ interface ClassesViewProps {
     classes: Types.Class[];
     teachers: Types.Teacher[];
     onUpdate: (c: Types.Class) => void;
+    onCreate?: (c: Types.Class) => Promise<void>;
 }
 
-export const ClassesView: React.FC<ClassesViewProps> = ({ classes, teachers, onUpdate }) => {
+export const ClassesView: React.FC<ClassesViewProps> = ({ classes, teachers, onUpdate, onCreate }) => {
     const [editingClass, setEditingClass] = useState<Types.Class | null>(null);
+    const [isCreating, setIsCreating] = useState(false);
     const [searchSubject, setSearchSubject] = useState('');
     const [newSubject, setNewSubject] = useState('');
     const { addToast } = useToast();
 
+    // ... existing presets ...
     const allKnownSubjects = Array.from(new Set([
         ...Utils.PRESET_PRESCHOOL_SUBJECTS,
         ...Utils.PRESET_PRIMARY_SUBJECTS,
@@ -30,17 +33,57 @@ export const ClassesView: React.FC<ClassesViewProps> = ({ classes, teachers, onU
     const handleEdit = (cls: Types.Class) => {
         const currentSubjects = cls.subjects ?? Utils.getSubjectsForClass(cls);
         setEditingClass({ ...cls, subjects: currentSubjects });
+        setIsCreating(false);
     };
 
-    const handleSave = (e: React.FormEvent) => {
+    const handleCreate = () => {
+        setEditingClass({
+            id: '', // Will be ignored/generated
+            created_at: Date.now(),
+            updated_at: Date.now(),
+            name: '',
+            class_teacher_id: null,
+            subjects: []
+        } as Types.Class);
+        setIsCreating(true);
+    };
+
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (editingClass) {
-            onUpdate({ ...editingClass, updated_at: Date.now() });
-            addToast('Class configuration updated', 'success');
+            if (isCreating && onCreate) {
+                if (!editingClass.name) {
+                    addToast('Class name is required', 'error');
+                    return;
+                }
+                try {
+                    const newClass = { ...editingClass, id: Utils.generateId(), created_at: Date.now(), updated_at: Date.now() };
+                    await onCreate(newClass);
+                    addToast('Class created successfully', 'success');
+                } catch (error: any) {
+                    // Handle duplicate name error
+                    if (error.message?.includes('duplicate key') || error.message?.includes('unique constraint')) {
+                        addToast(`A class named "${editingClass.name}" already exists`, 'error');
+                    } else {
+                        addToast(`Failed to create class: ${error.message || 'Unknown error'}`, 'error');
+                    }
+                    return; // Don't close modal on error
+                }
+            } else {
+                try {
+                    onUpdate({ ...editingClass, updated_at: Date.now() });
+                    addToast('Class configuration updated', 'success');
+                } catch (error: any) {
+                    addToast(`Failed to update class: ${error.message || 'Unknown error'}`, 'error');
+                    return;
+                }
+            }
             setEditingClass(null);
+            setIsCreating(false);
         }
     };
 
+    // ... existing toggle/apply/add logic ...
     const toggleSubject = (subj: string) => {
         if (!editingClass) return;
         const current = editingClass.subjects || [];
@@ -73,46 +116,76 @@ export const ClassesView: React.FC<ClassesViewProps> = ({ classes, teachers, onU
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Class & Subject Configuration</h1>
-                <p className="text-gray-500">Assign teachers and manage subjects for each class.</p>
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Class & Subject Configuration</h1>
+                    <p className="text-gray-500">Assign teachers and manage subjects for each class.</p>
+                </div>
+                {onCreate && (
+                    <Button onClick={handleCreate}>Add Class</Button>
+                )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {classes.map(c => {
-                    const teacher = teachers.find(t => t.id === c.class_teacher_id);
-                    const subjectCount = (c.subjects ?? Utils.getSubjectsForClass(c)).length;
-                    return (
-                        <Card key={c.id} className="hover:border-brand-400 transition-all cursor-pointer group" >
-                            <div className="flex flex-col h-full justify-between">
-                                <div>
-                                    <div className="flex justify-between items-start mb-2">
-                                        <h3 className="font-bold text-xl text-gray-800">{c.name}</h3>
-                                        <div className="bg-gray-100 p-2 rounded-full group-hover:bg-brand-50 transition-colors"><BookOpen className="h-5 w-5 text-gray-500 group-hover:text-brand-600" /></div>
+            {classes.length === 0 ? (
+                <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed">
+                    <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                    <h3 className="text-lg font-medium text-gray-900">No Classes Found</h3>
+                    <p className="text-gray-500 mb-4">Get started by creating your first class.</p>
+                    <div className="flex justify-center gap-3">
+                        {onCreate && <Button onClick={handleCreate} variant="outline">Create Class</Button>}
+                    </div>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {classes.map(c => {
+                        const teacher = teachers.find(t => t.id === c.class_teacher_id);
+                        const subjectCount = (c.subjects ?? Utils.getSubjectsForClass(c)).length;
+                        return (
+                            <Card key={c.id} className="hover:border-brand-400 transition-all cursor-pointer group" >
+                                <div className="flex flex-col h-full justify-between">
+                                    <div>
+                                        <div className="flex justify-between items-start mb-2">
+                                            <h3 className="font-bold text-xl text-gray-800">{c.name}</h3>
+                                            <div className="bg-gray-100 p-2 rounded-full group-hover:bg-brand-50 transition-colors"><BookOpen className="h-5 w-5 text-gray-500 group-hover:text-brand-600" /></div>
+                                        </div>
+                                        <div className="text-sm text-gray-600 mb-4 flex items-center gap-2">
+                                            <User className="h-4 w-4 text-gray-400" />
+                                            {teacher ? <span className="font-medium text-brand-700">{teacher.name}</span> : <span className="italic text-gray-400">No Class Teacher</span>}
+                                        </div>
                                     </div>
-                                    <div className="text-sm text-gray-600 mb-4 flex items-center gap-2">
-                                        <User className="h-4 w-4 text-gray-400" />
-                                        {teacher ? <span className="font-medium text-brand-700">{teacher.name}</span> : <span className="italic text-gray-400">No Class Teacher</span>}
+                                    <div className="border-t pt-4 flex justify-between items-center">
+                                        <span className="text-xs font-medium bg-gray-100 px-2 py-1 rounded text-gray-600">{subjectCount} Subjects</span>
+                                        <Button size="sm" variant="secondary" onClick={() => handleEdit(c)}>Configure</Button>
                                     </div>
                                 </div>
-                                <div className="border-t pt-4 flex justify-between items-center">
-                                    <span className="text-xs font-medium bg-gray-100 px-2 py-1 rounded text-gray-600">{subjectCount} Subjects</span>
-                                    <Button size="sm" variant="secondary" onClick={() => handleEdit(c)}>Configure</Button>
-                                </div>
-                            </div>
-                        </Card>
-                    );
-                })}
-            </div>
+                            </Card>
+                        );
+                    })}
+                </div>
+            )}
 
-            <Modal isOpen={!!editingClass} onClose={() => setEditingClass(null)} title={`Configure ${editingClass?.name}`} size="lg">
+            <Modal isOpen={!!editingClass} onClose={() => setEditingClass(null)} title={isCreating ? "Create New Class" : `Configure ${editingClass?.name}`} size="lg">
                 {editingClass && (
                     <form onSubmit={handleSave} className="space-y-6">
+                        {isCreating && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Class Name</label>
+                                <input
+                                    className="w-full rounded-md border border-gray-300 p-2 focus:ring-brand-500 focus:outline-none"
+                                    placeholder="e.g. Year 1 Gold"
+                                    value={editingClass.name}
+                                    onChange={e => setEditingClass({ ...editingClass, name: e.target.value })}
+                                    required
+                                />
+                            </div>
+                        )}
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
                             <Select label="Class Teacher" value={editingClass.class_teacher_id || ''} onChange={e => setEditingClass({ ...editingClass, class_teacher_id: e.target.value || null })}>
                                 <option value="">-- Select Teacher --</option>
+                                <option value="unassigned">No Teacher</option>
                                 {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                             </Select>
                         </div>
+                        {/* ... subjects UI ... */}
                         <div>
                             <div className="flex justify-between items-center mb-4">
                                 <h4 className="font-bold text-gray-900 flex items-center gap-2"><Library className="h-4 w-4" /> Assigned Subjects</h4>
@@ -150,7 +223,7 @@ export const ClassesView: React.FC<ClassesViewProps> = ({ classes, teachers, onU
                         </div>
                         <div className="flex justify-end gap-3 pt-4 border-t">
                             <Button type="button" variant="secondary" onClick={() => setEditingClass(null)}>Cancel</Button>
-                            <Button type="submit">Save Changes</Button>
+                            <Button type="submit">{isCreating ? "Create Class" : "Save Changes"}</Button>
                         </div>
                     </form>
                 )}

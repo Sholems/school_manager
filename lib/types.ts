@@ -49,6 +49,15 @@ export interface Settings extends Entity {
   promotion_threshold: number; // Minimum average to pass (e.g., 50)
   promotion_rules: 'auto' | 'manual';
 
+  // Invoice & Payment Settings
+  show_bank_details: boolean;
+  bank_name: string;
+  bank_account_name: string;
+  bank_account_number: string;
+  bank_sort_code: string;
+  invoice_notes: string; // Custom notes on invoice
+  invoice_due_days: number; // Days until payment is due
+
   // Role Permissions Configuration
   role_permissions: Record<UserRole, RolePermissions>;
 }
@@ -57,6 +66,32 @@ export interface Settings extends Entity {
 export interface RolePermissions {
   navigation: string[];       // List of navigation item IDs allowed for this role
   dashboardWidgets: string[]; // List of dashboard widget IDs to show for this role
+}
+
+// Admission Form Submission
+export interface Admission extends Entity {
+  // Child Information
+  child_name: string;
+  child_dob: string;
+  child_gender: 'Male' | 'Female';
+  previous_school?: string;
+
+  // Program Applied For
+  program: 'creche' | 'pre-school' | 'primary';
+  class_applied: string;
+
+  // Parent/Guardian Information
+  parent_name: string;
+  parent_email: string;
+  parent_phone: string;
+  parent_address: string;
+  relationship: 'Father' | 'Mother' | 'Guardian';
+
+  // Application Status
+  status: 'pending' | 'reviewed' | 'accepted' | 'rejected';
+  admin_notes?: string;
+  reviewed_at?: number;
+  reviewed_by?: string;
 }
 
 export interface Class extends Entity {
@@ -70,13 +105,15 @@ export interface Teacher extends Entity {
   address: string;
   email: string;
   phone: string;
-  passport_media?: string | null; // Base64 image
+  passport_url?: string | null; // Base64 image or URL
 }
 
 export interface Staff extends Entity {
   name: string;
   role: string; // Job Title (e.g. Bursar)
   tasks: string; // Assigned tasks
+  assigned_modules?: string[]; // e.g. ['bursary', 'attendance']
+  passport_url?: string | null; // Base64 image or URL
   email: string;
   phone: string;
   address: string;
@@ -89,9 +126,11 @@ export interface Student extends Entity {
   class_id: string;
   dob: string; // ISO date string YYYY-MM-DD
   parent_name: string;
+  parent_email?: string; // For password recovery
   parent_phone: string;
   address: string;
-  passport_media?: string | null; // Base64 image
+  passport_url?: string | null; // Base64 image or URL
+  password?: string; // Portal login password (set by admin)
 }
 
 export interface Subject extends Entity {
@@ -152,15 +191,21 @@ export interface FeeStructure extends Entity {
   term: string;
 }
 
+export interface PaymentLineItem {
+  purpose: string;
+  amount: number;
+}
+
 export interface Payment extends Entity {
   student_id: string;
-  amount: number;
+  amount: number; // Total amount (sum of all line items)
   date: string;
   method: 'cash' | 'transfer' | 'pos';
+  lineItems: PaymentLineItem[]; // Individual purpose amounts
   remark?: string;
   session: string;
   term: string;
-  fee_structure_id?: string; // Link to specific fee head
+  fee_structure_id?: string;
 }
 
 export interface Expense extends Entity {
@@ -217,6 +262,18 @@ export interface SchoolEvent extends Entity {
   target_audience: 'all' | 'teachers' | 'students' | 'parents';
 }
 
+// Phase 4: Newsletters
+export interface Newsletter extends Entity {
+  title: string;
+  description?: string;
+  file_data: string; // Base64 encoded PDF
+  file_name: string;
+  session: string;
+  term: string;
+  published_by: string;
+  is_published: boolean;
+}
+
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 export interface ToastNotification {
@@ -246,5 +303,5 @@ export type ViewState =
   | 'calendar'
   | 'analytics';
 
-export type UserRole = 'super_admin' | 'admin' | 'teacher' | 'student' | 'parent' | 'staff';
+export type UserRole = 'admin' | 'teacher' | 'student' | 'parent' | 'staff';
 

@@ -15,18 +15,37 @@ import { Modal } from '@/components/ui/modal';
 import { useToast } from '@/components/providers/toast-provider';
 import * as Utils from '@/lib/utils';
 import * as Types from '@/lib/types';
+import {
+    useStudents, useClasses, useAnnouncements, useSettings,
+    useCreateAnnouncement, useUpdateAnnouncement, useDeleteAnnouncement
+} from '@/lib/hooks/use-data';
 
 export const AnnouncementsView: React.FC = () => {
-    const {
-        announcements,
-        classes,
-        settings,
-        currentRole,
-        addAnnouncement,
-        updateAnnouncement,
-        deleteAnnouncement
-    } = useSchoolStore();
+    // Auth
+    const { currentRole, currentUser } = useSchoolStore();
     const { addToast } = useToast();
+
+    // Data Hooks
+    const { data: students = [] } = useStudents();
+    const { data: classes = [] } = useClasses();
+    const { data: announcements = [] } = useAnnouncements();
+    const { data: settings = Utils.INITIAL_SETTINGS } = useSettings();
+
+    // Mutations
+    const { mutate: addAnnouncement } = useCreateAnnouncement();
+    const { mutate: updateAnnouncement } = useUpdateAnnouncement();
+    const { mutate: deleteAnnouncement } = useDeleteAnnouncement();
+
+    // Role-based access control
+    const isReadOnlyRole = currentRole === 'student' || currentRole === 'parent';
+
+    // Get student's class for filtering announcements
+    const studentClassId = React.useMemo(() => {
+        if (!isReadOnlyRole) return null;
+        const studentId = currentUser?.student_id || students[0]?.id;
+        const student = students.find(s => s.id === studentId);
+        return student?.class_id || null;
+    }, [isReadOnlyRole, currentUser, students]);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAnnouncement, setEditingAnnouncement] = useState<Types.Announcement | null>(null);
@@ -86,7 +105,7 @@ export const AnnouncementsView: React.FC = () => {
         };
 
         if (editingAnnouncement) {
-            updateAnnouncement(announcementData);
+            updateAnnouncement({ id: announcementData.id, updates: announcementData });
             addToast('Announcement updated', 'success');
         } else {
             addAnnouncement(announcementData);
@@ -105,6 +124,16 @@ export const AnnouncementsView: React.FC = () => {
     // Filter and sort announcements
     const filteredAnnouncements = announcements
         .filter(a => {
+            // Role-based filtering for students/parents
+            if (isReadOnlyRole) {
+                // Show announcements targeted at: all, parents (for parent role), or student's class
+                const isForAll = a.target === 'all';
+                const isForParents = currentRole === 'parent' && a.target === 'parents';
+                const isForMyClass = a.target === 'class' && a.class_id === studentClassId;
+                if (!isForAll && !isForParents && !isForMyClass) return false;
+            }
+
+            // Apply user filter
             if (filter === 'pinned') return a.is_pinned;
             if (filter === 'urgent') return a.priority === 'urgent';
             return true;
@@ -139,70 +168,76 @@ export const AnnouncementsView: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Announcements</h1>
-                    <p className="text-sm text-gray-500 mt-1">Manage school-wide and targeted announcements</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                        {isReadOnlyRole ? 'View important school announcements' : 'Manage school-wide and targeted announcements'}
+                    </p>
                 </div>
-                <Button onClick={() => handleOpenModal()}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    New Announcement
-                </Button>
+                {!isReadOnlyRole && (
+                    <Button onClick={() => handleOpenModal()}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        New Announcement
+                    </Button>
+                )}
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-brand-100 rounded-lg flex items-center justify-center">
-                            <Megaphone className="h-5 w-5 text-brand-600" />
+            {/* Stats - Only show for admin roles */}
+            {!isReadOnlyRole && (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <Card className="p-4">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 bg-brand-100 rounded-lg flex items-center justify-center">
+                                <Megaphone className="h-5 w-5 text-brand-600" />
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-gray-900">{announcements.length}</p>
+                                <p className="text-xs text-gray-500">Total</p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-2xl font-bold text-gray-900">{announcements.length}</p>
-                            <p className="text-xs text-gray-500">Total</p>
+                    </Card>
+                    <Card className="p-4">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                <Pin className="h-5 w-5 text-yellow-600" />
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-gray-900">
+                                    {announcements.filter(a => a.is_pinned).length}
+                                </p>
+                                <p className="text-xs text-gray-500">Pinned</p>
+                            </div>
                         </div>
-                    </div>
-                </Card>
-                <Card className="p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                            <Pin className="h-5 w-5 text-yellow-600" />
+                    </Card>
+                    <Card className="p-4">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                <AlertTriangle className="h-5 w-5 text-red-600" />
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-gray-900">
+                                    {announcements.filter(a => a.priority === 'urgent').length}
+                                </p>
+                                <p className="text-xs text-gray-500">Urgent</p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-2xl font-bold text-gray-900">
-                                {announcements.filter(a => a.is_pinned).length}
-                            </p>
-                            <p className="text-xs text-gray-500">Pinned</p>
+                    </Card>
+                    <Card className="p-4">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                <Clock className="h-5 w-5 text-green-600" />
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-gray-900">
+                                    {announcements.filter(a => {
+                                        const weekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+                                        return a.created_at > weekAgo;
+                                    }).length}
+                                </p>
+                                <p className="text-xs text-gray-500">This Week</p>
+                            </div>
                         </div>
-                    </div>
-                </Card>
-                <Card className="p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-red-100 rounded-lg flex items-center justify-center">
-                            <AlertTriangle className="h-5 w-5 text-red-600" />
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold text-gray-900">
-                                {announcements.filter(a => a.priority === 'urgent').length}
-                            </p>
-                            <p className="text-xs text-gray-500">Urgent</p>
-                        </div>
-                    </div>
-                </Card>
-                <Card className="p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center">
-                            <Clock className="h-5 w-5 text-green-600" />
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold text-gray-900">
-                                {announcements.filter(a => {
-                                    const weekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-                                    return a.created_at > weekAgo;
-                                }).length}
-                            </p>
-                            <p className="text-xs text-gray-500">This Week</p>
-                        </div>
-                    </div>
-                </Card>
-            </div>
+                    </Card>
+                </div>
+            )}
 
             {/* Filter Tabs */}
             <div className="flex bg-gray-100 p-1 rounded-lg w-fit">
@@ -242,8 +277,8 @@ export const AnnouncementsView: React.FC = () => {
                         <Card
                             key={announcement.id}
                             className={`p-4 border-l-4 ${announcement.priority === 'urgent' ? 'border-l-red-500' :
-                                    announcement.priority === 'important' ? 'border-l-yellow-500' :
-                                        'border-l-brand-500'
+                                announcement.priority === 'important' ? 'border-l-yellow-500' :
+                                    'border-l-brand-500'
                                 }`}
                         >
                             <div className="flex items-start justify-between gap-4">
@@ -277,20 +312,22 @@ export const AnnouncementsView: React.FC = () => {
                                         </span>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => handleOpenModal(announcement)}
-                                        className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
-                                    >
-                                        <Edit className="h-4 w-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(announcement.id)}
-                                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </button>
-                                </div>
+                                {!isReadOnlyRole && (
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => handleOpenModal(announcement)}
+                                            className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
+                                        >
+                                            <Edit className="h-4 w-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(announcement.id)}
+                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </Card>
                     ))

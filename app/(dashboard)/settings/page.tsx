@@ -1,8 +1,11 @@
 'use client';
-import { useSchoolStore } from '@/lib/store';
+import { useSettings, useUpdateSettings } from '@/lib/hooks/use-data';
 import { SettingsView } from '@/components/features/SettingsView';
+import * as Utils from '@/lib/utils';
 
 export default function SettingsPage() {
-    const { settings, setSettings } = useSchoolStore();
-    return <SettingsView settings={settings} onUpdate={setSettings} />;
+    const { data: settings = Utils.INITIAL_SETTINGS } = useSettings();
+    const { mutate: updateSettings } = useUpdateSettings();
+
+    return <SettingsView settings={settings} onUpdate={updateSettings} />;
 }

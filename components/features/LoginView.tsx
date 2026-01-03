@@ -2,111 +2,522 @@
 
 import React, { useState } from 'react';
 import { useSchoolStore } from '@/lib/store';
-import { UserRole } from '@/lib/types';
+import { useStudents, useSettings } from '@/lib/hooks/use-data';
+import { UserRole, Student } from '@/lib/types';
 import {
     ShieldCheck,
     Users,
     GraduationCap,
-    Heart,
-    ArrowRight
+    ArrowRight,
+    Briefcase,
+    AlertCircle,
+    Eye,
+    EyeOff,
+    Mail,
+    CheckCircle,
+    KeyRound
 } from 'lucide-react';
+import * as Utils from '@/lib/utils';
+import { useAuth } from '@/components/providers/supabase-auth-provider';
 
 export const LoginView = () => {
-    const { login, settings } = useSchoolStore();
+    const { login } = useSchoolStore();
+    // Use TanStack Query for data
+    const { data: students = [] } = useStudents();
+    const { data: settings = Utils.INITIAL_SETTINGS } = useSettings();
+    const { signIn, isDemo } = useAuth();
     const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+
+    // Student/Parent login form state
+    const [studentNo, setStudentNo] = useState('');
+    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState(''); // Added for admin login
+    const [showPassword, setShowPassword] = useState(false);
+    const [loginError, setLoginError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Forgot password state
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
+    const [forgotStudentNo, setForgotStudentNo] = useState('');
+    const [forgotEmail, setForgotEmail] = useState('');
+    const [forgotError, setForgotError] = useState('');
+    const [forgotSuccess, setForgotSuccess] = useState(false);
+    const [newPassword, setNewPassword] = useState('');
 
     const roles = [
         {
-            id: 'super_admin' as UserRole,
-            name: 'Super Admin',
-            icon: ShieldCheck,
-            color: 'bg-red-600',
-            desc: 'System owner. Control roles and landing page CMS.'
-        },
-        {
             id: 'admin' as UserRole,
-            name: 'Principal / Admin',
+            name: 'Admin',
             icon: ShieldCheck,
-            color: 'bg-blue-500',
-            desc: 'Academic and administrative oversight.'
+            color: 'bg-blue-600',
+            desc: 'System Administration'
         },
         {
             id: 'teacher' as UserRole,
             name: 'Teacher',
             icon: Users,
-            color: 'bg-green-500',
-            desc: 'Manage grades, attendance, and class records.'
+            color: 'bg-green-600',
+            desc: 'Class & Grade Management'
         },
         {
             id: 'student' as UserRole,
             name: 'Student / Parent',
             icon: GraduationCap,
-            color: 'bg-purple-500',
-            desc: 'View results, check fees, and profile.'
+            color: 'bg-purple-600',
+            desc: 'Academic Portal'
         },
         {
             id: 'staff' as UserRole,
-            name: 'Operations / Staff',
-            icon: Users,
-            color: 'bg-amber-500',
-            desc: 'Non-teaching staff dashboard & tasks.'
+            name: 'Non Teaching',
+            icon: Briefcase,
+            color: 'bg-amber-600',
+            desc: 'Operations Dashboard'
         },
     ];
 
+    const handleSupabaseLogin = async (role: UserRole) => {
+        setLoginError('');
+        setIsLoading(true);
+
+        try {
+            const { error } = await signIn(email, password);
+            if (error) {
+                setLoginError(error.message);
+                setIsLoading(false);
+                return;
+            }
+            // Successful login will be handled by auth state change
+            // But we typically want to redirect or update local state
+            // The SupabaseAuthProvider handles session, but useSchoolStore handles "currentRole"
+            // We need to sync them. For now, let's allow the auth provider to drive.
+            // Actually, we might need to manually set role in store if it's not inferred from user metadata
+
+            // For now, assuming successful login redirects via middleware or updates context
+            // But we also need to update the client-side store for the dashboard to render
+            // This part requires syncing Supabase user profile to Zustand store.
+            // Since this is a hybrid phase, we might need to fetch the user profile here.
+
+        } catch (err) {
+            setLoginError('An unexpected error occurred.');
+            setIsLoading(false);
+        }
+    };
+
+    const handleStudentLogin = (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoginError('');
+        setIsLoading(true);
+
+        // Find student by student number
+        const student = students.find(
+            s => s.student_no.toLowerCase() === studentNo.toLowerCase().trim()
+        );
+
+        setTimeout(() => {
+            setIsLoading(false);
+
+            if (!student) {
+                setLoginError('Student not found. Please check your Student Number.');
+                return;
+            }
+
+            if (!student.password) {
+                setLoginError('Portal access not yet activated. Please contact the school admin.');
+                return;
+            }
+
+            if (student.password !== password) {
+                setLoginError('Incorrect password. Please try again.');
+                return;
+            }
+
+            // Login successful
+            login('student', {
+                ...student,
+                role: 'student',
+                name: student.names,
+                student_id: student.id
+            });
+        }, 800);
+    };
+
+    const handleForgotPassword = (e: React.FormEvent) => {
+        e.preventDefault();
+        setForgotError('');
+        setIsLoading(true);
+
+        const student = students.find(
+            s => s.student_no.toLowerCase() === forgotStudentNo.toLowerCase().trim()
+        );
+
+        setTimeout(() => {
+            setIsLoading(false);
+
+            if (!student) {
+                setForgotError('Student not found. Please check your Student Number.');
+                return;
+            }
+
+            if (!student.parent_email) {
+                setForgotError('No email on file. Please contact the school admin.');
+                return;
+            }
+
+            if (student.parent_email.toLowerCase() !== forgotEmail.toLowerCase().trim()) {
+                setForgotError('Email does not match our records.');
+                return;
+            }
+
+            // Generate new password and update student record
+            const generatedPassword = 'Pass' + Math.random().toString(36).substring(2, 8);
+            setNewPassword(generatedPassword);
+
+            // Update student in storage
+            const updatedStudents = students.map(s =>
+                s.id === student.id ? { ...s, password: generatedPassword, updated_at: Date.now() } : s
+            );
+            Utils.saveToStorage(Utils.STORAGE_KEYS.STUDENTS, updatedStudents);
+
+            setForgotSuccess(true);
+        }, 1000);
+    };
+
+    const handleDirectLogin = (role: UserRole) => {
+        const mockUser = {
+            role: role,
+            name: 'Demo User',
+            student_id: undefined
+        };
+        login(role, mockUser);
+    };
+
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
-            <div className="w-full max-w-4xl space-y-8">
-                <div className="text-center space-y-2">
-                    {settings.logo_media ? (
-                        <img src={settings.logo_media} alt="Logo" className="h-20 mx-auto mb-4 object-contain" />
-                    ) : (
-                        <div className="h-20 w-20 bg-brand-600 rounded-2xl flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4 shadow-xl">NG</div>
-                    )}
-                    <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tight">{settings.school_name}</h1>
-                    <p className="text-gray-500 font-medium">Welcome back! Please select your portal to continue.</p>
+        <div className="min-h-screen relative flex flex-col items-center justify-center p-4 md:p-6 font-primary overflow-hidden">
+            {/* Background Image with Overlay */}
+            <div className="absolute inset-0 z-0">
+                <div
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{ backgroundImage: "url('/fruifulvine_class.jpg')" }}
+                />
+                <div className="absolute inset-0 bg-brand-900/60 backdrop-blur-[2px]" />
+            </div>
+
+            {/* Return to Home Button */}
+            <a href="/" className="absolute top-6 left-6 z-20 flex items-center gap-2 text-white/80 hover:text-white transition-colors bg-black/20 hover:bg-black/40 px-4 py-2 rounded-full backdrop-blur-md">
+                <ArrowRight className="rotate-180" size={18} />
+                <span className="text-sm font-bold">Back to Home</span>
+            </a>
+
+            <div className="w-full max-w-6xl space-y-8 relative z-10 animate-in fade-in zoom-in duration-500 flex flex-col items-center">
+                <div className="text-center space-y-4">
+                    <div className="inline-block p-4 bg-white rounded-3xl shadow-2xl mb-4 border-4 border-white">
+                        <img
+                            src={settings.logo_media || '/fruitful_logo_main.png'}
+                            alt="Logo"
+                            className="h-24 md:h-32 object-contain"
+                        />
+                    </div>
+                    <h1 className="text-3xl md:text-6xl font-black text-white uppercase tracking-tight drop-shadow-md">
+                        {settings.school_name}
+                    </h1>
+                    <p className="text-brand-100 text-base md:text-xl font-medium max-w-2xl mx-auto">
+                        {selectedRole === 'student' ? 'Enter your Student Number and Password to access your portal.' : 'Welcome to the digital campus. Select your portal to proceed.'}
+                    </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    {roles.map((role) => (
-                        <button
-                            key={role.id}
-                            onClick={() => setSelectedRole(role.id)}
-                            className={`relative group bg-white p-8 rounded-3xl border-2 transition-all duration-300 text-left hover:shadow-2xl hover:-translate-y-1 ${selectedRole === role.id
-                                ? 'border-brand-500 ring-4 ring-brand-50'
-                                : 'border-transparent shadow-sm'
-                                }`}
-                        >
-                            <div className={`${role.color} w-16 h-16 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg group-hover:scale-110 transition-transform`}>
-                                <role.icon size={32} />
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">{role.name}</h3>
-                            <p className="text-sm text-gray-500 leading-relaxed mb-8">{role.desc}</p>
-
-                            <div className={`flex items-center gap-2 text-sm font-bold transition-colors ${selectedRole === role.id ? 'text-brand-600' : 'text-gray-400 group-hover:text-brand-500'
-                                }`}>
-                                Click to Select <ArrowRight size={16} />
-                            </div>
-                        </button>
-                    ))}
-                </div>
-
-                {selectedRole && (
-                    <div className="flex justify-center pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <button
-                            onClick={() => login(selectedRole, { role: selectedRole, name: 'Demo User' })}
-                            className="bg-brand-600 hover:bg-brand-700 text-white px-12 py-4 rounded-2xl font-black text-lg shadow-xl shadow-brand-200 flex items-center gap-3 transition-all hover:scale-105 active:scale-95"
-                        >
-                            Enter Portal <ArrowRight />
-                        </button>
+                {/* Role Selection Cards */}
+                {!selectedRole && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 px-4 md:px-0 w-full">
+                        {roles.map((role) => (
+                            <button
+                                key={role.id}
+                                onClick={() => setSelectedRole(role.id)}
+                                className="group relative bg-black/40 backdrop-blur-md rounded-3xl p-6 border transition-all duration-300 text-left hover:-translate-y-2 border-white/10 hover:bg-black/60 hover:border-white/30"
+                            >
+                                <div className={`${role.color} w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-white mb-4 md:mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                    <role.icon size={24} className="md:w-7 md:h-7" />
+                                </div>
+                                <h3 className="text-lg md:text-xl font-bold text-white mb-2">{role.name}</h3>
+                                <p className="text-xs md:text-sm text-gray-200 mb-6 font-medium leading-relaxed">{role.desc}</p>
+                                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-400 group-hover:text-white transition-colors">
+                                    Access Portal <ArrowRight size={14} />
+                                </div>
+                            </button>
+                        ))}
                     </div>
                 )}
 
-                <div className="text-center pt-8">
-                    <p className="text-xs text-gray-400 font-medium flex items-center justify-center gap-1">
-                        Made with <Heart size={12} className="text-red-400 fill-current" /> by NG School Management System
+                {/* Student/Parent Login Form */}
+                {selectedRole === 'student' && (
+                    <div className="w-full max-w-md animate-in slide-in-from-bottom-6 fade-in duration-500">
+                        <div className="bg-white rounded-3xl shadow-2xl p-8">
+                            <div className="text-center mb-6">
+                                <div className="h-14 w-14 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                    <GraduationCap size={28} className="text-purple-600" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900">Student / Parent Portal</h2>
+                            </div>
+
+                            <form onSubmit={handleStudentLogin} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Student Number</label>
+                                    <input
+                                        type="text"
+                                        value={studentNo}
+                                        onChange={e => { setStudentNo(e.target.value); setLoginError(''); }}
+                                        placeholder="e.g. ST001"
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                    <div className="relative">
+                                        <input
+                                            type={showPassword ? 'text' : 'password'}
+                                            value={password}
+                                            onChange={e => { setPassword(e.target.value); setLoginError(''); }}
+                                            placeholder="Enter your password"
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 pr-12"
+                                            required
+                                        />
+                                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {loginError && (
+                                    <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-xl">
+                                        <AlertCircle size={18} />
+                                        {loginError}
+                                    </div>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                                >
+                                    {isLoading ? (
+                                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                                    ) : (
+                                        <>
+                                            Login to Portal
+                                            <ArrowRight size={20} />
+                                        </>
+                                    )}
+                                </button>
+                            </form>
+
+                            <div className="flex items-center justify-between mt-4">
+                                <button onClick={() => { setSelectedRole(null); setLoginError(''); setStudentNo(''); setPassword(''); }} className="text-sm text-gray-500 hover:text-gray-700 font-medium">
+                                    ← Back
+                                </button>
+                                <button onClick={() => setShowForgotPassword(true)} className="text-sm text-purple-600 hover:text-purple-800 font-medium">
+                                    Forgot Password?
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Direct Login for Admin/Teacher/Staff */}
+                {/* Login Form for Admin/Teacher/Staff */}
+                {selectedRole && selectedRole !== 'student' && (
+                    <div className="w-full max-w-md animate-in slide-in-from-bottom-6 fade-in duration-500">
+                        <div className="bg-white rounded-3xl shadow-2xl p-8">
+                            <div className="text-center mb-6">
+                                <div className={`h-14 w-14 ${roles.find(r => r.id === selectedRole)?.color.replace('bg-', 'bg-').replace('600', '100')} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
+                                    {(() => {
+                                        const Icon = roles.find(r => r.id === selectedRole)?.icon;
+                                        return Icon ? <Icon size={28} className={roles.find(r => r.id === selectedRole)?.color.replace('bg-', 'text-')} /> : null;
+                                    })()}
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900">{roles.find(r => r.id === selectedRole)?.name} Login</h2>
+                            </div>
+
+                            {/* Show Direct Login button ONLY in Demo Mode */}
+                            {isDemo ? (
+                                <div className="flex flex-col gap-4">
+                                    <div className="bg-amber-50 text-amber-800 p-4 rounded-xl text-sm flex items-start gap-2">
+                                        <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                                        <p>You are in <strong>Demo Mode</strong>. Click to login instantly without credentials.</p>
+                                    </div>
+                                    <button
+                                        onClick={() => handleDirectLogin(selectedRole)}
+                                        className="w-full py-4 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
+                                    >
+                                        Enter as {roles.find(r => r.id === selectedRole)?.name}
+                                        <ArrowRight size={20} />
+                                    </button>
+                                </div>
+                            ) : (
+                                /* Real Supabase Login Form */
+                                <form onSubmit={(e) => {
+                                    e.preventDefault();
+                                    handleSupabaseLogin(selectedRole);
+                                }} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                        <div className="relative">
+                                            <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                            <input
+                                                type="email"
+                                                value={email}
+                                                onChange={e => { setEmail(e.target.value); setLoginError(''); }}
+                                                placeholder={`admin@school.com`}
+                                                className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                        <div className="relative">
+                                            <KeyRound size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                            <input
+                                                type={showPassword ? 'text' : 'password'}
+                                                value={password}
+                                                onChange={e => { setPassword(e.target.value); setLoginError(''); }}
+                                                placeholder="Enter your password"
+                                                className="w-full pl-11 pr-12 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                                                required
+                                            />
+                                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {loginError && (
+                                        <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-xl">
+                                            <AlertCircle size={18} />
+                                            {loginError}
+                                        </div>
+                                    )}
+
+                                    <button
+                                        type="submit"
+                                        disabled={isLoading}
+                                        className="w-full py-4 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
+                                        {isLoading ? (
+                                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                                        ) : (
+                                            <>
+                                                Login
+                                                <ArrowRight size={20} />
+                                            </>
+                                        )}
+                                    </button>
+                                </form>
+                            )}
+
+                            <div className="flex justify-center mt-6">
+                                <button onClick={() => { setSelectedRole(null); setLoginError(''); setEmail(''); setPassword(''); }} className="text-sm text-gray-500 hover:text-gray-700 font-medium flex items-center gap-1">
+                                    ← Select a different role
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="pt-12 pb-6 text-center z-10 w-full px-4">
+                    <p className="text-[10px] md:text-xs text-brand-100/60 font-medium flex items-center justify-center gap-1.5 bg-black/40 px-6 py-2 rounded-full backdrop-blur-sm inline-flex">
+                        &copy; {new Date().getFullYear()} Bold Ideas Innovations Ltd <ShieldCheck size={10} />
                     </p>
                 </div>
             </div>
+
+            {/* Forgot Password Modal */}
+            {showForgotPassword && (
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => { setShowForgotPassword(false); setForgotSuccess(false); setForgotError(''); setForgotStudentNo(''); setForgotEmail(''); }}>
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 animate-in zoom-in-95 fade-in duration-300" onClick={e => e.stopPropagation()}>
+                        {!forgotSuccess ? (
+                            <>
+                                <div className="text-center mb-6">
+                                    <div className="h-14 w-14 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                        <KeyRound size={28} className="text-purple-600" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-gray-900">Reset Password</h2>
+                                    <p className="text-sm text-gray-500 mt-2">Enter your Student Number and registered email to reset your password.</p>
+                                </div>
+
+                                <form onSubmit={handleForgotPassword} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Student Number</label>
+                                        <input
+                                            type="text"
+                                            value={forgotStudentNo}
+                                            onChange={e => { setForgotStudentNo(e.target.value); setForgotError(''); }}
+                                            placeholder="e.g. ST001"
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Registered Parent Email</label>
+                                        <div className="relative">
+                                            <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                            <input
+                                                type="email"
+                                                value={forgotEmail}
+                                                onChange={e => { setForgotEmail(e.target.value); setForgotError(''); }}
+                                                placeholder="parent@example.com"
+                                                className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {forgotError && (
+                                        <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-xl">
+                                            <AlertCircle size={18} />
+                                            {forgotError}
+                                        </div>
+                                    )}
+
+                                    <button
+                                        type="submit"
+                                        disabled={isLoading}
+                                        className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
+                                        {isLoading ? (
+                                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                                        ) : (
+                                            'Reset Password'
+                                        )}
+                                    </button>
+                                </form>
+
+                                <button onClick={() => { setShowForgotPassword(false); setForgotError(''); setForgotStudentNo(''); setForgotEmail(''); }} className="w-full mt-4 text-sm text-gray-500 hover:text-gray-700 font-medium">
+                                    Cancel
+                                </button>
+                            </>
+                        ) : (
+                            <div className="text-center">
+                                <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <CheckCircle size={32} className="text-green-600" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-2">Password Reset!</h2>
+                                <p className="text-gray-600 mb-6">Your new password has been generated. Please save it securely.</p>
+                                <div className="bg-gray-100 rounded-xl p-4 mb-6">
+                                    <p className="text-xs text-gray-500 uppercase font-medium mb-1">New Password</p>
+                                    <p className="text-2xl font-mono font-bold text-gray-900 tracking-wider">{newPassword}</p>
+                                </div>
+                                <p className="text-xs text-gray-500 mb-6">In a real system, this password would be sent to your registered email.</p>
+                                <button
+                                    onClick={() => { setShowForgotPassword(false); setForgotSuccess(false); setForgotStudentNo(''); setForgotEmail(''); }}
+                                    className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-colors"
+                                >
+                                    Done
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

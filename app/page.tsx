@@ -3,38 +3,21 @@
 import { useEffect, useState } from 'react';
 import { LandingPage } from '@/components/features/LandingPage';
 import * as Utils from '@/lib/utils';
+import { useSettings, useStudents, useTeachers, useClasses } from '@/lib/hooks/use-data';
 
 export default function Page() {
-    const [settings, setSettings] = useState(Utils.INITIAL_SETTINGS);
-    const [stats, setStats] = useState({ studentsCount: 0, teachersCount: 0, classesCount: 0 });
-    const [isLoaded, setIsLoaded] = useState(false);
+    // Use TanStack Query - renders immediately with defaults, updates when data loads
+    const { data: settings = Utils.INITIAL_SETTINGS } = useSettings();
+    const { data: students = [] } = useStudents();
+    const { data: teachers = [] } = useTeachers();
+    const { data: classes = [] } = useClasses();
 
-    useEffect(() => {
-        // Load settings from localStorage
-        const loadedSettings = Utils.loadFromStorage(Utils.STORAGE_KEYS.SETTINGS, Utils.INITIAL_SETTINGS);
-        const loadedStudents = Utils.loadFromStorage(Utils.STORAGE_KEYS.STUDENTS, Utils.SEED_STUDENTS);
-        const loadedTeachers = Utils.loadFromStorage(Utils.STORAGE_KEYS.TEACHERS, Utils.SEED_TEACHERS);
-        const loadedClasses = Utils.loadFromStorage(Utils.STORAGE_KEYS.CLASSES, Utils.SEED_CLASSES);
+    const stats = {
+        studentsCount: students.length,
+        teachersCount: teachers.length,
+        classesCount: classes.length
+    };
 
-        setSettings(loadedSettings);
-        setStats({
-            studentsCount: loadedStudents.length,
-            teachersCount: loadedTeachers.length,
-            classesCount: loadedClasses.length
-        });
-        setIsLoaded(true);
-    }, []);
-
-    if (!isLoaded) {
-        return (
-            <div className="h-screen w-full flex items-center justify-center bg-brand-900">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent mx-auto mb-4"></div>
-                    <p className="text-white/60 font-medium">Loading...</p>
-                </div>
-            </div>
-        );
-    }
-
+    // Render immediately with defaults - no loading spinner!
     return <LandingPage settings={settings} stats={stats} />;
 }

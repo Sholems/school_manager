@@ -13,7 +13,7 @@ interface AttendanceViewProps {
     classes: Types.Class[];
     attendance: Types.Attendance[];
     settings: Types.Settings;
-    onSave: (att: Types.Attendance[]) => void;
+    onSave: (att: Types.Attendance) => void;
 }
 
 export const AttendanceView: React.FC<AttendanceViewProps> = ({
@@ -40,8 +40,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
         const newEntry: Types.Attendance = {
             id: existingRecord?.id || Utils.generateId(), date, class_id: selectedClass, session: settings.current_session, term: settings.current_term, records, created_at: existingRecord?.created_at || Date.now(), updated_at: Date.now()
         };
-        const others = attendance.filter(a => a.id !== newEntry.id);
-        onSave([...others, newEntry]);
+        onSave(newEntry);
         addToast('Attendance saved successfully', 'success');
     };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Save } from 'lucide-react';
 import * as Types from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,42 @@ interface SettingsViewProps {
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onUpdate }) => {
-    const [formData, setFormData] = useState<Types.Settings>(settings);
+    // Ensure all new fields have default values to prevent uncontrolled input errors
+    const initializeForm = (s: Types.Settings) => ({
+        ...s,
+        school_name: s.school_name ?? '',
+        school_email: s.school_email ?? '',
+        school_phone: s.school_phone ?? '',
+        school_address: s.school_address ?? '',
+        school_tagline: s.school_tagline ?? '',
+        current_session: s.current_session ?? '',
+        current_term: s.current_term ?? 'First Term',
+        next_term_begins: s.next_term_begins ?? '',
+        report_font_family: s.report_font_family ?? 'inherit',
+        class_teacher_label: s.class_teacher_label ?? 'Class Teacher',
+        head_teacher_label: s.head_teacher_label ?? 'Head Teacher',
+        landing_hero_title: s.landing_hero_title ?? '',
+        landing_hero_subtitle: s.landing_hero_subtitle ?? '',
+        landing_about_text: s.landing_about_text ?? '',
+        landing_features: s.landing_features ?? '',
+        landing_cta_text: s.landing_cta_text ?? '',
+        show_bank_details: s.show_bank_details ?? true,
+        bank_name: s.bank_name ?? '',
+        bank_account_name: s.bank_account_name ?? '',
+        bank_account_number: s.bank_account_number ?? '',
+        bank_sort_code: s.bank_sort_code ?? '',
+        invoice_notes: s.invoice_notes ?? '',
+        invoice_due_days: s.invoice_due_days ?? 14,
+        director_name: s.director_name ?? '',
+        head_of_school_name: s.head_of_school_name ?? '',
+    });
+
+    const [formData, setFormData] = useState<Types.Settings>(initializeForm(settings));
+
+    // Update form data when settings prop changes (e.g. data loaded)
+    useEffect(() => {
+        setFormData(initializeForm(settings));
+    }, [settings]);
     const { addToast } = useToast();
     const handleChange = (field: keyof Types.Settings, value: any) => { setFormData(prev => ({ ...prev, [field]: value })); };
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof Types.Settings) => {
@@ -91,12 +126,60 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onUpdate }
                                 {formData.watermark_media && <img src={formData.watermark_media} className="mt-2 h-12 object-contain border" />}
                             </div>
                         </div>
-                        <div className="grid grid-cols-1 gap-4 border-t pt-4">
+                        <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                            <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase">Director Signature (for ID Card)</label>
+                                <Input placeholder="Director's Name" value={formData.director_name || ''} onChange={e => handleChange('director_name', e.target.value)} className="mt-1" />
+                                <input type="file" className="text-xs mt-2 block w-full" accept="image/*" onChange={e => handleFileChange(e, 'director_signature')} />
+                                {formData.director_signature && <img src={formData.director_signature} className="mt-2 h-10 object-contain border border-dashed p-1" />}
+                            </div>
                             <div>
                                 <label className="text-xs font-bold text-gray-500 uppercase">{formData.head_teacher_label} Signature</label>
-                                <input type="file" className="text-xs mt-1 block w-full" onChange={e => handleFileChange(e, 'head_of_school_signature')} />
-                                {formData.head_of_school_signature && <img src={formData.head_of_school_signature} className="mt-2 h-12 object-contain border border-dashed p-1" />}
+                                <Input placeholder="Head of School Name" value={formData.head_of_school_name || ''} onChange={e => handleChange('head_of_school_name', e.target.value)} className="mt-1" />
+                                <input type="file" className="text-xs mt-2 block w-full" accept="image/*" onChange={e => handleFileChange(e, 'head_of_school_signature')} />
+                                {formData.head_of_school_signature && <img src={formData.head_of_school_signature} className="mt-2 h-10 object-contain border border-dashed p-1" />}
                             </div>
+                        </div>
+                    </div>
+                </Card>
+                <Card title="Invoice & Bank Details">
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                            <input type="checkbox" id="show_bank_details" checked={formData.show_bank_details} onChange={e => handleChange('show_bank_details', e.target.checked)} className="h-4 w-4 text-brand-600 border-gray-300 rounded" />
+                            <label htmlFor="show_bank_details" className="text-sm font-medium text-gray-700">Show Bank Details on Invoice</label>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <Input label="Bank Name" value={formData.bank_name || ''} onChange={e => handleChange('bank_name', e.target.value)} placeholder="e.g. First Bank" />
+                            <Input label="Account Name" value={formData.bank_account_name || ''} onChange={e => handleChange('bank_account_name', e.target.value)} placeholder="School Account" />
+                            <Input label="Account Number" value={formData.bank_account_number || ''} onChange={e => handleChange('bank_account_number', e.target.value)} placeholder="0123456789" />
+                            <Input label="Due Days" type="number" value={formData.invoice_due_days?.toString() || '14'} onChange={e => handleChange('invoice_due_days', parseInt(e.target.value) || 14)} />
+                        </div>
+                        <textarea value={formData.invoice_notes || ''} onChange={e => handleChange('invoice_notes', e.target.value)} placeholder="Invoice notes (optional)..." rows={1} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+                    </div>
+                </Card>
+                <Card title="Homepage Settings" className="md:col-span-2">
+                    <p className="text-xs text-gray-500 mb-4">Configure the content displayed on your public-facing homepage.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input label="Hero Title" value={formData.landing_hero_title || ''} onChange={e => handleChange('landing_hero_title', e.target.value)} placeholder="e.g. Welcome to Our School" />
+                        <Input label="Hero Subtitle" value={formData.landing_hero_subtitle || ''} onChange={e => handleChange('landing_hero_subtitle', e.target.value)} placeholder="e.g. Faith-Based Excellence" />
+                        <div className="md:col-span-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase block mb-1">About Section Text</label>
+                            <textarea
+                                value={formData.landing_about_text || ''}
+                                onChange={e => handleChange('landing_about_text', e.target.value)}
+                                placeholder="Describe your school's mission, vision, and values..."
+                                rows={3}
+                                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                            />
+                        </div>
+                        <div className="md:col-span-2">
+                            <Input label="Features (comma-separated)" value={formData.landing_features || ''} onChange={e => handleChange('landing_features', e.target.value)} placeholder="e.g. Faith-Based Education, Modern Facilities, Expert Teachers" />
+                            <p className="text-[10px] text-gray-400 mt-1">These values feed into the "Why Choose Us" section. (Currently using Core Values: CARE, RESPECT, EXCELLENCE)</p>
+                        </div>
+                        <Input label="CTA Button Text" value={formData.landing_cta_text || ''} onChange={e => handleChange('landing_cta_text', e.target.value)} placeholder="e.g. Apply for Admission" />
+                        <div className="flex items-center gap-2 pt-4">
+                            <input type="checkbox" id="landing_show_stats" checked={formData.landing_show_stats} onChange={e => handleChange('landing_show_stats', e.target.checked)} className="h-4 w-4 text-brand-600 border-gray-300 rounded" />
+                            <label htmlFor="landing_show_stats" className="text-sm font-medium text-gray-700">Show Stats in Hero (Students, Teachers, etc.)</label>
                         </div>
                     </div>
                 </Card>
