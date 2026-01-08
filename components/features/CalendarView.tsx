@@ -104,8 +104,7 @@ export const CalendarView: React.FC = () => {
             return;
         }
 
-        // Only include columns that exist in the database
-        const eventData: Partial<Types.SchoolEvent> = {
+        const eventData: Types.SchoolEvent = {
             id: editingEvent?.id || Utils.generateId(),
             title: title.trim(),
             description: description.trim() || undefined,
@@ -113,15 +112,19 @@ export const CalendarView: React.FC = () => {
             end_date: endDate || undefined,
             event_type: eventType,
             target_audience: targetAudience,
+            class_id: selectedClassId || undefined,
+            session: settings.current_session,
+            term: settings.current_term,
+            created_by: editingEvent?.created_by || authUser?.id || undefined,
             created_at: editingEvent?.created_at || Date.now(),
             updated_at: Date.now()
         };
 
         if (editingEvent) {
-            updateEvent({ id: eventData.id!, updates: eventData as Types.SchoolEvent });
+            updateEvent({ id: eventData.id, updates: eventData });
             addToast('Event updated', 'success');
         } else {
-            addEvent(eventData as Types.SchoolEvent);
+            addEvent(eventData);
             addToast('Event created', 'success');
         }
 
@@ -594,8 +597,23 @@ export const CalendarView: React.FC = () => {
                                 <option value="teachers">Teachers Only</option>
                                 <option value="students">Students Only</option>
                                 <option value="parents">Parents Only</option>
+                                <option value="staff">Staff Only</option>
                             </Select>
                         </div>
+
+                        {/* Class-specific event selector */}
+                        {(targetAudience === 'students' || targetAudience === 'parents') && (
+                            <Select
+                                label="Specific Class (Optional)"
+                                value={selectedClassId}
+                                onChange={e => setSelectedClassId(e.target.value)}
+                            >
+                                <option value="">All {targetAudience === 'students' ? 'Students' : 'Parents'}</option>
+                                {classes.map((cls: { id: string; name: string }) => (
+                                    <option key={cls.id} value={cls.id}>{cls.name}</option>
+                                ))}
+                            </Select>
+                        )}
 
                         <div className="flex justify-between pt-4">
                             <div>
