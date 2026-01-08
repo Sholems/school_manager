@@ -83,6 +83,34 @@ export async function updateSettings(settings: Types.Settings): Promise<Types.Se
 // GENERIC CRUD - All operations use Supabase directly
 // =============================================
 
+// Helper to convert camelCase to snake_case for specific fields
+function prepareForDatabase(table: string, item: any): any {
+    const prepared = { ...item };
+    
+    // Handle payments table: lineItems -> line_items
+    if (table === 'payments' && prepared.lineItems !== undefined) {
+        prepared.line_items = prepared.lineItems;
+        delete prepared.lineItems;
+    }
+    
+    return prepared;
+}
+
+// Helper to convert snake_case back to camelCase for specific fields
+function prepareFromDatabase(table: string, data: any): any {
+    if (!data) return data;
+    
+    const prepared = { ...data };
+    
+    // Handle payments table: line_items -> lineItems
+    if (table === 'payments' && prepared.line_items !== undefined) {
+        prepared.lineItems = prepared.line_items;
+        delete prepared.line_items;
+    }
+    
+    return prepared;
+}
+
 export async function fetchAll<T>(table: string): Promise<T[]> {
     try {
         const supabase = createClient()
@@ -94,7 +122,10 @@ export async function fetchAll<T>(table: string): Promise<T[]> {
         }
 
         devLog(`[DataService] Fetched ${data?.length || 0} rows from ${table}`);
-        return (data || []) as T[];
+        
+        // Transform data from database format to TypeScript format
+        const transformedData = (data || []).map(item => prepareFromDatabase(table, item));
+        return transformedData as T[];
     } catch (err) {
         console.error(`[DataService] Unexpected error fetching ${table}:`, err);
         return [];
@@ -105,7 +136,7 @@ export async function createItem<T>(table: string, item: any): Promise<T> {
     const supabase = createClient()
 
     // Prepare item for Supabase
-    const safeItem = { ...item };
+    let safeItem = { ...item };
 
     // Remove id if empty - let Supabase generate it
     if (safeItem.id === '' || safeItem.id === null || safeItem.id === undefined) {
@@ -119,6 +150,9 @@ export async function createItem<T>(table: string, item: any): Promise<T> {
     if (typeof safeItem.updated_at === 'number') {
         safeItem.updated_at = new Date(safeItem.updated_at).toISOString();
     }
+
+    // Convert field names for database compatibility
+    safeItem = prepareForDatabase(table, safeItem);
 
     devLog(`[DataService] Creating item in '${table}'`, safeItem);
 
@@ -134,20 +168,23 @@ export async function createItem<T>(table: string, item: any): Promise<T> {
     }
 
     devLog(`[DataService] Created item in '${table}':`, data.id);
-    return data as T;
+    return prepareFromDatabase(table, data) as T;
 }
 
 export async function updateItem<T>(table: string, id: string, updates: any): Promise<T> {
     const supabase = createClient()
 
     // Convert timestamps to ISO strings
-    const safeUpdates = { ...updates };
+    let safeUpdates = { ...updates };
     if (typeof safeUpdates.created_at === 'number') {
         safeUpdates.created_at = new Date(safeUpdates.created_at).toISOString();
     }
     if (typeof safeUpdates.updated_at === 'number') {
         safeUpdates.updated_at = new Date(safeUpdates.updated_at).toISOString();
     }
+
+    // Convert field names for database compatibility
+    safeUpdates = prepareForDatabase(table, safeUpdates);
 
     devLog(`[DataService] Updating item in '${table}':`, id);
 
@@ -164,7 +201,7 @@ export async function updateItem<T>(table: string, id: string, updates: any): Pr
     }
 
     devLog(`[DataService] Updated item in '${table}':`, id);
-    return data as T;
+    return prepareFromDatabase(table, data) as T;
 }
 
 export async function deleteItem(table: string, id: string): Promise<void> {

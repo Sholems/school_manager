@@ -270,56 +270,56 @@ export const StudentDashboardView = () => {
     }
 
     return (
-        <div className="space-y-8">
-            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden">
-                <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-                    {/* Student Picture - Issue #1 & #2 Fixed */}
+        <div className="space-y-6 lg:space-y-8">
+            <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden">
+                <div className="relative z-10 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                    {/* Student Picture */}
                     {student.passport_url ? (
                         <img 
                             src={student.passport_url} 
                             alt={student.names}
-                            className="h-24 w-24 rounded-2xl border-4 border-brand-100 object-cover shadow-lg"
+                            className="h-20 w-20 sm:h-24 sm:w-24 rounded-xl sm:rounded-2xl border-4 border-brand-100 object-cover shadow-lg shrink-0"
                         />
                     ) : (
-                        <div className="h-24 w-24 bg-brand-50 rounded-2xl border-4 border-brand-100 flex items-center justify-center text-3xl font-black text-brand-600 shadow-inner">
+                        <div className="h-20 w-20 sm:h-24 sm:w-24 bg-brand-50 rounded-xl sm:rounded-2xl border-4 border-brand-100 flex items-center justify-center text-2xl sm:text-3xl font-black text-brand-600 shadow-inner shrink-0">
                             {student.names.substring(0, 1)}
                         </div>
                     )}
-                    <div className="text-center md:text-left">
-                        <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tight">{student.names}</h1>
-                        <p className="text-gray-500 font-medium">Admission No: <span className="text-brand-600 font-bold">{student.student_no}</span> | Term: {settings.current_term}</p>
+                    <div className="text-center sm:text-left flex-1 min-w-0">
+                        <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-gray-900 uppercase tracking-tight truncate">{student.names}</h1>
+                        <p className="text-gray-500 font-medium text-sm sm:text-base">Admission No: <span className="text-brand-600 font-bold">{student.student_no}</span> | Term: {settings.current_term}</p>
                     </div>
-                    {/* Buttons - Issue #3 & #4 Fixed - Made colorful and better styled */}
-                    <div className="md:ml-auto flex flex-wrap gap-3">
-                        <Link href="/id_cards">
-                            <Button variant="secondary" className="flex gap-2 bg-purple-500 hover:bg-purple-600 text-white border-0 shadow-lg shadow-purple-200">
-                                <BadgeCheck size={18} />
+                    {/* Buttons - Stack on mobile, row on larger screens */}
+                    <div className="w-full sm:w-auto flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 mt-2 sm:mt-0">
+                        <Link href="/id_cards" className="w-full sm:w-auto">
+                            <button className="w-full sm:w-auto flex gap-2 items-center justify-center bg-purple-500 hover:bg-purple-600 text-white px-4 py-2.5 rounded-xl font-bold shadow-lg shadow-purple-200 transition-all text-sm">
+                                <BadgeCheck size={16} />
                                 ID Card
-                            </Button>
+                            </button>
                         </Link>
-                        <Link href="/bursary">
-                            <Button variant="secondary" className="flex gap-2 bg-emerald-500 hover:bg-emerald-600 text-white border-0 shadow-lg shadow-emerald-200">
-                                <Receipt size={18} />
-                                View Invoice
-                            </Button>
+                        <Link href="/bursary" className="w-full sm:w-auto">
+                            <button className="w-full sm:w-auto flex gap-2 items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold shadow-lg shadow-emerald-200 transition-all text-sm">
+                                <Receipt size={16} />
+                                Invoice
+                            </button>
                         </Link>
                         {isResultPublished ? (
                             <button
                                 onClick={() => {
                                     if (myScore) setShowReportCard(true);
                                 }}
-                                className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-brand-200 transition-all"
+                                className="w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-brand-200 transition-all text-sm"
                             >
-                                <Download size={18} />
+                                <Download size={16} />
                                 Report Card
                             </button>
                         ) : (
                             <button
                                 disabled
-                                className="bg-gray-300 text-gray-500 px-6 py-3 rounded-xl font-bold flex items-center gap-2 cursor-not-allowed"
+                                className="w-full sm:w-auto bg-gray-300 text-gray-500 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold flex items-center justify-center gap-2 cursor-not-allowed text-sm"
                                 title="Results not yet published by school administration"
                             >
-                                <Clock size={18} />
+                                <Clock size={16} />
                                 Results Pending
                             </button>
                         )}
@@ -328,20 +328,20 @@ export const StudentDashboardView = () => {
                 <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-brand-50 rounded-full blur-3xl opacity-50"></div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
                 {stats.map((stat, i) => (
-                    <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-                        <div className={`${stat.color} p-3 rounded-xl text-white`}>
-                            <stat.icon size={24} />
+                    <div key={i} className="bg-white p-3 sm:p-4 lg:p-6 rounded-xl lg:rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3 lg:gap-4">
+                        <div className={`${stat.color} p-2 sm:p-3 rounded-lg lg:rounded-xl text-white shrink-0`}>
+                            <stat.icon size={20} className="sm:w-6 sm:h-6" />
                         </div>
-                        <div className="flex-1">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{stat.label}</p>
-                            <div className="flex items-center gap-2">
-                                <p className="text-2xl font-black text-gray-900">{stat.value}</p>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider truncate">{stat.label}</p>
+                            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                                <p className="text-lg sm:text-xl lg:text-2xl font-black text-gray-900">{stat.value}</p>
                                 {stat.trend !== null && stat.trend !== 0 && (
-                                    <span className={`flex items-center gap-0.5 text-xs font-bold px-1.5 py-0.5 rounded-full ${stat.trend > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                    <span className={`flex items-center gap-0.5 text-[10px] sm:text-xs font-bold px-1 sm:px-1.5 py-0.5 rounded-full ${stat.trend > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                                         }`}>
-                                        {stat.trend > 0 ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+                                        {stat.trend > 0 ? <ArrowUp size={10} /> : <ArrowDown size={10} />}
                                         {Math.abs(stat.trend).toFixed(stat.label === 'Rank' ? 0 : 1)}{stat.trendSuffix}
                                     </span>
                                 )}
@@ -353,31 +353,31 @@ export const StudentDashboardView = () => {
 
             {/* Exam Countdown Widget */}
             {nextExam && daysUntilExam !== null && (
-                <div className={`p-4 rounded-2xl border flex items-center gap-4 ${daysUntilExam <= 7 ? 'bg-red-50 border-red-200' :
+                <div className={`p-3 sm:p-4 rounded-xl lg:rounded-2xl border flex items-center gap-3 sm:gap-4 ${daysUntilExam <= 7 ? 'bg-red-50 border-red-200' :
                     daysUntilExam <= 14 ? 'bg-yellow-50 border-yellow-200' :
                         'bg-brand-50 border-brand-200'
                     }`}>
-                    <div className={`p-3 rounded-xl ${daysUntilExam <= 7 ? 'bg-red-500' :
+                    <div className={`p-2 sm:p-3 rounded-lg lg:rounded-xl ${daysUntilExam <= 7 ? 'bg-red-500' :
                         daysUntilExam <= 14 ? 'bg-yellow-500' :
                             'bg-brand-500'
-                        } text-white`}>
-                        <Timer size={24} />
+                        } text-white shrink-0`}>
+                        <Timer size={20} className="sm:w-6 sm:h-6" />
                     </div>
-                    <div className="flex-1">
-                        <p className="text-xs font-bold text-gray-500 uppercase">Upcoming Exam</p>
-                        <p className="font-bold text-gray-900">{nextExam.title}</p>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase">Upcoming Exam</p>
+                        <p className="font-bold text-gray-900 text-sm sm:text-base truncate">{nextExam.title}</p>
                     </div>
-                    <div className="text-right">
-                        <p className={`text-3xl font-black ${daysUntilExam <= 7 ? 'text-red-600' :
+                    <div className="text-right shrink-0">
+                        <p className={`text-2xl sm:text-3xl font-black ${daysUntilExam <= 7 ? 'text-red-600' :
                             daysUntilExam <= 14 ? 'text-yellow-600' :
                                 'text-brand-600'
                             }`}>{daysUntilExam}</p>
-                        <p className="text-xs font-medium text-gray-500">days left</p>
+                        <p className="text-[10px] sm:text-xs font-medium text-gray-500">days left</p>
                     </div>
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                 <div className="lg:col-span-2 space-y-6">
                     {/* Academic Progress Chart */}
                     <AcademicProgressChart scores={scores} studentId={student.id} />

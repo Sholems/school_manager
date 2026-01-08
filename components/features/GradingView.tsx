@@ -379,46 +379,46 @@ export const GradingView: React.FC<GradingViewProps> = ({
     }, [scores, selectedClass, settings.current_session, settings.current_term]);
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center no-print">
-                <h1 className="text-2xl font-bold text-gray-900">Academic Grading</h1>
-                <div className="flex bg-gray-100 p-1 rounded-lg">
-                    <button onClick={() => setActiveTab('broadsheet')} className={`px-4 py-2 text-sm font-medium rounded-md ${activeTab === 'broadsheet' ? 'bg-white shadow text-brand-700' : 'text-gray-600'}`}>Score Entry</button>
-                    <button onClick={() => setActiveTab('skills')} className={`px-4 py-2 text-sm font-medium rounded-md ${activeTab === 'skills' ? 'bg-white shadow text-brand-700' : 'text-gray-600'}`}>Skills & Behavior</button>
-                    <button onClick={() => setActiveTab('report')} className={`px-4 py-2 text-sm font-medium rounded-md ${activeTab === 'report' ? 'bg-white shadow text-brand-700' : 'text-gray-600'}`}>Report Cards</button>
+        <div className="space-y-4 lg:space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
+                <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Academic Grading</h1>
+                <div className="flex bg-gray-100 p-1 rounded-lg overflow-x-auto w-full sm:w-auto">
+                    <button onClick={() => setActiveTab('broadsheet')} className={`px-3 lg:px-4 py-2 text-xs lg:text-sm font-medium rounded-md whitespace-nowrap ${activeTab === 'broadsheet' ? 'bg-white shadow text-brand-700' : 'text-gray-600'}`}>Score Entry</button>
+                    <button onClick={() => setActiveTab('skills')} className={`px-3 lg:px-4 py-2 text-xs lg:text-sm font-medium rounded-md whitespace-nowrap ${activeTab === 'skills' ? 'bg-white shadow text-brand-700' : 'text-gray-600'}`}>Skills</button>
+                    <button onClick={() => setActiveTab('report')} className={`px-3 lg:px-4 py-2 text-xs lg:text-sm font-medium rounded-md whitespace-nowrap ${activeTab === 'report' ? 'bg-white shadow text-brand-700' : 'text-gray-600'}`}>Report Cards</button>
                     {currentRole === 'admin' && (
-                        <button onClick={() => setActiveTab('publish')} className={`px-4 py-2 text-sm font-medium rounded-md flex items-center gap-1 ${activeTab === 'publish' ? 'bg-white shadow text-brand-700' : 'text-gray-600'}`}>
-                            <Shield className="h-4 w-4" />
-                            Publish Results
+                        <button onClick={() => setActiveTab('publish')} className={`px-3 lg:px-4 py-2 text-xs lg:text-sm font-medium rounded-md flex items-center gap-1 whitespace-nowrap ${activeTab === 'publish' ? 'bg-white shadow text-brand-700' : 'text-gray-600'}`}>
+                            <Shield className="h-3 w-3 lg:h-4 lg:w-4" />
+                            Publish
                         </button>
                     )}
                 </div>
             </div>
             {activeTab === 'broadsheet' && (
-                <Card className="min-h-[600px] flex flex-col">
-                    <div className="flex gap-4 mb-6 p-4 bg-gray-50 border-b">
-                        <div className="w-1/3">
+                <Card className="min-h-[400px] lg:min-h-[600px] flex flex-col">
+                    <div className="flex flex-col sm:flex-row gap-3 lg:gap-4 mb-4 lg:mb-6 p-3 lg:p-4 bg-gray-50 border-b">
+                        <div className="w-full sm:w-1/3">
                             <Select label="Select Class" value={selectedClass} onChange={e => setSelectedClass(e.target.value)}>
                                 {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </Select>
                         </div>
-                        <div className="w-1/3">
+                        <div className="w-full sm:w-1/3">
                             <Select label="Select Subject" value={selectedSubject} onChange={e => setSelectedSubject(e.target.value)}>
                                 {classSubjects.map(s => <option key={s} value={s}>{s}</option>)}
                             </Select>
                         </div>
                     </div>
-                    <div className="overflow-x-auto flex-1">
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-gray-100 text-gray-700 uppercase text-xs font-semibold">
+                    <div className="overflow-x-auto flex-1 -mx-3 lg:mx-0">
+                        <table className="w-full text-xs lg:text-sm text-left min-w-[600px]">
+                            <thead className="bg-gray-100 text-gray-700 uppercase text-[10px] lg:text-xs font-semibold">
                                 <tr>
-                                    <th className="px-4 py-3 sticky left-0 bg-gray-100">Student Name</th>
-                                    <th className="px-4 py-3 text-center">HW/CW (20)</th>
-                                    <th className="px-4 py-3 text-center">CAT (20)</th>
-                                    <th className="px-4 py-3 text-center">Exam (60)</th>
-                                    <th className="px-4 py-3 text-center">Total (100)</th>
-                                    <th className="px-4 py-3 text-center">Grade</th>
-                                    <th className="px-4 py-3">Remark</th>
+                                    <th className="px-2 lg:px-4 py-2 lg:py-3 sticky left-0 bg-gray-100 min-w-[120px]">Student</th>
+                                    <th className="px-2 lg:px-4 py-2 lg:py-3 text-center">HW/CW</th>
+                                    <th className="px-2 lg:px-4 py-2 lg:py-3 text-center">CAT</th>
+                                    <th className="px-2 lg:px-4 py-2 lg:py-3 text-center">Exam</th>
+                                    <th className="px-2 lg:px-4 py-2 lg:py-3 text-center">Total</th>
+                                    <th className="px-2 lg:px-4 py-2 lg:py-3 text-center">Grade</th>
+                                    <th className="px-2 lg:px-4 py-2 lg:py-3 hidden sm:table-cell">Remark</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
@@ -426,13 +426,16 @@ export const GradingView: React.FC<GradingViewProps> = ({
                                     const row = getRow(s.id);
                                     return (
                                         <tr key={s.id} className="hover:bg-gray-50">
-                                            <td className="px-4 py-2 font-medium text-gray-900 sticky left-0 bg-white">{s.names} <div className="text-xs text-gray-500 font-normal">{s.student_no}</div></td>
-                                            <td className="px-4 py-2 text-center"><ScoreInput value={row.ca1} max={20} onChange={(v) => handleScoreChange(s.id, 'ca1', v)} /></td>
-                                            <td className="px-4 py-2 text-center"><ScoreInput value={row.ca2} max={20} onChange={(v) => handleScoreChange(s.id, 'ca2', v)} /></td>
-                                            <td className="px-4 py-2 text-center"><ScoreInput value={row.exam} max={60} onChange={(v) => handleScoreChange(s.id, 'exam', v)} /></td>
-                                            <td className="px-4 py-2 text-center font-bold"><span className={row.total < 40 ? 'text-red-600' : 'text-gray-900'}>{row.total}</span></td>
-                                            <td className="px-4 py-2 text-center"><span className={`px-2 py-1 rounded text-xs font-bold ${row.grade === 'A' ? 'bg-green-100 text-green-800' : row.grade === 'F' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>{row.grade}</span></td>
-                                            <td className="px-4 py-2 text-xs text-gray-500">{row.comment}</td>
+                                            <td className="px-2 lg:px-4 py-2 font-medium text-gray-900 sticky left-0 bg-white">
+                                                <span className="block truncate max-w-[100px] lg:max-w-none">{s.names}</span>
+                                                <span className="text-[10px] lg:text-xs text-gray-500 font-normal">{s.student_no}</span>
+                                            </td>
+                                            <td className="px-2 lg:px-4 py-2 text-center"><ScoreInput value={row.ca1} max={20} onChange={(v) => handleScoreChange(s.id, 'ca1', v)} className="!w-12 lg:!w-16" /></td>
+                                            <td className="px-2 lg:px-4 py-2 text-center"><ScoreInput value={row.ca2} max={20} onChange={(v) => handleScoreChange(s.id, 'ca2', v)} className="!w-12 lg:!w-16" /></td>
+                                            <td className="px-2 lg:px-4 py-2 text-center"><ScoreInput value={row.exam} max={60} onChange={(v) => handleScoreChange(s.id, 'exam', v)} className="!w-12 lg:!w-16" /></td>
+                                            <td className="px-2 lg:px-4 py-2 text-center font-bold"><span className={row.total < 40 ? 'text-red-600' : 'text-gray-900'}>{row.total}</span></td>
+                                            <td className="px-2 lg:px-4 py-2 text-center"><span className={`px-1.5 lg:px-2 py-0.5 lg:py-1 rounded text-[10px] lg:text-xs font-bold ${row.grade === 'A' ? 'bg-green-100 text-green-800' : row.grade === 'F' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>{row.grade}</span></td>
+                                            <td className="px-2 lg:px-4 py-2 text-xs text-gray-500 hidden sm:table-cell">{row.comment}</td>
                                         </tr>
                                     );
                                 })}

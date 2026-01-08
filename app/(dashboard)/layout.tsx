@@ -26,8 +26,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     // Settings from TanStack Query - only enabled once auth is ready
     const { data: settings = Utils.INITIAL_SETTINGS, isLoading: settingsLoading } = useSettings();
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Start closed on mobile
     const pathname = usePathname();
+
+    // Set sidebar open by default on desktop
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth >= 1024) {
+                setIsSidebarOpen(true);
+            }
+        };
+        handleResize(); // Check on mount
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Sync Supabase Auth with Zustand Store (for auth only)
     useEffect(() => {
@@ -108,63 +120,85 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     return (
         <div className="h-screen bg-gray-50 flex overflow-hidden">
+            {/* Mobile Sidebar Overlay */}
+            {isSidebarOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/50 z-30 lg:hidden" 
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
-            <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} h-full bg-brand-900 transition-all duration-300 flex flex-col fixed inset-y-0 z-40 lg:relative no-print`}>
-                <div className="h-20 flex items-center px-6 border-b border-white/10 shrink-0 gap-3">
+            <aside className={`
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} 
+                ${isSidebarOpen ? 'w-64' : 'lg:w-20'} 
+                w-64 h-full bg-brand-900 transition-all duration-300 flex flex-col fixed inset-y-0 z-40 no-print
+            `}>
+                <div className="h-16 lg:h-20 flex items-center px-4 lg:px-6 border-b border-white/10 shrink-0 gap-3">
                     <div className="h-10 w-10 bg-white rounded-lg flex items-center justify-center text-brand-600 font-bold shrink-0 shadow-sm">
                         <img src={settings.logo_media || '/fruitful_logo_main.png'} alt="Logo" className="h-8 w-8 object-contain" />
                     </div>
-                    {isSidebarOpen && <span className="ml-3 text-white font-bold text-xl truncate tracking-tight">{settings.school_name.split(' ')[0]}</span>}
+                    <span className={`${isSidebarOpen ? 'block' : 'lg:hidden'} ml-2 text-white font-bold text-lg lg:text-xl truncate tracking-tight`}>
+                        {settings.school_name.split(' ')[0]}
+                    </span>
+                    {/* Mobile close button */}
+                    <button 
+                        onClick={() => setIsSidebarOpen(false)} 
+                        className="lg:hidden ml-auto p-2 text-white/70 hover:text-white"
+                    >
+                        <Menu className="h-5 w-5" />
+                    </button>
                 </div>
 
-                <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar text-white">
+                <nav className="flex-1 px-3 lg:px-4 py-4 lg:py-6 space-y-1 overflow-y-auto custom-scrollbar text-white">
                     {filteredNavigation.map((item) => (
                         <Link
                             key={item.id}
                             href={item.href}
-                            className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${pathname === item.href
+                            onClick={() => setIsSidebarOpen(false)}
+                            className={`w-full flex items-center px-3 lg:px-4 py-2.5 lg:py-3 text-sm font-medium rounded-lg transition-colors group ${pathname === item.href
                                 ? 'bg-white/10 text-white'
                                 : 'text-brand-100 hover:bg-white/5 hover:text-white'
                                 }`}
                         >
                             <item.icon className="h-5 w-5 shrink-0" />
-                            {isSidebarOpen && <span className="ml-3">{item.name}</span>}
+                            <span className={`${isSidebarOpen ? 'block' : 'lg:hidden'} ml-3`}>{item.name}</span>
                         </Link>
                     ))}
                 </nav>
 
-                <div className="p-4 border-t border-white/10 shrink-0">
+                <div className="p-3 lg:p-4 border-t border-white/10 shrink-0">
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center px-4 py-3 text-sm font-medium text-brand-100 hover:bg-white/5 hover:text-white rounded-lg transition-colors"
+                        className="w-full flex items-center px-3 lg:px-4 py-2.5 lg:py-3 text-sm font-medium text-brand-100 hover:bg-white/5 hover:text-white rounded-lg transition-colors"
                     >
                         <LogOut className="h-5 w-5 shrink-0" />
-                        {isSidebarOpen && <span className="ml-3">Log Out</span>}
+                        <span className={`${isSidebarOpen ? 'block' : 'lg:hidden'} ml-3`}>Log Out</span>
                     </button>
                 </div>
             </aside>
 
-            {/* Main Content */}
-            <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-                <header className="h-20 bg-white border-b sticky top-0 z-30 flex items-center justify-between px-6 no-print shadow-sm shrink-0">
+            {/* Main Content - Adjust margin for sidebar */}
+            <main className={`flex-1 flex flex-col min-w-0 h-full overflow-hidden transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
+                <header className="h-16 lg:h-20 bg-white border-b sticky top-0 z-20 flex items-center justify-between px-4 lg:px-6 no-print shadow-sm shrink-0">
                     <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-md transition-colors hover:bg-gray-100">
-                        {isSidebarOpen ? <Menu className="h-6 w-6 text-gray-600" /> : <Menu className="h-6 w-6 text-gray-600 rotate-90 transition-transform" />}
+                        <Menu className="h-5 w-5 lg:h-6 lg:w-6 text-gray-600" />
                     </button>
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-3 lg:gap-6">
                         <NotificationCenter />
-                        <div className="flex items-center gap-4 border-l pl-6">
+                        <div className="flex items-center gap-2 lg:gap-4 border-l pl-3 lg:pl-6">
                             <div className="text-right hidden sm:block">
-                                <p className="text-sm font-bold text-gray-900 uppercase tracking-tight">{currentRole}</p>
+                                <p className="text-xs lg:text-sm font-bold text-gray-900 uppercase tracking-tight">{currentRole}</p>
                                 <p className="text-xs text-brand-600 font-medium">{settings.current_term}</p>
                             </div>
-                            <div className="h-10 w-10 bg-brand-50 rounded-full border-2 border-brand-100 flex items-center justify-center font-bold text-brand-700 uppercase">
+                            <div className="h-8 w-8 lg:h-10 lg:w-10 bg-brand-50 rounded-full border-2 border-brand-100 flex items-center justify-center font-bold text-brand-700 uppercase text-xs lg:text-sm">
                                 {currentRole.substring(0, 2)}
                             </div>
                         </div>
                     </div>
                 </header>
 
-                <div className="flex-1 overflow-y-auto p-6 md:p-8">
+                <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
                     <div className="max-w-7xl mx-auto">
                         {children}
                     </div>
