@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Phone, MapPin, Edit, User } from 'lucide-react';
+import { Plus, Trash2, Phone, MapPin, Edit, User, Key, Shield, Eye, EyeOff } from 'lucide-react';
 import * as Types from '@/lib/types';
 import * as Utils from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,11 @@ interface TeachersViewProps {
 
 export const TeachersView: React.FC<TeachersViewProps> = ({ teachers, onAdd, onUpdate, onDelete }) => {
     const [showModal, setShowModal] = useState(false);
+    const [showLoginModal, setShowLoginModal] = useState(false);
+    const [selectedTeacher, setSelectedTeacher] = useState<Types.Teacher | null>(null);
+    const [loginPassword, setLoginPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [isCreatingLogin, setIsCreatingLogin] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [formData, setFormData] = useState<Partial<Types.Teacher>>({
         name: '', email: '', phone: '', address: '', passport_url: null
@@ -34,6 +39,52 @@ export const TeachersView: React.FC<TeachersViewProps> = ({ teachers, onAdd, onU
         setFormData({ name: '', email: '', phone: '', address: '', passport_url: null });
         setEditingId(null);
         setShowModal(true);
+    };
+
+    const handleCreateLoginAccount = (teacher: Types.Teacher) => {
+        if (!teacher.email) {
+            addToast('Teacher must have an email address to create login account', 'error');
+            return;
+        }
+        setSelectedTeacher(teacher);
+        setLoginPassword('');
+        setShowLoginModal(true);
+    };
+
+    const handleSubmitLoginAccount = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedTeacher || !loginPassword) return;
+
+        setIsCreatingLogin(true);
+        try {
+            const response = await fetch('/api/auth/create-staff-account', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    profileId: selectedTeacher.id,
+                    profileType: 'teacher',
+                    email: selectedTeacher.email,
+                    password: loginPassword,
+                    name: selectedTeacher.name
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                addToast(data.error || 'Failed to create login account', 'error');
+                return;
+            }
+
+            addToast(`Login account created! Email: ${selectedTeacher.email}`, 'success');
+            setShowLoginModal(false);
+            setSelectedTeacher(null);
+            setLoginPassword('');
+        } catch (error) {
+            addToast('An error occurred. Please try again.', 'error');
+        } finally {
+            setIsCreatingLogin(false);
+        }
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -85,6 +136,13 @@ export const TeachersView: React.FC<TeachersViewProps> = ({ teachers, onAdd, onU
                                 </div>
                             </div>
                             <div className="flex gap-1">
+                                <button 
+                                    onClick={() => handleCreateLoginAccount(t)} 
+                                    className="text-gray-400 hover:text-green-600 transition-colors p-1"
+                                    title="Create Login Account"
+                                >
+                                    <Key className="h-4 w-4" />
+                                </button>
                                 <button onClick={() => handleEdit(t)} className="text-gray-400 hover:text-brand-600 transition-colors p-1">
                                     <Edit className="h-4 w-4" />
                                 </button>
@@ -148,7 +206,60 @@ export const TeachersView: React.FC<TeachersViewProps> = ({ teachers, onAdd, onU
                     </Button>
                 </form>
             </Modal>
+
+            {/* Create Login Account Modal */}
+            <Modal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} title="Create Login Account">
+                <form onSubmit={handleSubmitLoginAccount} className="space-y-4">
+                    <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-lg">
+                        <div className="h-12 w-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">
+                            <Shield className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-gray-900">{selectedTeacher?.name}</h3>
+                            <p className="text-sm text-gray-600">{selectedTeacher?.email}</p>
+                        </div>
+                    </div>
+
+                    <div className="p-4 bg-blue-50 rounded-lg text-sm text-blue-800">
+                        <p className="font-medium mb-1">📧 Login Email:</p>
+                        <p className="font-mono bg-white px-2 py-1 rounded">{selectedTeacher?.email}</p>
+                    </div>
+
+                    <div className="relative">
+                        <Input
+                            label="Set Password"
+                            type={showPassword ? "text" : "password"}
+                            required
+                            value={loginPassword}
+                            onChange={e => setLoginPassword(e.target.value)}
+                            placeholder="Minimum 8 characters"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-9 text-gray-400 hover:text-gray-600"
+                        >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                    </div>
+
+                    {loginPassword && loginPassword.length < 8 && (
+                        <p className="text-sm text-red-500">Password must be at least 8 characters</p>
+                    )}
+
+                    <Button 
+                        type="submit" 
+                        className="w-full bg-green-600 hover:bg-green-700"
+                        disabled={isCreatingLogin || loginPassword.length < 8}
+                    >
+                        {isCreatingLogin ? 'Creating...' : 'Create Login Account'}
+                    </Button>
+
+                    <p className="text-xs text-gray-500 text-center">
+                        The teacher can use their email and this password to login to the dashboard.
+                    </p>
+                </form>
+            </Modal>
         </div>
     );
 };
-

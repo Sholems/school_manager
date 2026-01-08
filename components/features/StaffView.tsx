@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Key, Shield, Eye, EyeOff } from 'lucide-react';
 import * as Types from '@/lib/types';
 import * as Utils from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,11 @@ interface StaffViewProps {
 
 export const StaffView: React.FC<StaffViewProps> = ({ staff, onAdd, onDelete }) => {
     const [showModal, setShowModal] = useState(false);
+    const [showLoginModal, setShowLoginModal] = useState(false);
+    const [selectedStaff, setSelectedStaff] = useState<Types.Staff | null>(null);
+    const [loginPassword, setLoginPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [isCreatingLogin, setIsCreatingLogin] = useState(false);
     const [formData, setFormData] = useState({ name: '', role: '', tasks: '', email: '', phone: '', address: '', assigned_modules: [] as string[], passport_url: null as string | null });
     const { addToast } = useToast();
 
@@ -62,6 +67,52 @@ export const StaffView: React.FC<StaffViewProps> = ({ staff, onAdd, onDelete }) 
         setFormData({ name: '', role: '', tasks: '', email: '', phone: '', address: '', assigned_modules: [], passport_url: null });
     };
 
+    const handleCreateLoginAccount = (staffMember: Types.Staff) => {
+        if (!staffMember.email) {
+            addToast('Staff member must have an email address to create login account', 'error');
+            return;
+        }
+        setSelectedStaff(staffMember);
+        setLoginPassword('');
+        setShowLoginModal(true);
+    };
+
+    const handleSubmitLoginAccount = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedStaff || !loginPassword) return;
+
+        setIsCreatingLogin(true);
+        try {
+            const response = await fetch('/api/auth/create-staff-account', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    profileId: selectedStaff.id,
+                    profileType: 'staff',
+                    email: selectedStaff.email,
+                    password: loginPassword,
+                    name: selectedStaff.name
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                addToast(data.error || 'Failed to create login account', 'error');
+                return;
+            }
+
+            addToast(`Login account created! Email: ${selectedStaff.email}`, 'success');
+            setShowLoginModal(false);
+            setSelectedStaff(null);
+            setLoginPassword('');
+        } catch (error) {
+            addToast('An error occurred. Please try again.', 'error');
+        } finally {
+            setIsCreatingLogin(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center"><div><h1 className="text-2xl font-bold text-gray-900">Non-Academic Staff</h1><p className="text-gray-500">Manage support staff and roles</p></div><Button onClick={() => setShowModal(true)}><Plus className="h-4 w-4 mr-2" /> Add Staff</Button></div>
@@ -88,7 +139,18 @@ export const StaffView: React.FC<StaffViewProps> = ({ staff, onAdd, onDelete }) 
                                     </div>
                                 </td>
                                 <td className="px-4 py-3 text-xs">{s.phone}</td>
-                                <td className="px-4 py-3 text-right"><button onClick={() => onDelete(s.id)} className="text-gray-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button></td>
+                                <td className="px-4 py-3 text-right flex items-center justify-end gap-2">
+                                    <button 
+                                        onClick={() => handleCreateLoginAccount(s)} 
+                                        className="text-gray-400 hover:text-green-600"
+                                        title="Create Login Account"
+                                    >
+                                        <Key className="h-4 w-4" />
+                                    </button>
+                                    <button onClick={() => onDelete(s.id)} className="text-gray-400 hover:text-red-600">
+                                        <Trash2 className="h-4 w-4" />
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
@@ -137,6 +199,60 @@ export const StaffView: React.FC<StaffViewProps> = ({ staff, onAdd, onDelete }) 
                     <div className="grid grid-cols-2 gap-4"><Input label="Phone" required value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} /><Input label="Email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} /></div>
                     <Input label="Address" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
                     <Button type="submit" className="w-full">Save Staff Member</Button>
+                </form>
+            </Modal>
+
+            {/* Create Login Account Modal */}
+            <Modal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} title="Create Login Account">
+                <form onSubmit={handleSubmitLoginAccount} className="space-y-4">
+                    <div className="flex items-center gap-3 p-4 bg-amber-50 rounded-lg">
+                        <div className="h-12 w-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+                            <Shield className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-gray-900">{selectedStaff?.name}</h3>
+                            <p className="text-sm text-gray-600">{selectedStaff?.role} • {selectedStaff?.email}</p>
+                        </div>
+                    </div>
+
+                    <div className="p-4 bg-blue-50 rounded-lg text-sm text-blue-800">
+                        <p className="font-medium mb-1">📧 Login Email:</p>
+                        <p className="font-mono bg-white px-2 py-1 rounded">{selectedStaff?.email}</p>
+                    </div>
+
+                    <div className="relative">
+                        <Input
+                            label="Set Password"
+                            type={showPassword ? "text" : "password"}
+                            required
+                            value={loginPassword}
+                            onChange={e => setLoginPassword(e.target.value)}
+                            placeholder="Minimum 8 characters"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-9 text-gray-400 hover:text-gray-600"
+                        >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                    </div>
+
+                    {loginPassword && loginPassword.length < 8 && (
+                        <p className="text-sm text-red-500">Password must be at least 8 characters</p>
+                    )}
+
+                    <Button 
+                        type="submit" 
+                        className="w-full bg-green-600 hover:bg-green-700"
+                        disabled={isCreatingLogin || loginPassword.length < 8}
+                    >
+                        {isCreatingLogin ? 'Creating...' : 'Create Login Account'}
+                    </Button>
+
+                    <p className="text-xs text-gray-500 text-center">
+                        The staff member can use their email and this password to login.
+                    </p>
                 </form>
             </Modal>
         </div>

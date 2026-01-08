@@ -27,7 +27,7 @@ export const LoginView = () => {
     // Use TanStack Query for data
     const { data: students = [] } = useStudents();
     const { data: settings = Utils.INITIAL_SETTINGS } = useSettings();
-    const { signIn, isDemo } = useAuth();
+    const { signIn, isDemo, supabase } = useAuth();
     const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
 
     // Student/Parent login form state
@@ -129,9 +129,16 @@ export const LoginView = () => {
                 return;
             }
 
-            // Student is now authenticated via Supabase Auth
-            // The session is automatically managed by Supabase
-            // Just set the local state for immediate UI update
+            // Set the session in the browser's Supabase client
+            // This is critical - the API signed in server-side, but we need the session client-side
+            if (data.session) {
+                await supabase.auth.setSession({
+                    access_token: data.session.access_token,
+                    refresh_token: data.session.refresh_token
+                });
+            }
+
+            // Set local state for immediate UI update
             login('student', data.student);
             
             // Redirect to dashboard

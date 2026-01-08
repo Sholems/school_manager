@@ -32,59 +32,78 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
 
     const supabase = createClient()
 
-    // Fetch user profile data from user_profiles table
-    const fetchUserData = useCallback(async (userId: string, email?: string) => {
+    // Fetch user profile data from user_profiles table with timeout
+    const fetchUserData = useCallback(async (userId: string, email?: string): Promise<UserData> => {
+        console.log('[Auth] Fetching user data for:', userId, email)
+        
+        // Default user data to return on any failure
+        const defaultUserData: UserData = {
+            id: userId,
+            email: email || '',
+            role: email?.includes('@student.') ? 'student' : 'admin',
+            profile_id: null,
+            profile_type: null
+        }
+
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise<null>((resolve) => {
+            setTimeout(() => {
+                console.log('[Auth] Query timeout - using default')
+                resolve(null)
+            }, 5000) // 5 second timeout
+        })
+
         try {
-            // First try user_profiles table (new unified auth)
-            const { data: profileData, error: profileError } = await supabase
+            // First try user_profiles table (new unified auth for students)
+            const profilePromise = supabase
                 .from('user_profiles')
                 .select('id, role, profile_id, profile_type, email')
                 .eq('auth_id', userId)
                 .maybeSingle()
 
-            if (profileData) {
-                return {
-                    id: userId,
-                    email: profileData.email || email || '',
-                    role: profileData.role as 'admin' | 'teacher' | 'student' | 'staff',
-                    profile_id: profileData.profile_id,
-                    profile_type: profileData.profile_type as 'teacher' | 'student' | 'staff' | null
-                } as UserData
+            const profileResult = await Promise.race([profilePromise, timeoutPromise])
+            
+            if (profileResult && 'data' in profileResult) {
+                const { data: profileData, error: profileError } = profileResult
+                console.log('[Auth] user_profiles query result:', { profileData, profileError })
+
+                if (profileData && !profileError) {
+                    console.log('[Auth] Found user in user_profiles:', profileData.role)
+                    return {
+                        id: userId,
+                        email: profileData.email || email || '',
+                        role: profileData.role as 'admin' | 'teacher' | 'student' | 'staff',
+                        profile_id: profileData.profile_id,
+                        profile_type: profileData.profile_type as 'teacher' | 'student' | 'staff' | null
+                    }
+                }
             }
 
             // Fallback to old users table for existing admin/staff
-            const { data, error } = await supabase
+            const usersPromise = supabase
                 .from('users')
                 .select('id, email, role, profile_id, profile_type')
                 .eq('id', userId)
                 .maybeSingle()
 
-            if (error) {
-                console.warn('Could not fetch user profile:', error.message || 'Unknown error')
-                return {
-                    id: userId,
-                    email: email || '',
-                    role: 'admin' as const,
-                    profile_id: null,
-                    profile_type: null
-                } as UserData
+            const usersResult = await Promise.race([usersPromise, timeoutPromise])
+            
+            if (usersResult && 'data' in usersResult) {
+                const { data, error } = usersResult
+                console.log('[Auth] users table query result:', { data, error })
+
+                if (!error && data) {
+                    console.log('[Auth] Found user in users table:', data.role)
+                    return data as UserData
+                }
             }
 
-            if (!data) {
-                console.warn('No user record found, using default admin role')
-                return {
-                    id: userId,
-                    email: email || '',
-                    role: 'admin' as const,
-                    profile_id: null,
-                    profile_type: null
-                } as UserData
-            }
-
-            return data as UserData
+            // If no record found anywhere, return default based on email pattern
+            console.log('[Auth] No profile found, using default for:', email)
+            return defaultUserData
         } catch (error) {
-            console.error('Error fetching user data:', error)
-            return null
+            console.error('[Auth] Error fetching user data:', error)
+            return defaultUserData
         }
     }, [supabase])
 

@@ -24,13 +24,30 @@ CREATE INDEX IF NOT EXISTS idx_user_profiles_role ON user_profiles(role);
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for user_profiles
-CREATE POLICY "Users can read their own profile"
+-- Drop existing policies first (in case re-running)
+DROP POLICY IF EXISTS "Users can read their own profile" ON user_profiles;
+DROP POLICY IF EXISTS "Service role can manage all profiles" ON user_profiles;
+DROP POLICY IF EXISTS "Authenticated users can read own profile" ON user_profiles;
+DROP POLICY IF EXISTS "Anon users can read profiles" ON user_profiles;
+
+-- Allow authenticated users to read their own profile
+CREATE POLICY "Authenticated users can read own profile"
     ON user_profiles FOR SELECT
+    TO authenticated
     USING (auth.uid() = auth_id);
 
-CREATE POLICY "Service role can manage all profiles"
-    ON user_profiles FOR ALL
+-- Allow anon role to select (needed during login flow before session is established)
+CREATE POLICY "Anon users can read profiles"
+    ON user_profiles FOR SELECT
+    TO anon
     USING (true);
+
+-- Allow service role full access (for creating profiles via API)
+CREATE POLICY "Service role full access"
+    ON user_profiles FOR ALL
+    TO service_role
+    USING (true)
+    WITH CHECK (true);
 
 -- Function to automatically create auth account for student
 CREATE OR REPLACE FUNCTION create_student_auth_account(

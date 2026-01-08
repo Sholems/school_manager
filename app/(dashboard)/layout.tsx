@@ -102,14 +102,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         return <LoginView />;
     }
 
-    // Wait for user data to be fetched from user_profiles
-    if (user && !userData && !currentUser) {
-        return (
-            <div className="h-screen w-full flex items-center justify-center bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
-            </div>
-        );
-    }
+    // If user is authenticated but no userData yet, we may still be loading
+    // But don't block forever - after auth loads, userData should always be set
+    // The auth provider now always returns userData (even default) so this shouldn't trigger
 
     return (
         <div className="h-screen bg-gray-50 flex overflow-hidden">
