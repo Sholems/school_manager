@@ -224,6 +224,7 @@ CREATE TABLE announcements (
     target TEXT DEFAULT 'all' CHECK (target IN ('all', 'class', 'parents', 'teachers', 'staff')),
     class_id UUID REFERENCES classes(id) ON DELETE SET NULL,
     author_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    author_role TEXT DEFAULT 'admin' CHECK (author_role IN ('admin', 'teacher', 'staff', 'parent', 'student')),
     priority TEXT DEFAULT 'normal' CHECK (priority IN ('normal', 'important', 'urgent')),
     expires_at TIMESTAMPTZ,
     is_pinned BOOLEAN DEFAULT FALSE,

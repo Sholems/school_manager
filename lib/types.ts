@@ -258,8 +258,14 @@ export interface SchoolEvent extends Entity {
   description?: string;
   start_date: string;
   end_date?: string;
-  event_type: 'academic' | 'holiday' | 'exam' | 'meeting' | 'other';
-  target_audience: 'all' | 'teachers' | 'students' | 'parents';
+  event_type: 'academic' | 'holiday' | 'exam' | 'meeting' | 'sports' | 'cultural' | 'other';
+  target_audience: 'all' | 'teachers' | 'students' | 'parents' | 'staff';
+  class_id?: string; // For class-specific events
+  is_recurring?: boolean;
+  recurrence_pattern?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  session?: string;
+  term?: string;
+  created_by?: string; // User ID who created the event
 }
 
 // Phase 4: Newsletters

@@ -3,9 +3,11 @@
 import React, { useState, useMemo } from 'react';
 import {
     Calendar as CalendarIcon, Plus, Trash2, Edit, ChevronLeft, ChevronRight,
-    GraduationCap, Coffee, FileText, Users, MoreHorizontal
+    GraduationCap, Coffee, FileText, Users, MoreHorizontal, Trophy, Music, X,
+    List, Grid, Clock
 } from 'lucide-react';
 import { useSchoolStore } from '@/lib/store';
+import { useAuth } from '@/components/providers/supabase-auth-provider';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
@@ -15,20 +17,26 @@ import { useToast } from '@/components/providers/toast-provider';
 import * as Utils from '@/lib/utils';
 import * as Types from '@/lib/types';
 import {
-    useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent
+    useEvents, useClasses, useSettings,
+    useCreateEvent, useUpdateEvent, useDeleteEvent
 } from '@/lib/hooks/use-data';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+type ViewMode = 'month' | 'agenda';
+
 export const CalendarView: React.FC = () => {
     // Auth
-    const { currentRole } = useSchoolStore();
+    const { currentRole, currentUser } = useSchoolStore();
+    const { user: authUser } = useAuth();
     const { addToast } = useToast();
 
     // Data Hooks
     const { data: events = [] } = useEvents();
+    const { data: classes = [] } = useClasses();
+    const { data: settings = Utils.INITIAL_SETTINGS } = useSettings();
 
     // Mutations
     const { mutate: addEvent } = useCreateEvent();
@@ -38,9 +46,12 @@ export const CalendarView: React.FC = () => {
     // Role-based access control
     const isReadOnlyRole = currentRole === 'student' || currentRole === 'parent';
 
+    const [viewMode, setViewMode] = useState<ViewMode>('month');
     const [currentDate, setCurrentDate] = useState(new Date());
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<Types.SchoolEvent | null>(null);
+    const [viewingEvent, setViewingEvent] = useState<Types.SchoolEvent | null>(null);
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
     // Form state
@@ -50,6 +61,7 @@ export const CalendarView: React.FC = () => {
     const [endDate, setEndDate] = useState('');
     const [eventType, setEventType] = useState<Types.SchoolEvent['event_type']>('academic');
     const [targetAudience, setTargetAudience] = useState<Types.SchoolEvent['target_audience']>('all');
+    const [selectedClassId, setSelectedClassId] = useState<string>('');
 
     const resetForm = () => {
         setTitle('');
@@ -58,7 +70,14 @@ export const CalendarView: React.FC = () => {
         setEndDate('');
         setEventType('academic');
         setTargetAudience('all');
+        setSelectedClassId('');
         setEditingEvent(null);
+    };
+
+    // View event details (for all users)
+    const handleViewEvent = (event: Types.SchoolEvent) => {
+        setViewingEvent(event);
+        setIsViewModalOpen(true);
     };
 
     const handleOpenModal = (event?: Types.SchoolEvent, date?: string) => {
@@ -71,6 +90,7 @@ export const CalendarView: React.FC = () => {
             setEndDate(event.end_date || '');
             setEventType(event.event_type);
             setTargetAudience(event.target_audience);
+            setSelectedClassId(event.class_id || '');
         } else {
             resetForm();
             if (date) setStartDate(date);
@@ -92,6 +112,10 @@ export const CalendarView: React.FC = () => {
             end_date: endDate || undefined,
             event_type: eventType,
             target_audience: targetAudience,
+            class_id: selectedClassId || undefined,
+            session: settings.current_session,
+            term: settings.current_term,
+            created_by: editingEvent?.created_by || authUser?.id || undefined,
             created_at: editingEvent?.created_at || Date.now(),
             updated_at: Date.now()
         };
@@ -113,16 +137,34 @@ export const CalendarView: React.FC = () => {
         addToast('Event deleted', 'info');
     };
 
-    // Filter events based on role
+    // Get student's class for filtering class-specific events
+    const userClassId = useMemo(() => {
+        if (currentRole === 'student' && currentUser?.class_id) {
+            return currentUser.class_id;
+        }
+        return null;
+    }, [currentRole, currentUser]);
+
+    // Filter events based on role and target audience
     const filteredEvents = useMemo(() => {
-        if (!isReadOnlyRole) return events;
-        // For students/parents, show events targeted at all, students, or parents
-        return events.filter(e =>
-            e.target_audience === 'all' ||
-            e.target_audience === 'students' ||
-            e.target_audience === 'parents'
-        );
-    }, [events, isReadOnlyRole]);
+        return events.filter(e => {
+            // Admins see everything
+            if (currentRole === 'admin') return true;
+            
+            // Check target audience
+            if (e.target_audience === 'all') return true;
+            if (e.target_audience === currentRole) return true;
+            if (e.target_audience === 'students' && currentRole === 'parent') return true;
+            
+            // Check class-specific events
+            if (e.class_id && userClassId && e.class_id === userClassId) return true;
+            
+            // Teachers can see teacher and student events
+            if (currentRole === 'teacher' && (e.target_audience === 'teachers' || e.target_audience === 'students')) return true;
+            
+            return false;
+        });
+    }, [events, currentRole, userClassId]);
 
     // Calendar calculations
     const year = currentDate.getFullYear();
@@ -182,19 +224,32 @@ export const CalendarView: React.FC = () => {
             case 'holiday': return <Coffee className="h-3 w-3" />;
             case 'exam': return <FileText className="h-3 w-3" />;
             case 'meeting': return <Users className="h-3 w-3" />;
+            case 'sports': return <Trophy className="h-3 w-3" />;
+            case 'cultural': return <Music className="h-3 w-3" />;
             default: return <MoreHorizontal className="h-3 w-3" />;
         }
     };
 
     const getEventTypeColor = (type: Types.SchoolEvent['event_type']) => {
         switch (type) {
-            case 'academic': return 'bg-blue-100 text-blue-700';
-            case 'holiday': return 'bg-green-100 text-green-700';
-            case 'exam': return 'bg-red-100 text-red-700';
-            case 'meeting': return 'bg-purple-100 text-purple-700';
-            default: return 'bg-gray-100 text-gray-700';
+            case 'academic': return 'bg-blue-100 text-blue-700 border-blue-200';
+            case 'holiday': return 'bg-green-100 text-green-700 border-green-200';
+            case 'exam': return 'bg-red-100 text-red-700 border-red-200';
+            case 'meeting': return 'bg-purple-100 text-purple-700 border-purple-200';
+            case 'sports': return 'bg-orange-100 text-orange-700 border-orange-200';
+            case 'cultural': return 'bg-pink-100 text-pink-700 border-pink-200';
+            default: return 'bg-gray-100 text-gray-700 border-gray-200';
         }
     };
+
+    // Upcoming events for agenda view
+    const upcomingEvents = useMemo(() => {
+        const today = new Date().toISOString().split('T')[0];
+        return filteredEvents
+            .filter(e => e.start_date >= today)
+            .sort((a, b) => a.start_date.localeCompare(b.start_date))
+            .slice(0, 20);
+    }, [filteredEvents]);
 
     const isToday = (date: Date) => {
         const today = new Date();
@@ -203,21 +258,46 @@ export const CalendarView: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Event Calendar</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">School Calendar</h1>
                     <p className="text-sm text-gray-500 mt-1">
-                        {isReadOnlyRole ? 'View school events and important dates' : 'Manage school events and academic calendar'}
+                        {settings.current_term} - {settings.current_session}
                     </p>
                 </div>
-                {!isReadOnlyRole && (
-                    <Button onClick={() => handleOpenModal()}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        New Event
-                    </Button>
-                )}
+                <div className="flex items-center gap-3">
+                    {/* View Toggle */}
+                    <div className="flex bg-gray-100 rounded-lg p-1">
+                        <button
+                            onClick={() => setViewMode('month')}
+                            className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                                viewMode === 'month' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            <Grid className="h-4 w-4" />
+                            Month
+                        </button>
+                        <button
+                            onClick={() => setViewMode('agenda')}
+                            className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                                viewMode === 'agenda' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            <List className="h-4 w-4" />
+                            Agenda
+                        </button>
+                    </div>
+                    {!isReadOnlyRole && (
+                        <Button onClick={() => handleOpenModal()}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            New Event
+                        </Button>
+                    )}
+                </div>
             </div>
 
+            {/* Month View */}
+            {viewMode === 'month' && (
             <Card className="p-4">
                 {/* Calendar Header */}
                 <div className="flex items-center justify-between mb-6">
@@ -279,11 +359,15 @@ export const CalendarView: React.FC = () => {
                                     {dayEvents.slice(0, 2).map(event => (
                                         <div
                                             key={event.id}
-                                            className={`text-xs px-1 py-0.5 rounded truncate flex items-center gap-1 ${getEventTypeColor(event.event_type)
+                                            className={`text-xs px-1 py-0.5 rounded truncate flex items-center gap-1 cursor-pointer hover:opacity-80 ${getEventTypeColor(event.event_type)
                                                 }`}
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                if (!isReadOnlyRole) handleOpenModal(event);
+                                                if (isReadOnlyRole) {
+                                                    handleViewEvent(event);
+                                                } else {
+                                                    handleOpenModal(event);
+                                                }
                                             }}
                                         >
                                             {getEventTypeIcon(event.event_type)}
@@ -301,8 +385,147 @@ export const CalendarView: React.FC = () => {
                     })}
                 </div>
             </Card>
+            )}
 
-            {/* Upcoming Events Sidebar could be added here */}
+            {/* Agenda View */}
+            {viewMode === 'agenda' && (
+                <Card className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-xl font-bold text-gray-900">Upcoming Events</h2>
+                        <span className="text-sm text-gray-500">Next 30 days</span>
+                    </div>
+                    
+                    {upcomingEvents.length === 0 ? (
+                        <div className="text-center py-12">
+                            <CalendarIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                            <p className="text-gray-500">No upcoming events</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {upcomingEvents.map(event => {
+                                const eventDate = new Date(event.start_date);
+                                const endDate = event.end_date ? new Date(event.end_date) : null;
+                                const isMultiDay = endDate && endDate.toDateString() !== eventDate.toDateString();
+                                
+                                return (
+                                    <div
+                                        key={event.id}
+                                        className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                                        onClick={() => isReadOnlyRole ? handleViewEvent(event) : handleOpenModal(event)}
+                                    >
+                                        {/* Date Badge */}
+                                        <div className="flex-shrink-0 w-14 text-center">
+                                            <div className="text-xs font-medium text-gray-500 uppercase">
+                                                {eventDate.toLocaleDateString('en-US', { weekday: 'short' })}
+                                            </div>
+                                            <div className="text-2xl font-bold text-gray-900">
+                                                {eventDate.getDate()}
+                                            </div>
+                                            <div className="text-xs text-gray-500">
+                                                {eventDate.toLocaleDateString('en-US', { month: 'short' })}
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Event Details */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${getEventTypeColor(event.event_type)}`}>
+                                                    {getEventTypeIcon(event.event_type)}
+                                                    {event.event_type.charAt(0).toUpperCase() + event.event_type.slice(1)}
+                                                </span>
+                                                {event.target_audience !== 'all' && (
+                                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                                                        {event.target_audience === 'teachers' ? 'Teachers' :
+                                                         event.target_audience === 'students' ? 'Students' :
+                                                         event.target_audience === 'parents' ? 'Parents' :
+                                                         event.target_audience === 'staff' ? 'Staff' : event.target_audience}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <h3 className="font-medium text-gray-900 truncate">{event.title}</h3>
+                                            {event.description && (
+                                                <p className="text-sm text-gray-500 line-clamp-2 mt-1">{event.description}</p>
+                                            )}
+                                            {isMultiDay && (
+                                                <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
+                                                    <Clock className="h-3 w-3" />
+                                                    Until {endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        {/* Action Arrow */}
+                                        <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </Card>
+            )}
+
+            {/* View Event Modal - For read-only users (students/parents) */}
+            <Modal
+                isOpen={isViewModalOpen}
+                onClose={() => { setIsViewModalOpen(false); setViewingEvent(null); }}
+                title="Event Details"
+            >
+                {viewingEvent && (
+                    <div className="space-y-4">
+                        {/* Event Type Badge */}
+                        <div className="flex items-center gap-2">
+                            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getEventTypeColor(viewingEvent.event_type)}`}>
+                                {getEventTypeIcon(viewingEvent.event_type)}
+                                {viewingEvent.event_type.charAt(0).toUpperCase() + viewingEvent.event_type.slice(1)}
+                            </span>
+                            {viewingEvent.target_audience !== 'all' && (
+                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                    For {viewingEvent.target_audience}
+                                </span>
+                            )}
+                        </div>
+                        
+                        {/* Title */}
+                        <h2 className="text-xl font-bold text-gray-900">{viewingEvent.title}</h2>
+                        
+                        {/* Date(s) */}
+                        <div className="flex items-center gap-2 text-gray-600">
+                            <CalendarIcon className="h-5 w-5" />
+                            <span>
+                                {new Date(viewingEvent.start_date).toLocaleDateString('en-US', { 
+                                    weekday: 'long', 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric' 
+                                })}
+                                {viewingEvent.end_date && viewingEvent.end_date !== viewingEvent.start_date && (
+                                    <> — {new Date(viewingEvent.end_date).toLocaleDateString('en-US', { 
+                                        weekday: 'long', 
+                                        year: 'numeric', 
+                                        month: 'long', 
+                                        day: 'numeric' 
+                                    })}</>
+                                )}
+                            </span>
+                        </div>
+                        
+                        {/* Description */}
+                        {viewingEvent.description && (
+                            <div className="pt-2">
+                                <h4 className="text-sm font-medium text-gray-500 mb-2">Description</h4>
+                                <p className="text-gray-700 whitespace-pre-wrap">{viewingEvent.description}</p>
+                            </div>
+                        )}
+                        
+                        {/* Close Button */}
+                        <div className="flex justify-end pt-4">
+                            <Button onClick={() => { setIsViewModalOpen(false); setViewingEvent(null); }}>
+                                Close
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
 
             {/* Event Modal - Only for admin/teacher roles */}
             {!isReadOnlyRole && (
@@ -360,6 +583,8 @@ export const CalendarView: React.FC = () => {
                                 <option value="holiday">Holiday</option>
                                 <option value="exam">Examination</option>
                                 <option value="meeting">Meeting</option>
+                                <option value="sports">Sports</option>
+                                <option value="cultural">Cultural</option>
                                 <option value="other">Other</option>
                             </Select>
 
@@ -372,8 +597,23 @@ export const CalendarView: React.FC = () => {
                                 <option value="teachers">Teachers Only</option>
                                 <option value="students">Students Only</option>
                                 <option value="parents">Parents Only</option>
+                                <option value="staff">Staff Only</option>
                             </Select>
                         </div>
+
+                        {/* Class-specific event selector */}
+                        {(targetAudience === 'students' || targetAudience === 'parents') && (
+                            <Select
+                                label="Specific Class (Optional)"
+                                value={selectedClassId}
+                                onChange={e => setSelectedClassId(e.target.value)}
+                            >
+                                <option value="">All {targetAudience === 'students' ? 'Students' : 'Parents'}</option>
+                                {classes.map((cls: { id: string; name: string }) => (
+                                    <option key={cls.id} value={cls.id}>{cls.name}</option>
+                                ))}
+                            </Select>
+                        )}
 
                         <div className="flex justify-between pt-4">
                             <div>

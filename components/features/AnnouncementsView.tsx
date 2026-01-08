@@ -7,6 +7,7 @@ import {
     Edit, Eye
 } from 'lucide-react';
 import { useSchoolStore } from '@/lib/store';
+import { useAuth } from '@/components/providers/supabase-auth-provider';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
@@ -23,6 +24,7 @@ import {
 export const AnnouncementsView: React.FC = () => {
     // Auth
     const { currentRole, currentUser } = useSchoolStore();
+    const { user: authUser } = useAuth();
     const { addToast } = useToast();
 
     // Data Hooks
@@ -96,7 +98,7 @@ export const AnnouncementsView: React.FC = () => {
             content: content.trim(),
             target,
             class_id: target === 'class' ? selectedClass : undefined,
-            author_id: 'current-user', // Would be actual user ID with auth
+            author_id: authUser?.id || editingAnnouncement?.author_id || '', // Use Supabase auth user ID
             author_role: currentRole,
             priority,
             is_pinned: isPinned,
