@@ -270,22 +270,32 @@ export const StudentDashboardView = () => {
         <div className="space-y-8">
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden">
                 <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-                    <div className="h-24 w-24 bg-brand-50 rounded-2xl border-4 border-brand-100 flex items-center justify-center text-3xl font-black text-brand-600 shadow-inner">
-                        {student.names.substring(0, 1)}
-                    </div>
+                    {/* Student Picture - Issue #1 & #2 Fixed */}
+                    {student.passport_url ? (
+                        <img 
+                            src={student.passport_url} 
+                            alt={student.names}
+                            className="h-24 w-24 rounded-2xl border-4 border-brand-100 object-cover shadow-lg"
+                        />
+                    ) : (
+                        <div className="h-24 w-24 bg-brand-50 rounded-2xl border-4 border-brand-100 flex items-center justify-center text-3xl font-black text-brand-600 shadow-inner">
+                            {student.names.substring(0, 1)}
+                        </div>
+                    )}
                     <div className="text-center md:text-left">
                         <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tight">{student.names}</h1>
                         <p className="text-gray-500 font-medium">Admission No: <span className="text-brand-600 font-bold">{student.student_no}</span> | Term: {settings.current_term}</p>
                     </div>
-                    <div className="md:ml-auto flex gap-3">
+                    {/* Buttons - Issue #3 & #4 Fixed - Made colorful and better styled */}
+                    <div className="md:ml-auto flex flex-wrap gap-3">
                         <Link href="/id_cards">
-                            <Button variant="secondary" className="flex gap-2">
+                            <Button variant="secondary" className="flex gap-2 bg-purple-500 hover:bg-purple-600 text-white border-0 shadow-lg shadow-purple-200">
                                 <BadgeCheck size={18} />
                                 ID Card
                             </Button>
                         </Link>
                         <Link href="/bursary">
-                            <Button variant="secondary" className="flex gap-2">
+                            <Button variant="secondary" className="flex gap-2 bg-emerald-500 hover:bg-emerald-600 text-white border-0 shadow-lg shadow-emerald-200">
                                 <Receipt size={18} />
                                 View Invoice
                             </Button>
@@ -295,7 +305,7 @@ export const StudentDashboardView = () => {
                                 if (myScore) setShowReportCard(true);
                                 else alert("Results not yet available for this term.");
                             }}
-                            className="bg-brand-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-brand-100 hover:bg-brand-700 transition-all"
+                            className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-brand-200 transition-all"
                         >
                             <Download size={18} />
                             Report Card

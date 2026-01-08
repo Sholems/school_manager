@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSchoolStore } from '@/lib/store';
 import { useStudents, useSettings } from '@/lib/hooks/use-data';
 import { UserRole, Student } from '@/lib/types';
@@ -21,6 +22,7 @@ import * as Utils from '@/lib/utils';
 import { useAuth } from '@/components/providers/supabase-auth-provider';
 
 export const LoginView = () => {
+    const router = useRouter();
     const { login } = useSchoolStore();
     // Use TanStack Query for data
     const { data: students = [] } = useStudents();
@@ -129,6 +131,7 @@ export const LoginView = () => {
 
             // Login successful
             login('student', data.student);
+            router.push('/dashboard'); // Redirect to dashboard
             setIsLoading(false);
         } catch (err) {
             setLoginError('An unexpected error occurred. Please try again.');

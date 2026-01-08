@@ -94,9 +94,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
 
     // Check if user is authenticated
-    // In production: check Supabase auth user
-    // In demo mode: check Zustand currentUser
-    const isAuthenticated = isDemo ? !!currentUser : !!user;
+    // Students use Zustand store authentication (no Supabase auth)
+    // Admin/staff use Supabase authentication
+    // In demo mode: everything uses Zustand
+    const isAuthenticated = !!currentUser || (!isDemo && !!user);
     
     if (!isAuthenticated) {
         return <LoginView />;
