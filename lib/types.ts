@@ -168,6 +168,11 @@ export interface Score extends Entity {
   head_teacher_remark?: string;
   next_term_begins?: string;
   promoted_to?: string;
+  
+  // Report Card Publication Status
+  is_passed?: boolean; // Admin must pass/approve report card before student/parent can view
+  passed_at?: number; // Timestamp when report card was passed
+  passed_by?: string; // Admin user ID who passed the report card
 }
 
 export interface AttendanceRecord {

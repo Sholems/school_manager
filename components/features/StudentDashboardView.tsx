@@ -163,10 +163,13 @@ export const StudentDashboardView = () => {
     const positionTrend = previousTermData.position !== null && position !== null ? previousTermData.position - position : null; // Positive = improved
     const attendanceTrend = previousTermData.attendance !== null ? myAttendance - previousTermData.attendance : null;
 
+    // Check if report card is published by admin
+    const isResultPublished = myScore?.is_passed ?? false;
+
     const stats = [
         {
             label: 'Term Average',
-            value: `${average.toFixed(1)}%`,
+            value: isResultPublished ? `${average.toFixed(1)}%` : '--',
             icon: TrendingUp,
             color: 'bg-green-500',
             trend: averageTrend,
@@ -190,10 +193,10 @@ export const StudentDashboardView = () => {
         },
         {
             label: 'Rank',
-            value: position ? Utils.ordinalSuffix(position) : '-',
+            value: isResultPublished && position ? Utils.ordinalSuffix(position) : '--',
             icon: Award,
             color: 'bg-amber-500',
-            trend: positionTrend,
+            trend: isResultPublished ? positionTrend : null,
             trendSuffix: '',
             invertTrend: false // Positive means moved up in rank
         },
@@ -236,7 +239,7 @@ export const StudentDashboardView = () => {
         };
     }, [myScore]);
 
-    if (showReportCard && currentClass && myScore) {
+    if (showReportCard && currentClass && myScore && isResultPublished) {
         return (
             <div className="fixed inset-0 z-50 bg-gray-900/95 overflow-y-auto">
                 <div className="min-h-screen p-4 md:p-8 flex flex-col items-center">
@@ -300,16 +303,26 @@ export const StudentDashboardView = () => {
                                 View Invoice
                             </Button>
                         </Link>
-                        <button
-                            onClick={() => {
-                                if (myScore) setShowReportCard(true);
-                                else alert("Results not yet available for this term.");
-                            }}
-                            className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-brand-200 transition-all"
-                        >
-                            <Download size={18} />
-                            Report Card
-                        </button>
+                        {isResultPublished ? (
+                            <button
+                                onClick={() => {
+                                    if (myScore) setShowReportCard(true);
+                                }}
+                                className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-brand-200 transition-all"
+                            >
+                                <Download size={18} />
+                                Report Card
+                            </button>
+                        ) : (
+                            <button
+                                disabled
+                                className="bg-gray-300 text-gray-500 px-6 py-3 rounded-xl font-bold flex items-center gap-2 cursor-not-allowed"
+                                title="Results not yet published by school administration"
+                            >
+                                <Clock size={18} />
+                                Results Pending
+                            </button>
+                        )}
                     </div>
                 </div>
                 <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-brand-50 rounded-full blur-3xl opacity-50"></div>

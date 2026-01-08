@@ -110,6 +110,7 @@ export default function GradingPage() {
                     scores={scores}
                     settings={settings}
                     onUpsertScore={handleUpsertScore}
+                    currentRole={currentRole}
                 />
             )}
 

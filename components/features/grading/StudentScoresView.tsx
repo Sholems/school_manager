@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { ClipboardList, Award, TrendingUp, BookOpen } from 'lucide-react';
+import { ClipboardList, Award, TrendingUp, BookOpen, Lock, Clock } from 'lucide-react';
 import * as Types from '@/lib/types';
 import * as Utils from '@/lib/utils';
 import { Card } from '@/components/ui/card';
@@ -26,11 +26,14 @@ export const StudentScoresView: React.FC<StudentScoresViewProps> = ({
         );
     }, [scores, student.id, settings]);
 
+    // Check if report card is published
+    const isPublished = myScore?.is_passed ?? false;
+
     // Calculate position
     const position = useMemo(() => {
-        if (!myScore) return null;
+        if (!myScore || !isPublished) return null;
         return Utils.getStudentPosition(student.id, students, scores, settings.current_session, settings.current_term);
-    }, [student.id, students, scores, settings, myScore]);
+    }, [student.id, students, scores, settings, myScore, isPublished]);
 
     const totalInClass = useMemo(() => {
         return students.filter(s => s.class_id === student.class_id).length;
@@ -49,6 +52,35 @@ export const StudentScoresView: React.FC<StudentScoresViewProps> = ({
             default: return 'bg-gray-100 text-gray-700';
         }
     };
+
+    // Show locked message if results are not published
+    if (!isPublished) {
+        return (
+            <div className="space-y-6">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">My Academic Scores</h1>
+                    <p className="text-gray-500">View your scores for {settings.current_term} - {settings.current_session}</p>
+                </div>
+
+                <Card className="p-12 text-center">
+                    <div className="max-w-md mx-auto">
+                        <div className="h-20 w-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Lock className="h-10 w-10 text-amber-600" />
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-900 mb-2">Results Not Yet Published</h2>
+                        <p className="text-gray-500 mb-6">
+                            Your results for {settings.current_term} ({settings.current_session}) have not been released yet. 
+                            Please check back later or contact your school administration.
+                        </p>
+                        <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
+                            <Clock className="h-4 w-4" />
+                            <span>Results are typically published after the examination period</span>
+                        </div>
+                    </div>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
