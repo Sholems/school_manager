@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Key, Shield, Eye, EyeOff } from 'lucide-react';
+import { Plus, Trash2, Key, Shield, Eye, EyeOff, Edit } from 'lucide-react';
 import * as Types from '@/lib/types';
 import * as Utils from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -10,11 +10,13 @@ import { useToast } from '@/components/providers/toast-provider';
 interface StaffViewProps {
     staff: Types.Staff[];
     onAdd: (s: Types.Staff) => void;
+    onUpdate: (params: { id: string; updates: Partial<Types.Staff> }) => void;
     onDelete: (id: string) => void;
 }
 
-export const StaffView: React.FC<StaffViewProps> = ({ staff, onAdd, onDelete }) => {
+export const StaffView: React.FC<StaffViewProps> = ({ staff, onAdd, onUpdate, onDelete }) => {
     const [showModal, setShowModal] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [selectedStaff, setSelectedStaff] = useState<Types.Staff | null>(null);
     const [loginPassword, setLoginPassword] = useState('');
@@ -61,10 +63,37 @@ export const StaffView: React.FC<StaffViewProps> = ({ staff, onAdd, onDelete }) 
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onAdd({ ...formData, id: Utils.generateId(), created_at: Date.now(), updated_at: Date.now() });
-        addToast('Staff member added successfully', 'success');
+        if (editingId) {
+            onUpdate({ id: editingId, updates: { ...formData, updated_at: Date.now() } });
+            addToast('Staff member updated successfully', 'success');
+        } else {
+            onAdd({ ...formData as Types.Staff, id: Utils.generateId(), created_at: Date.now(), updated_at: Date.now() });
+            addToast('Staff member added successfully', 'success');
+        }
         setShowModal(false);
+        setEditingId(null);
         setFormData({ name: '', role: '', tasks: '', email: '', phone: '', address: '', assigned_modules: [], passport_url: null });
+    };
+
+    const handleEdit = (staffMember: Types.Staff) => {
+        setFormData({
+            name: staffMember.name,
+            role: staffMember.role,
+            tasks: staffMember.tasks,
+            email: staffMember.email,
+            phone: staffMember.phone,
+            address: staffMember.address,
+            assigned_modules: staffMember.assigned_modules || [],
+            passport_url: staffMember.passport_url || null
+        });
+        setEditingId(staffMember.id);
+        setShowModal(true);
+    };
+
+    const handleCreate = () => {
+        setFormData({ name: '', role: '', tasks: '', email: '', phone: '', address: '', assigned_modules: [], passport_url: null });
+        setEditingId(null);
+        setShowModal(true);
     };
 
     const handleCreateLoginAccount = (staffMember: Types.Staff) => {
@@ -115,7 +144,7 @@ export const StaffView: React.FC<StaffViewProps> = ({ staff, onAdd, onDelete }) 
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center"><div><h1 className="text-2xl font-bold text-gray-900">Non-Academic Staff</h1><p className="text-gray-500">Manage support staff and roles</p></div><Button onClick={() => setShowModal(true)}><Plus className="h-4 w-4 mr-2" /> Add Staff</Button></div>
+            <div className="flex justify-between items-center"><div><h1 className="text-2xl font-bold text-gray-900">Non-Academic Staff</h1><p className="text-gray-500">Manage support staff and roles</p></div><Button onClick={handleCreate}><Plus className="h-4 w-4 mr-2" /> Add Staff</Button></div>
             <div className="overflow-x-auto bg-white rounded-lg border shadow-sm">
                 <table className="w-full text-sm text-left">
                     <thead className="bg-gray-50 text-gray-700 font-medium"><tr><th className="px-4 py-3">Staff</th><th className="px-4 py-3">Role</th><th className="px-4 py-3">Access Modules</th><th className="px-4 py-3">Contact</th><th className="px-4 py-3 text-right">Actions</th></tr></thead>
@@ -141,13 +170,20 @@ export const StaffView: React.FC<StaffViewProps> = ({ staff, onAdd, onDelete }) 
                                 <td className="px-4 py-3 text-xs">{s.phone}</td>
                                 <td className="px-4 py-3 text-right flex items-center justify-end gap-2">
                                     <button 
+                                        onClick={() => handleEdit(s)} 
+                                        className="text-gray-400 hover:text-brand-600"
+                                        title="Edit Staff"
+                                    >
+                                        <Edit className="h-4 w-4" />
+                                    </button>
+                                    <button 
                                         onClick={() => handleCreateLoginAccount(s)} 
                                         className="text-gray-400 hover:text-green-600"
                                         title="Create Login Account"
                                     >
                                         <Key className="h-4 w-4" />
                                     </button>
-                                    <button onClick={() => onDelete(s.id)} className="text-gray-400 hover:text-red-600">
+                                    <button onClick={() => onDelete(s.id)} className="text-gray-400 hover:text-red-600" title="Delete Staff">
                                         <Trash2 className="h-4 w-4" />
                                     </button>
                                 </td>
@@ -156,7 +192,7 @@ export const StaffView: React.FC<StaffViewProps> = ({ staff, onAdd, onDelete }) 
                     </tbody>
                 </table>
             </div>
-            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Add New Staff">
+            <Modal isOpen={showModal} onClose={() => { setShowModal(false); setEditingId(null); }} title={editingId ? "Edit Staff Member" : "Add New Staff"}>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="flex justify-center mb-4">
                         <div className="relative group cursor-pointer">
@@ -198,7 +234,7 @@ export const StaffView: React.FC<StaffViewProps> = ({ staff, onAdd, onDelete }) 
                     <Input label="Assigned Tasks" value={formData.tasks} onChange={e => setFormData({ ...formData, tasks: e.target.value })} />
                     <div className="grid grid-cols-2 gap-4"><Input label="Phone" required value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} /><Input label="Email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} /></div>
                     <Input label="Address" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
-                    <Button type="submit" className="w-full">Save Staff Member</Button>
+                    <Button type="submit" className="w-full">{editingId ? 'Update Staff Member' : 'Save Staff Member'}</Button>
                 </form>
             </Modal>
 

@@ -20,6 +20,7 @@
   "/_not-found/page": "app/_not-found/page.js",
   "/admission/page": "app/admission/page.js",
   "/api/auth/callback/route": "app/api/auth/callback/route.js",
+  "/api/auth/create-staff-account/route": "app/api/auth/create-staff-account/route.js",
   "/api/auth/student-login/route": "app/api/auth/student-login/route.js",
   "/api/classes/route": "app/api/classes/route.js",
   "/api/health/route": "app/api/health/route.js",

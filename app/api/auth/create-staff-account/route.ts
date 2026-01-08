@@ -15,10 +15,12 @@ export async function POST(request: NextRequest) {
     try {
         const { data: body, error: parseError } = await safeJsonParse(request)
         if (parseError) {
+            console.error('Parse error:', parseError)
             return errorResponse(parseError, 400)
         }
 
         const { profileId, profileType, email, password, name } = body
+        console.log('Creating account for:', { profileId, profileType, email, name })
 
         if (!profileId || !profileType || !email || !password) {
             return errorResponse('Profile ID, type, email, and password are required', 400)
@@ -33,29 +35,33 @@ export async function POST(request: NextRequest) {
             return errorResponse('Password must be at least 8 characters', 400)
         }
 
-        const supabase = createServiceRoleClient()
+        let supabase;
+        try {
+            supabase = createServiceRoleClient()
+        } catch (err) {
+            console.error('Failed to create service role client:', err)
+            return errorResponse('Server configuration error. Please contact admin.', 500)
+        }
 
         // Check if this profile already has an auth account
-        const { data: existingProfile } = await supabase
+        const { data: existingProfile, error: profileCheckError } = await supabase
             .from('user_profiles')
             .select('auth_id, email')
             .eq('profile_id', profileId)
             .eq('profile_type', profileType)
-            .single()
+            .maybeSingle()
+
+        if (profileCheckError) {
+            console.error('Error checking existing profile:', profileCheckError)
+            // Continue anyway - table might not exist yet
+        }
 
         if (existingProfile?.auth_id) {
             return errorResponse('This user already has a login account', 400)
         }
 
-        // Check if email is already used in Supabase Auth
-        const { data: existingUsers } = await supabase.auth.admin.listUsers()
-        const emailExists = existingUsers?.users?.some(u => u.email?.toLowerCase() === email.toLowerCase())
-        
-        if (emailExists) {
-            return errorResponse('This email is already registered. Use a different email.', 400)
-        }
-
         // Create Supabase Auth account
+        console.log('Creating Supabase auth account...')
         const { data: authData, error: authError } = await supabase.auth.admin.createUser({
             email: email,
             password: password,
@@ -69,8 +75,14 @@ export async function POST(request: NextRequest) {
 
         if (authError || !authData.user) {
             console.error('Failed to create auth account:', authError)
-            return errorResponse('Failed to create login account. Please try again.', 500)
+            // Check if user already exists
+            if (authError?.message?.includes('already been registered') || authError?.message?.includes('already exists')) {
+                return errorResponse('This email is already registered. Use a different email.', 400)
+            }
+            return errorResponse(authError?.message || 'Failed to create login account. Please try again.', 500)
         }
+
+        console.log('Auth account created, creating user_profiles link...')
 
         // Create user_profiles link
         const { error: profileError } = await supabase.from('user_profiles').insert({
@@ -85,9 +97,10 @@ export async function POST(request: NextRequest) {
             console.error('Failed to create user profile:', profileError)
             // Try to clean up the auth account
             await supabase.auth.admin.deleteUser(authData.user.id)
-            return errorResponse('Failed to link account. Please try again.', 500)
+            return errorResponse('Failed to link account: ' + profileError.message, 500)
         }
 
+        console.log('Account created successfully for:', email)
         return NextResponse.json({
             success: true,
             message: `Login account created successfully for ${name}`,
@@ -95,7 +108,7 @@ export async function POST(request: NextRequest) {
         })
     } catch (error) {
         console.error('Create staff account error:', error)
-        return errorResponse('An unexpected error occurred')
+        return errorResponse('An unexpected error occurred: ' + (error instanceof Error ? error.message : 'Unknown error'))
     }
 }
 

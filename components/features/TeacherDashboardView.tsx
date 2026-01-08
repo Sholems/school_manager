@@ -155,9 +155,17 @@ export const TeacherDashboardView = () => {
         [subjectTeachers, myTeacherProfile.id, settings.current_session]
     );
 
-    // My Classes (unique classes I teach)
-    const myClassIds = Array.from(new Set(myAssignments.map(a => a.class_id)));
+    // My Classes (classes where I'm assigned as class teacher OR teach subjects)
+    const myClassIdsFromSubjects = myAssignments.map(a => a.class_id);
+    const myClassIdsFromClassTeacher = classes.filter(c => c.class_teacher_id === myTeacherProfile.id).map(c => c.id);
+    const myClassIds = Array.from(new Set([...myClassIdsFromSubjects, ...myClassIdsFromClassTeacher]));
     const myClasses = classes.filter(c => myClassIds.includes(c.id));
+
+    // Classes where I'm the class teacher
+    const classesAsClassTeacher = useMemo(() => 
+        classes.filter(c => c.class_teacher_id === myTeacherProfile.id),
+        [classes, myTeacherProfile.id]
+    );
 
     // My Students (students in any of my classes)
     const myStudents = useMemo(() =>
@@ -170,7 +178,7 @@ export const TeacherDashboardView = () => {
         { label: 'My Subjects', value: myAssignments.length.toString(), icon: BookOpen, color: 'bg-blue-500' },
         { label: 'Total Students', value: myStudents.length.toString(), icon: Users, color: 'bg-indigo-500' },
         { label: 'Classes', value: myClasses.length.toString(), icon: GraduationCap, color: 'bg-pink-500' },
-        { label: 'Pending Grades', value: '0', icon: ClipboardList, color: 'bg-amber-500' },
+        { label: 'Class Teacher For', value: classesAsClassTeacher.length.toString(), icon: ClipboardList, color: 'bg-amber-500' },
     ];
 
     return (
@@ -222,13 +230,50 @@ export const TeacherDashboardView = () => {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Recent Activity or Schedule could go here */}
+                        {/* My Classes Section */}
                         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                            <h2 className="text-xl font-bold text-gray-900 mb-4">My Schedule Today</h2>
-                            <div className="flex flex-col items-center justify-center h-48 text-gray-400 bg-gray-50 rounded-2xl border-2 border-dashed">
-                                <Clock size={32} className="mb-2 opacity-50" />
-                                <p>No classes scheduled for today.</p>
-                            </div>
+                            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <GraduationCap size={20} className="text-brand-500" />
+                                My Classes
+                            </h2>
+                            {myClasses.length > 0 ? (
+                                <div className="space-y-3">
+                                    {myClasses.map(cls => {
+                                        const isClassTeacher = cls.class_teacher_id === myTeacherProfile.id;
+                                        const studentsInClass = students.filter((s: Types.Student) => s.class_id === cls.id).length;
+                                        const subjectsInClass = myAssignments.filter(a => a.class_id === cls.id);
+                                        return (
+                                            <div key={cls.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-gray-100 transition-colors">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h3 className="font-bold text-gray-900">{cls.name}</h3>
+                                                    {isClassTeacher && (
+                                                        <span className="px-2 py-1 bg-brand-100 text-brand-700 text-xs font-bold rounded-full">
+                                                            Class Teacher
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-4 text-sm text-gray-500">
+                                                    <span className="flex items-center gap-1">
+                                                        <Users size={14} />
+                                                        {studentsInClass} students
+                                                    </span>
+                                                    {subjectsInClass.length > 0 && (
+                                                        <span className="flex items-center gap-1">
+                                                            <BookOpen size={14} />
+                                                            {subjectsInClass.map(s => s.subject).join(', ')}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-48 text-gray-400 bg-gray-50 rounded-2xl border-2 border-dashed">
+                                    <GraduationCap size={32} className="mb-2 opacity-50" />
+                                    <p>No classes assigned yet.</p>
+                                </div>
+                            )}
                         </div>
 
                         <div className="bg-brand-900 text-white p-6 rounded-3xl shadow-xl relative overflow-hidden">

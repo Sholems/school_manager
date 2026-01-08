@@ -125,6 +125,12 @@
       "namedRegex": "^/api/auth/callback(?:/)?$"
     },
     {
+      "page": "/api/auth/create-staff-account",
+      "regex": "^/api/auth/create\\-staff\\-account(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/create\\-staff\\-account(?:/)?$"
+    },
+    {
       "page": "/api/auth/student-login",
       "regex": "^/api/auth/student\\-login(?:/)?$",
       "routeKeys": {},
