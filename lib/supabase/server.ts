@@ -31,9 +31,16 @@ export async function createClient() {
 
 // Service role client for admin operations (bypasses RLS)
 export function createServiceRoleClient() {
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    
+    if (!serviceRoleKey) {
+        console.error('❌ SUPABASE_SERVICE_ROLE_KEY is not set in environment variables')
+        throw new Error('Service role key not configured')
+    }
+    
     return createSupabaseClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        serviceRoleKey,
         {
             auth: {
                 autoRefreshToken: false,
