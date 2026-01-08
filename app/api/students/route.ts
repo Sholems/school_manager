@@ -1,13 +1,10 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { hashPasswordWithSupabase } from '@/lib/password'
 import { 
     safeJsonParse, 
-    getAuthContext, 
     withRateLimit, 
-    errorResponse, 
-    unauthorizedResponse, 
-    forbiddenResponse 
+    errorResponse
 } from '@/lib/api-utils'
 import { RATE_LIMITS } from '@/lib/rate-limit'
 
@@ -18,12 +15,7 @@ export async function GET(request: NextRequest) {
     if (rateCheck.limited) return rateCheck.response!
 
     try {
-        const supabase = await createClient()
-        const { user, error: authError } = await getAuthContext(supabase)
-
-        if (authError || !user) {
-            return unauthorizedResponse()
-        }
+        const supabase = createServiceRoleClient()
 
         // Simple query - single school system
         const { data: students, error } = await supabase
@@ -56,17 +48,7 @@ export async function POST(request: NextRequest) {
     if (rateCheck.limited) return rateCheck.response!
 
     try {
-        const supabase = await createClient()
-        const { user, role, error: authError } = await getAuthContext(supabase)
-
-        if (authError || !user) {
-            return unauthorizedResponse()
-        }
-
-        // Only admins and staff can create students
-        if (!['admin', 'staff'].includes(role || '')) {
-            return forbiddenResponse('Only admins and staff can register students')
-        }
+        const supabase = createServiceRoleClient()
 
         const { data: body, error: parseError } = await safeJsonParse(request)
         if (parseError) {

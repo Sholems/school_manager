@@ -1,13 +1,10 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { hashPasswordWithSupabase } from '@/lib/password'
 import { 
     safeJsonParse, 
-    getAuthContext, 
     withRateLimit, 
-    errorResponse, 
-    unauthorizedResponse, 
-    forbiddenResponse 
+    errorResponse
 } from '@/lib/api-utils'
 import { RATE_LIMITS } from '@/lib/rate-limit'
 
@@ -22,12 +19,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     try {
         const { id } = await params
-        const supabase = await createClient()
-
-        const { user, error: authError } = await getAuthContext(supabase)
-        if (authError || !user) {
-            return unauthorizedResponse()
-        }
+        const supabase = createServiceRoleClient()
 
         const { data: student, error } = await supabase
             .from('students')
@@ -59,16 +51,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     try {
         const { id } = await params
-        const supabase = await createClient()
-
-        const { user, role, error: authError } = await getAuthContext(supabase)
-        if (authError || !user) {
-            return unauthorizedResponse()
-        }
-
-        if (!['admin', 'staff', 'teacher'].includes(role || '')) {
-            return forbiddenResponse()
-        }
+        const supabase = createServiceRoleClient()
 
         const { data: body, error: parseError } = await safeJsonParse(request)
         if (parseError) {
@@ -114,16 +97,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     try {
         const { id } = await params
-        const supabase = await createClient()
-
-        const { user, role, error: authError } = await getAuthContext(supabase)
-        if (authError || !user) {
-            return unauthorizedResponse()
-        }
-
-        if (role !== 'admin') {
-            return forbiddenResponse('Only admins can delete students')
-        }
+        const supabase = createServiceRoleClient()
 
         const { error } = await supabase
             .from('students')
