@@ -46,7 +46,16 @@ self.__SERVER_FILES_MANIFEST={
           "search": ""
         }
       ],
-      "remotePatterns": [],
+      "remotePatterns": [
+        {
+          "protocol": "https",
+          "hostname": "**.r2.cloudflarestorage.com"
+        },
+        {
+          "protocol": "https",
+          "hostname": "**.r2.dev"
+        }
+      ],
       "qualities": [
         75
       ],
@@ -93,7 +102,7 @@ self.__SERVER_FILES_MANIFEST={
     "basePath": "",
     "expireTime": 31536000,
     "generateEtags": true,
-    "poweredByHeader": true,
+    "poweredByHeader": false,
     "cacheHandlers": {},
     "cacheMaxMemorySize": 52428800,
     "compress": true,

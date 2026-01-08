@@ -21,10 +21,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Auth from store (keep this)
     const { currentRole, currentUser, logout, login: storeLogin } = useSchoolStore();
 
-    // Settings from TanStack Query (new approach)
-    const { data: settings = Utils.INITIAL_SETTINGS, isLoading: settingsLoading } = useSettings();
-
+    // Auth state - this must be ready before we can fetch settings
     const { user, userData, loading: authLoading, isDemo, signOut } = useAuth();
+
+    // Settings from TanStack Query - only enabled once auth is ready
+    const { data: settings = Utils.INITIAL_SETTINGS, isLoading: settingsLoading } = useSettings();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const pathname = usePathname();
 
@@ -82,8 +83,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     const filteredNavigation = navigation.filter(item => allowedNavIds.includes(item.id));
 
-    // Show loading if settings are loading or auth is loading
-    if (settingsLoading || authLoading) {
+    // Show loading spinner only while auth is initializing
+    // Settings will load with fallback defaults, so we don't block on them
+    if (authLoading) {
         return (
             <div className="h-screen w-full flex items-center justify-center bg-gray-50">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
@@ -91,10 +93,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         );
     }
 
-    if (!currentUser && !isDemo) {
-        if (!user) return <LoginView />;
-    } else if (!currentUser && isDemo) {
+    // Check if user is authenticated
+    // In production: check Supabase auth user
+    // In demo mode: check Zustand currentUser
+    const isAuthenticated = isDemo ? !!currentUser : !!user;
+    
+    if (!isAuthenticated) {
         return <LoginView />;
+    }
+
+    // Wait for Zustand sync if user is authenticated but currentUser not set yet
+    if (!isDemo && user && !currentUser) {
+        // Still syncing - show brief loading
+        return (
+            <div className="h-screen w-full flex items-center justify-center bg-gray-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
+            </div>
+        );
     }
 
     return (

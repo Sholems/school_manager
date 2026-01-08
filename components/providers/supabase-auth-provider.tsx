@@ -8,7 +8,6 @@ interface UserData {
     id: string
     email: string
     role: 'admin' | 'teacher' | 'student' | 'staff'
-    school_id: string
     profile_id: string | null
     profile_type: 'teacher' | 'student' | 'staff' | null
 }
@@ -38,19 +37,17 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         try {
             const { data, error } = await supabase
                 .from('users')
-                .select('*')
+                .select('id, email, role, profile_id, profile_type')
                 .eq('id', userId)
                 .maybeSingle()
 
             if (error) {
                 // RLS error or other issue - provide fallback based on auth user
-                console.warn('Could not fetch user profile (RLS may be blocking):', error.message || 'Unknown error')
-                // Return default admin user if we can't fetch from database
+                console.warn('Could not fetch user profile:', error.message || 'Unknown error')
                 return {
                     id: userId,
                     email: email || '',
                     role: 'admin' as const,
-                    school_id: '',
                     profile_id: null,
                     profile_type: null
                 } as UserData
@@ -63,7 +60,6 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
                     id: userId,
                     email: email || '',
                     role: 'admin' as const,
-                    school_id: '',
                     profile_id: null,
                     profile_type: null
                 } as UserData

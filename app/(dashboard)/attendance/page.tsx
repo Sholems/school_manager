@@ -39,7 +39,7 @@ export default function AttendancePage() {
     const student = useMemo(() => {
         if (!isStudentOrParent) return null;
         const studentId = currentUser?.student_id || students[0]?.id;
-        return students.find(s => s.id === studentId) || students[0];
+        return students.find((s: Types.Student) => s.id === studentId) || students[0];
     }, [isStudentOrParent, currentUser, students]);
 
     // Render student-specific view for student/parent roles

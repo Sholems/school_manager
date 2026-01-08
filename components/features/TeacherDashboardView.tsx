@@ -161,7 +161,7 @@ export const TeacherDashboardView = () => {
 
     // My Students (students in any of my classes)
     const myStudents = useMemo(() =>
-        students.filter(s => myClassIds.includes(s.class_id)),
+        students.filter((s: Types.Student) => myClassIds.includes(s.class_id)),
         [students, myClassIds]
     );
 

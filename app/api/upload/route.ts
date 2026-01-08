@@ -1,39 +1,47 @@
 import { createClient } from '@/lib/supabase/server'
 import { uploadBase64ToR2, generateFileKey } from '@/lib/r2'
 import { NextRequest, NextResponse } from 'next/server'
+import { 
+    safeJsonParse, 
+    withRateLimit, 
+    errorResponse, 
+    unauthorizedResponse 
+} from '@/lib/api-utils'
+import { RATE_LIMITS } from '@/lib/rate-limit'
 
 // POST /api/upload - Upload a file to R2
 export async function POST(request: NextRequest) {
+    // Stricter rate limit for uploads
+    const rateCheck = withRateLimit(request, RATE_LIMITS.upload)
+    if (rateCheck.limited) return rateCheck.response!
+
     try {
         const supabase = await createClient()
 
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+            return unauthorizedResponse()
         }
 
-        const { data: userData } = await supabase
-            .from('users')
-            .select('school_id')
-            .eq('id', user.id)
-            .single()
-
-        if (!userData?.school_id) {
-            return NextResponse.json({ error: 'No school assigned' }, { status: 403 })
+        const { data: body, error: parseError } = await safeJsonParse(request)
+        if (parseError) {
+            return errorResponse(parseError, 400)
         }
 
-        const body = await request.json()
         const { base64Data, folder, fileName, contentType } = body
 
         if (!base64Data || !folder || !fileName) {
-            return NextResponse.json(
-                { error: 'Missing required fields: base64Data, folder, fileName' },
-                { status: 400 }
-            )
+            return errorResponse('Missing required fields: base64Data, folder, fileName', 400)
         }
 
-        // Generate unique file key
-        const key = generateFileKey(folder, fileName, userData.school_id)
+        // Validate file size (max 5MB for base64)
+        const base64Size = base64Data.length * 0.75 // Approximate decoded size
+        if (base64Size > 5 * 1024 * 1024) {
+            return errorResponse('File too large. Maximum size is 5MB.', 400)
+        }
+
+        // Generate unique file key (no school_id prefix for single school)
+        const key = generateFileKey(folder, fileName)
 
         // Upload to R2
         const url = await uploadBase64ToR2(
@@ -45,6 +53,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ url, key })
     } catch (error) {
         console.error('Upload API error:', error)
-        return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+        return errorResponse('Upload failed')
     }
 }
+

@@ -103,42 +103,37 @@ export const LoginView = () => {
         }
     };
 
-    const handleStudentLogin = (e: React.FormEvent) => {
+    const handleStudentLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoginError('');
         setIsLoading(true);
 
-        // Find student by student number
-        const student = students.find(
-            s => s.student_no.toLowerCase() === studentNo.toLowerCase().trim()
-        );
+        try {
+            // Use secure API endpoint for password verification
+            const response = await fetch('/api/auth/student-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    studentNo: studentNo.trim(),
+                    password: password
+                })
+            });
 
-        setTimeout(() => {
-            setIsLoading(false);
+            const data = await response.json();
 
-            if (!student) {
-                setLoginError('Student not found. Please check your Student Number.');
-                return;
-            }
-
-            if (!student.password) {
-                setLoginError('Portal access not yet activated. Please contact the school admin.');
-                return;
-            }
-
-            if (student.password !== password) {
-                setLoginError('Incorrect password. Please try again.');
+            if (!response.ok) {
+                setLoginError(data.error || 'Login failed. Please try again.');
+                setIsLoading(false);
                 return;
             }
 
             // Login successful
-            login('student', {
-                ...student,
-                role: 'student',
-                name: student.names,
-                student_id: student.id
-            });
-        }, 800);
+            login('student', data.student);
+            setIsLoading(false);
+        } catch (err) {
+            setLoginError('An unexpected error occurred. Please try again.');
+            setIsLoading(false);
+        }
     };
 
     const handleForgotPassword = (e: React.FormEvent) => {
@@ -147,7 +142,7 @@ export const LoginView = () => {
         setIsLoading(true);
 
         const student = students.find(
-            s => s.student_no.toLowerCase() === forgotStudentNo.toLowerCase().trim()
+            (s: Student) => s.student_no.toLowerCase() === forgotStudentNo.toLowerCase().trim()
         );
 
         setTimeout(() => {
@@ -173,7 +168,7 @@ export const LoginView = () => {
             setNewPassword(generatedPassword);
 
             // Update student in storage
-            const updatedStudents = students.map(s =>
+            const updatedStudents = students.map((s: Student) =>
                 s.id === student.id ? { ...s, password: generatedPassword, updated_at: Date.now() } : s
             );
             Utils.saveToStorage(Utils.STORAGE_KEYS.STUDENTS, updatedStudents);

@@ -11,9 +11,6 @@ export default function StudentsPage() {
     const updateStudentMutation = useUpdateStudent();
     const deleteStudentMutation = useDeleteStudent();
 
-    // DEBUG
-    console.log('[StudentsPage] Query - students count:', students.length, 'classes:', classes.length, 'loading:', studentsLoading);
-
     if (studentsLoading) {
         return (
             <div className="flex items-center justify-center py-12">

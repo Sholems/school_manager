@@ -120,7 +120,7 @@ export async function createItem<T>(table: string, item: any): Promise<T> {
         safeItem.updated_at = new Date(safeItem.updated_at).toISOString();
     }
 
-    devLog(`[DataService] Creating item in '${table}'`);
+    devLog(`[DataService] Creating item in '${table}'`, safeItem);
 
     const { data, error } = await supabase
         .from(table)
@@ -129,8 +129,8 @@ export async function createItem<T>(table: string, item: any): Promise<T> {
         .single()
 
     if (error) {
-        console.error(`[DataService] Create failed for '${table}':`, error);
-        throw new Error(error.message);
+        console.error(`[DataService] Create failed for '${table}':`, error.message, error.code, error.details, error.hint);
+        throw new Error(error.message || 'Failed to create item');
     }
 
     devLog(`[DataService] Created item in '${table}':`, data.id);

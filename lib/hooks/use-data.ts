@@ -80,19 +80,37 @@ export function useUpdateClass() {
 }
 
 // =============================================
-// STUDENTS
+// STUDENTS - Using API routes for password hashing support
 // =============================================
 export function useStudents() {
     return useQuery({
         queryKey: queryKeys.students,
-        queryFn: () => DataService.fetchAll<Types.Student>('students'),
+        queryFn: async () => {
+            const response = await fetch('/api/students');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to fetch students');
+            }
+            return response.json();
+        },
     });
 }
 
 export function useCreateStudent() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (student: Types.Student) => DataService.createItem<Types.Student>('students', student),
+        mutationFn: async (student: Types.Student) => {
+            const response = await fetch('/api/students', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(student),
+            });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to create student');
+            }
+            return response.json();
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.students });
         },
@@ -102,8 +120,18 @@ export function useCreateStudent() {
 export function useUpdateStudent() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, updates }: { id: string; updates: Partial<Types.Student> }) =>
-            DataService.updateItem<Types.Student>('students', id, updates),
+        mutationFn: async ({ id, updates }: { id: string; updates: Partial<Types.Student> }) => {
+            const response = await fetch(`/api/students/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates),
+            });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to update student');
+            }
+            return response.json();
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.students });
         },
@@ -113,7 +141,16 @@ export function useUpdateStudent() {
 export function useDeleteStudent() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: string) => DataService.deleteItem('students', id),
+        mutationFn: async (id: string) => {
+            const response = await fetch(`/api/students/${id}`, {
+                method: 'DELETE',
+            });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to delete student');
+            }
+            return response.json();
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.students });
         },

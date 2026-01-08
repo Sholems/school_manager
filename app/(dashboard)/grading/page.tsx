@@ -50,10 +50,10 @@ export default function GradingPage() {
     const student = useMemo(() => {
         if (!isStudentOrParent) return null;
         const studentId = currentUser?.student_id || students[0]?.id;
-        return students.find(s => s.id === studentId) || students[0];
+        return students.find((s: Types.Student) => s.id === studentId) || students[0];
     }, [isStudentOrParent, currentUser, students]);
 
-    const currentClass = student ? classes.find(c => c.id === student.class_id) : undefined;
+    const currentClass = student ? classes.find((c: Types.Class) => c.id === student.class_id) : undefined;
 
     // Render student-specific view for student/parent roles
     if (isStudentOrParent && student) {

@@ -1,18 +1,34 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { isR2Configured } from './env'
 
-// Initialize R2 client
-const r2Client = new S3Client({
-    region: 'auto',
-    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-        accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-    },
-})
+// Lazy initialization of R2 client
+let r2Client: S3Client | null = null
 
-const BUCKET_NAME = process.env.R2_BUCKET_NAME!
-const PUBLIC_URL = process.env.R2_PUBLIC_URL!
+function getR2Client(): S3Client {
+    if (!r2Client) {
+        if (!isR2Configured()) {
+            throw new Error('R2 storage is not configured. Please set R2_* environment variables.')
+        }
+        r2Client = new S3Client({
+            region: 'auto',
+            endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+            credentials: {
+                accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+                secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+            },
+        })
+    }
+    return r2Client
+}
+
+function getBucketName(): string {
+    return process.env.R2_BUCKET_NAME!
+}
+
+function getPublicUrl(): string {
+    return process.env.R2_PUBLIC_URL!
+}
 
 /**
  * Upload a file to Cloudflare R2
@@ -22,14 +38,14 @@ export async function uploadToR2(
     key: string,
     contentType: string
 ): Promise<string> {
-    await r2Client.send(new PutObjectCommand({
-        Bucket: BUCKET_NAME,
+    await getR2Client().send(new PutObjectCommand({
+        Bucket: getBucketName(),
         Key: key,
         Body: file,
         ContentType: contentType,
     }))
 
-    return `${PUBLIC_URL}/${key}`
+    return `${getPublicUrl()}/${key}`
 }
 
 /**
@@ -53,8 +69,8 @@ export async function uploadBase64ToR2(
  * Delete a file from R2
  */
 export async function deleteFromR2(key: string): Promise<void> {
-    await r2Client.send(new DeleteObjectCommand({
-        Bucket: BUCKET_NAME,
+    await getR2Client().send(new DeleteObjectCommand({
+        Bucket: getBucketName(),
         Key: key,
     }))
 }
@@ -68,29 +84,25 @@ export async function getPresignedUploadUrl(
     expiresIn: number = 3600
 ): Promise<string> {
     const command = new PutObjectCommand({
-        Bucket: BUCKET_NAME,
+        Bucket: getBucketName(),
         Key: key,
         ContentType: contentType,
     })
 
-    return getSignedUrl(r2Client, command, { expiresIn })
+    return getSignedUrl(getR2Client(), command, { expiresIn })
 }
 
 /**
- * Generate a unique file key for storage
+ * Generate a unique file key for storage (single school - no school prefix)
  */
 export function generateFileKey(
     folder: string,
-    fileName: string,
-    schoolId?: string
+    fileName: string
 ): string {
     const timestamp = Date.now()
     const randomSuffix = Math.random().toString(36).substring(2, 8)
     const sanitizedName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_')
 
-    if (schoolId) {
-        return `${schoolId}/${folder}/${timestamp}-${randomSuffix}-${sanitizedName}`
-    }
     return `${folder}/${timestamp}-${randomSuffix}-${sanitizedName}`
 }
 
@@ -98,6 +110,8 @@ export function generateFileKey(
  * Extract the key from a full R2 URL
  */
 export function extractKeyFromUrl(url: string): string | null {
-    if (!url.startsWith(PUBLIC_URL)) return null
-    return url.replace(`${PUBLIC_URL}/`, '')
+    const publicUrl = getPublicUrl()
+    if (!url.startsWith(publicUrl)) return null
+    return url.replace(`${publicUrl}/`, '')
 }
+

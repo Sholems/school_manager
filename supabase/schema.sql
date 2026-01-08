@@ -113,6 +113,7 @@ CREATE TABLE students (
     parent_phone TEXT,
     address TEXT,
     passport_url TEXT,
+    password_hash TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

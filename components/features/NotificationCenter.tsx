@@ -18,6 +18,7 @@ import {
     useStudents, useAnnouncements, useEvents, useNewsletters,
     useFees, usePayments, useSettings
 } from '@/lib/hooks/use-data';
+import * as Types from '@/lib/types';
 
 export const NotificationCenter: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -43,7 +44,7 @@ export const NotificationCenter: React.FC = () => {
         threeDaysAgo.setDate(today.getDate() - 3);
 
         // 1. Recent Announcements
-        const student = students.find(s => s.id === (currentUser?.student_id || students[0]?.id));
+        const student = students.find((s: Types.Student) => s.id === (currentUser?.student_id || students[0]?.id));
         const classId = student?.class_id;
 
         announcements

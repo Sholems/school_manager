@@ -32,6 +32,7 @@ import {
 } from '@/lib/hooks/use-data';
 import { ReportCardTemplate } from './grading/ReportCardTemplate';
 import * as Utils from '@/lib/utils';
+import * as Types from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { AcademicProgressChart } from './grading/AcademicProgressChart';
@@ -57,10 +58,10 @@ export const StudentDashboardView = () => {
     // In a real app, we'd find the student linked to the parent/user
     // For demo/dev, we try to match by name or fallback to the first student
     const student = useMemo(() => {
-        let foundStudent: typeof students[0] | undefined;
+        let foundStudent: Types.Student | undefined;
 
         if (currentUser?.student_id) {
-            foundStudent = students.find(s => s.id === currentUser.student_id);
+            foundStudent = students.find((s: Types.Student) => s.id === currentUser.student_id);
         }
 
         // Use found student, or first student, or a safe fallback
@@ -75,10 +76,10 @@ export const StudentDashboardView = () => {
         } as any;
     }, [students, currentUser]);
 
-    const currentClass = classes.find(c => c.id === student.class_id);
+    const currentClass = classes.find((c: Types.Class) => c.id === student.class_id);
     const classSubjects = Utils.getSubjectsForClass(currentClass);
-    const classTeacher = teachers.find(t => t.id === currentClass?.class_teacher_id);
-    const classmates = students.filter(s => s.class_id === student.class_id);
+    const classTeacher = teachers.find((t: Types.Teacher) => t.id === currentClass?.class_teacher_id);
+    const classmates = students.filter((s: Types.Student) => s.class_id === student.class_id);
 
     // Calculate financial summary
     const myFees = fees.filter(f => f.class_id === student.class_id || !f.class_id);

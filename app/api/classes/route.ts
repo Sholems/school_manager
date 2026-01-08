@@ -1,24 +1,27 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { 
+    safeJsonParse, 
+    getAuthContext, 
+    withRateLimit, 
+    errorResponse, 
+    unauthorizedResponse, 
+    forbiddenResponse 
+} from '@/lib/api-utils'
+import { RATE_LIMITS } from '@/lib/rate-limit'
 
 // GET /api/classes - Fetch all classes
 export async function GET(request: NextRequest) {
+    // Rate limit check
+    const rateCheck = withRateLimit(request, RATE_LIMITS.default)
+    if (rateCheck.limited) return rateCheck.response!
+
     try {
         const supabase = await createClient()
+        const { user, error: authError } = await getAuthContext(supabase)
 
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        const { data: userData } = await supabase
-            .from('users')
-            .select('school_id')
-            .eq('id', user.id)
-            .single()
-
-        if (!userData?.school_id) {
-            return NextResponse.json({ error: 'No school assigned' }, { status: 403 })
+        if (authError || !user) {
+            return unauthorizedResponse()
         }
 
         const { data: classes, error } = await supabase
@@ -27,58 +30,55 @@ export async function GET(request: NextRequest) {
                 *,
                 class_teacher:teachers(id, name)
             `)
-            .eq('school_id', userData.school_id)
             .order('name')
 
         if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 })
+            return errorResponse(error.message)
         }
 
         return NextResponse.json(classes)
     } catch (error) {
         console.error('Classes API error:', error)
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+        return errorResponse('Internal server error')
     }
 }
 
 // POST /api/classes - Create a new class
 export async function POST(request: NextRequest) {
+    // Rate limit check
+    const rateCheck = withRateLimit(request, RATE_LIMITS.default)
+    if (rateCheck.limited) return rateCheck.response!
+
     try {
         const supabase = await createClient()
+        const { user, role, error: authError } = await getAuthContext(supabase)
 
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        if (authError || !user) {
+            return unauthorizedResponse()
         }
 
-        const { data: userData } = await supabase
-            .from('users')
-            .select('school_id, role')
-            .eq('id', user.id)
-            .single()
-
-        if (userData?.role !== 'admin') {
-            return NextResponse.json({ error: 'Only admins can create classes' }, { status: 403 })
+        if (role !== 'admin') {
+            return forbiddenResponse('Only admins can create classes')
         }
 
-        const body = await request.json()
+        const { data: body, error: parseError } = await safeJsonParse(request)
+        if (parseError) {
+            return errorResponse(parseError, 400)
+        }
 
         const { data: cls, error } = await supabase
             .from('classes')
-            .insert({
-                ...body,
-                school_id: userData.school_id,
-            })
+            .insert(body)
             .select()
             .single()
 
         if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 })
+            return errorResponse(error.message)
         }
 
         return NextResponse.json(cls, { status: 201 })
     } catch (error) {
         console.error('Classes API error:', error)
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+        return errorResponse('Internal server error')
     }
 }

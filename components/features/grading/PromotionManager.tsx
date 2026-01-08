@@ -40,20 +40,20 @@ export const PromotionManager: React.FC = () => {
         return i === currentIndex + 1;
     });
 
-    const activeStudents = students.filter(s => s.class_id === selectedClass);
+    const activeStudents = students.filter((s: Types.Student) => s.class_id === selectedClass);
 
     // Calculate student averages for promotion eligibility
     const studentStats = useMemo(() => {
-        return activeStudents.map(student => {
+        return activeStudents.map((student: Types.Student) => {
             // Get scores from all terms in current session
             const termScores = scores.filter(
-                s => s.student_id === student.id && s.session === settings.current_session
+                (s: Types.Score) => s.student_id === student.id && s.session === settings.current_session
             );
 
             // Calculate overall average across all terms
-            const allAverages = termScores.map(s => s.average).filter(a => a > 0);
+            const allAverages = termScores.map((s: Types.Score) => s.average).filter((a: number) => a > 0);
             const overallAverage = allAverages.length > 0
-                ? allAverages.reduce((a, b) => a + b, 0) / allAverages.length
+                ? allAverages.reduce((a: number, b: number) => a + b, 0) / allAverages.length
                 : 0;
 
             // Get position in class
@@ -69,11 +69,11 @@ export const PromotionManager: React.FC = () => {
                 eligible: overallAverage >= localThreshold,
                 promotedTo: promotionResults.get(student.id) || null
             };
-        }).sort((a, b) => b.average - a.average);
+        }).sort((a: any, b: any) => b.average - a.average);
     }, [activeStudents, scores, settings, localThreshold, promotionResults]);
 
-    const eligibleCount = studentStats.filter(s => s.eligible).length;
-    const processedCount = studentStats.filter(s => s.promotedTo !== null).length;
+    const eligibleCount = studentStats.filter((s: any) => s.eligible).length;
+    const processedCount = studentStats.filter((s: any) => s.promotedTo !== null).length;
 
     const handleRunPromotion = () => {
         if (!nextClass) {
@@ -84,7 +84,7 @@ export const PromotionManager: React.FC = () => {
         setIsProcessing(true);
         const results = new Map<string, string | null>();
 
-        studentStats.forEach(stat => {
+        studentStats.forEach((stat: any) => {
             if (stat.eligible) {
                 results.set(stat.student.id, nextClass.id);
             } else {
@@ -267,7 +267,7 @@ export const PromotionManager: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {studentStats.map(stat => {
+                                {studentStats.map((stat: any) => {
                                     const isPromoted = stat.promotedTo === nextClass?.id;
 
                                     return (

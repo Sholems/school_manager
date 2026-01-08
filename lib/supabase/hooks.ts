@@ -8,7 +8,6 @@ interface UserData {
     id: string
     email: string
     role: 'admin' | 'teacher' | 'student' | 'staff'
-    school_id: string
     profile_id: string | null
     profile_type: 'teacher' | 'student' | 'staff' | null
 }
@@ -28,7 +27,7 @@ export function useSupabaseAuth() {
             if (user) {
                 const { data } = await supabase
                     .from('users')
-                    .select('*')
+                    .select('id, email, role, profile_id, profile_type')
                     .eq('id', user.id)
                     .single()
                 setUserData(data)
@@ -46,7 +45,7 @@ export function useSupabaseAuth() {
                 if (session?.user) {
                     const { data } = await supabase
                         .from('users')
-                        .select('*')
+                        .select('id, email, role, profile_id, profile_type')
                         .eq('id', session.user.id)
                         .single()
                     setUserData(data)

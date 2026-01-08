@@ -9,6 +9,7 @@ import {
     useDeletePayment, useDeleteFee, useDeleteExpense
 } from '@/lib/hooks/use-data';
 import * as Utils from '@/lib/utils';
+import * as Types from '@/lib/types';
 
 export default function BursaryPage() {
     const { currentRole, currentUser } = useSchoolStore();
@@ -34,12 +35,12 @@ export default function BursaryPage() {
     const student = useMemo(() => {
         if (!isStudentOrParent) return null;
         const studentId = currentUser?.student_id || students[0]?.id;
-        return students.find(s => s.id === studentId) || students[0];
+        return students.find((s: Types.Student) => s.id === studentId) || students[0];
     }, [isStudentOrParent, currentUser, students]);
 
     const studentClass = useMemo(() => {
         if (!student) return undefined;
-        return classes.find(c => c.id === student.class_id);
+        return classes.find((c: Types.Class) => c.id === student.class_id);
     }, [student, classes]);
 
     if (isStudentOrParent && student) {

@@ -1,5 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { hashPasswordWithSupabase } from '@/lib/password'
+import { 
+    safeJsonParse, 
+    getAuthContext, 
+    withRateLimit, 
+    errorResponse, 
+    unauthorizedResponse, 
+    forbiddenResponse 
+} from '@/lib/api-utils'
+import { RATE_LIMITS } from '@/lib/rate-limit'
 
 interface RouteParams {
     params: Promise<{ id: string }>
@@ -7,13 +17,16 @@ interface RouteParams {
 
 // GET /api/students/[id] - Fetch a single student
 export async function GET(request: NextRequest, { params }: RouteParams) {
+    const rateCheck = withRateLimit(request, RATE_LIMITS.default)
+    if (rateCheck.limited) return rateCheck.response!
+
     try {
         const { id } = await params
         const supabase = await createClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        const { user, error: authError } = await getAuthContext(supabase)
+        if (authError || !user) {
+            return unauthorizedResponse()
         }
 
         const { data: student, error } = await supabase
@@ -26,43 +39,54 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             .single()
 
         if (error) {
-            return NextResponse.json({ error: error.message }, { status: 404 })
+            return errorResponse('Student not found', 404)
         }
 
-        return NextResponse.json(student)
+        // Remove password_hash from response
+        const { password_hash, ...sanitizedStudent } = student
+
+        return NextResponse.json(sanitizedStudent)
     } catch (error) {
         console.error('Student API error:', error)
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+        return errorResponse('Internal server error')
     }
 }
 
 // PUT /api/students/[id] - Update a student
 export async function PUT(request: NextRequest, { params }: RouteParams) {
+    const rateCheck = withRateLimit(request, RATE_LIMITS.default)
+    if (rateCheck.limited) return rateCheck.response!
+
     try {
         const { id } = await params
         const supabase = await createClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        const { user, role, error: authError } = await getAuthContext(supabase)
+        if (authError || !user) {
+            return unauthorizedResponse()
         }
 
-        const { data: userData } = await supabase
-            .from('users')
-            .select('school_id, role')
-            .eq('id', user.id)
-            .single()
-
-        if (!['admin', 'staff', 'teacher'].includes(userData?.role || '')) {
-            return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
+        if (!['admin', 'staff', 'teacher'].includes(role || '')) {
+            return forbiddenResponse()
         }
 
-        const body = await request.json()
+        const { data: body, error: parseError } = await safeJsonParse(request)
+        if (parseError) {
+            return errorResponse(parseError, 400)
+        }
+
+        // Hash password if being updated
+        let updateData = { ...body }
+        if (body.password) {
+            const passwordHash = await hashPasswordWithSupabase(supabase, body.password)
+            updateData.password_hash = passwordHash
+            delete updateData.password
+        }
 
         const { data: student, error } = await supabase
             .from('students')
             .update({
-                ...body,
+                ...updateData,
                 updated_at: new Date().toISOString(),
             })
             .eq('id', id)
@@ -70,35 +94,35 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
             .single()
 
         if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 })
+            return errorResponse(error.message)
         }
 
-        return NextResponse.json(student)
+        // Remove password_hash from response
+        const { password_hash, ...sanitizedStudent } = student
+
+        return NextResponse.json(sanitizedStudent)
     } catch (error) {
         console.error('Student API error:', error)
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+        return errorResponse('Internal server error')
     }
 }
 
 // DELETE /api/students/[id] - Delete a student
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
+    const rateCheck = withRateLimit(request, RATE_LIMITS.default)
+    if (rateCheck.limited) return rateCheck.response!
+
     try {
         const { id } = await params
         const supabase = await createClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        const { user, role, error: authError } = await getAuthContext(supabase)
+        if (authError || !user) {
+            return unauthorizedResponse()
         }
 
-        const { data: userData } = await supabase
-            .from('users')
-            .select('role')
-            .eq('id', user.id)
-            .single()
-
-        if (userData?.role !== 'admin') {
-            return NextResponse.json({ error: 'Only admins can delete students' }, { status: 403 })
+        if (role !== 'admin') {
+            return forbiddenResponse('Only admins can delete students')
         }
 
         const { error } = await supabase
@@ -107,12 +131,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
             .eq('id', id)
 
         if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 })
+            return errorResponse(error.message)
         }
 
         return NextResponse.json({ success: true })
     } catch (error) {
         console.error('Student API error:', error)
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+        return errorResponse('Internal server error')
     }
 }
+

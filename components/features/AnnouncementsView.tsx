@@ -43,7 +43,7 @@ export const AnnouncementsView: React.FC = () => {
     const studentClassId = React.useMemo(() => {
         if (!isReadOnlyRole) return null;
         const studentId = currentUser?.student_id || students[0]?.id;
-        const student = students.find(s => s.id === studentId);
+        const student = students.find((s: Types.Student) => s.id === studentId);
         return student?.class_id || null;
     }, [isReadOnlyRole, currentUser, students]);
 

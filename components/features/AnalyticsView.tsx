@@ -20,6 +20,7 @@ import {
 import { Card } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
 import * as Utils from '@/lib/utils';
+import * as Types from '@/lib/types';
 
 const COLORS = ['#16a34a', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
@@ -58,9 +59,9 @@ export const AnalyticsView: React.FC = () => {
     // Class comparison data
     const classComparisonData = useMemo(() => {
         return classes.map(cls => {
-            const classStudents = students.filter(s => s.class_id === cls.id);
+            const classStudents = students.filter((s: Types.Student) => s.class_id === cls.id);
             const classScores = scores.filter(
-                s => classStudents.some(st => st.id === s.student_id) &&
+                (s: Types.Score) => classStudents.some((st: Types.Student) => st.id === s.student_id) &&
                     s.session === selectedSession &&
                     s.term === settings.current_term
             );

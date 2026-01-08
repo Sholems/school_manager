@@ -1,94 +1,107 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { hashPasswordWithSupabase } from '@/lib/password'
+import { 
+    safeJsonParse, 
+    getAuthContext, 
+    withRateLimit, 
+    errorResponse, 
+    unauthorizedResponse, 
+    forbiddenResponse 
+} from '@/lib/api-utils'
+import { RATE_LIMITS } from '@/lib/rate-limit'
 
 // GET /api/students - Fetch all students
 export async function GET(request: NextRequest) {
+    // Rate limit check
+    const rateCheck = withRateLimit(request, RATE_LIMITS.default)
+    if (rateCheck.limited) return rateCheck.response!
+
     try {
         const supabase = await createClient()
+        const { user, error: authError } = await getAuthContext(supabase)
 
-        // Get current user and their school
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        if (authError || !user) {
+            return unauthorizedResponse()
         }
 
-        // Get user's school_id
-        const { data: userData } = await supabase
-            .from('users')
-            .select('school_id, role')
-            .eq('id', user.id)
-            .single()
-
-        if (!userData?.school_id) {
-            return NextResponse.json({ error: 'No school assigned' }, { status: 403 })
-        }
-
-        // Fetch students for this school
+        // Simple query - single school system
         const { data: students, error } = await supabase
             .from('students')
             .select(`
                 *,
                 class:classes(id, name)
             `)
-            .eq('school_id', userData.school_id)
             .order('names')
 
         if (error) {
             console.error('Error fetching students:', error)
-            return NextResponse.json({ error: error.message }, { status: 500 })
+            return errorResponse(error.message)
         }
 
-        return NextResponse.json(students)
+        // Remove password_hash from response for security
+        const sanitizedStudents = students?.map(({ password_hash, ...student }) => student) || []
+
+        return NextResponse.json(sanitizedStudents)
     } catch (error) {
         console.error('Students API error:', error)
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+        return errorResponse('Internal server error')
     }
 }
 
 // POST /api/students - Create a new student
 export async function POST(request: NextRequest) {
+    // Rate limit check
+    const rateCheck = withRateLimit(request, RATE_LIMITS.default)
+    if (rateCheck.limited) return rateCheck.response!
+
     try {
         const supabase = await createClient()
+        const { user, role, error: authError } = await getAuthContext(supabase)
 
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        const { data: userData } = await supabase
-            .from('users')
-            .select('school_id, role')
-            .eq('id', user.id)
-            .single()
-
-        if (!userData?.school_id) {
-            return NextResponse.json({ error: 'No school assigned' }, { status: 403 })
+        if (authError || !user) {
+            return unauthorizedResponse()
         }
 
         // Only admins and staff can create students
-        if (!['admin', 'staff'].includes(userData.role)) {
-            return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
+        if (!['admin', 'staff'].includes(role || '')) {
+            return forbiddenResponse('Only admins and staff can register students')
         }
 
-        const body = await request.json()
+        const { data: body, error: parseError } = await safeJsonParse(request)
+        if (parseError) {
+            return errorResponse(parseError, 400)
+        }
+
+        // Hash password if provided
+        let passwordHash = null
+        if (body.password) {
+            passwordHash = await hashPasswordWithSupabase(supabase, body.password)
+        }
+
+        // Remove plain password from body
+        const { password, ...studentData } = body
 
         const { data: student, error } = await supabase
             .from('students')
             .insert({
-                ...body,
-                school_id: userData.school_id,
+                ...studentData,
+                password_hash: passwordHash,
             })
             .select()
             .single()
 
         if (error) {
             console.error('Error creating student:', error)
-            return NextResponse.json({ error: error.message }, { status: 500 })
+            return errorResponse(error.message)
         }
 
-        return NextResponse.json(student, { status: 201 })
+        // Remove password_hash from response
+        const { password_hash, ...sanitizedStudent } = student
+
+        return NextResponse.json(sanitizedStudent, { status: 201 })
     } catch (error) {
         console.error('Students API error:', error)
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+        return errorResponse('Internal server error')
     }
 }
