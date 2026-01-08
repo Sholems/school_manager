@@ -94,18 +94,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
 
     // Check if user is authenticated
-    // Students use Zustand store authentication (no Supabase auth)
-    // Admin/staff use Supabase authentication
-    // In demo mode: everything uses Zustand
-    const isAuthenticated = !!currentUser || (!isDemo && !!user);
+    // Now properly unified: all users (including students) use Supabase auth
+    // Students get auto-created Supabase accounts on first login
+    const isAuthenticated = !!user;
     
     if (!isAuthenticated) {
         return <LoginView />;
     }
 
-    // Wait for Zustand sync if user is authenticated but currentUser not set yet
-    if (!isDemo && user && !currentUser) {
-        // Still syncing - show brief loading
+    // Wait for user data to be fetched from user_profiles
+    if (user && !userData && !currentUser) {
         return (
             <div className="h-screen w-full flex items-center justify-center bg-gray-50">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>

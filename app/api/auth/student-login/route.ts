@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { 
     safeJsonParse, 
@@ -7,7 +8,7 @@ import {
 } from '@/lib/api-utils'
 import { RATE_LIMITS } from '@/lib/rate-limit'
 
-// POST /api/auth/student-login - Verify student portal login
+// POST /api/auth/student-login - Proper Supabase Auth for students
 export async function POST(request: NextRequest) {
     // Strict rate limiting for auth endpoints to prevent brute force
     const rateCheck = withRateLimit(request, RATE_LIMITS.auth)
@@ -27,45 +28,93 @@ export async function POST(request: NextRequest) {
 
         const supabase = createServiceRoleClient()
 
-        // Find student by student number (case-insensitive)
+        // Find student by student number
         const { data: student, error: fetchError } = await supabase
             .from('students')
-            .select('id, student_no, names, class_id, password_hash')
+            .select('id, student_no, names, class_id, gender, passport_url')
             .ilike('student_no', studentNo.trim())
             .single()
 
         if (fetchError || !student) {
-            // Don't reveal if student exists or not
             return errorResponse('Invalid credentials', 401)
         }
 
-        if (!student.password_hash) {
-            return errorResponse('Portal access not yet activated. Please contact the school admin.', 403)
+        // Generate email for student
+        const studentEmail = `${student.student_no.toLowerCase()}@student.fruitfulvine.edu.ng`
+
+        // Check if student has a user_profile (linked to Supabase auth)
+        const { data: userProfile } = await supabase
+            .from('user_profiles')
+            .select('auth_id, email')
+            .eq('profile_id', student.id)
+            .eq('profile_type', 'student')
+            .single()
+
+        let authUserId = userProfile?.auth_id
+
+        // If no auth account exists, create one
+        if (!authUserId) {
+            console.log('Creating Supabase auth account for student:', student.student_no)
+            
+            // Create auth user using admin client
+            const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+                email: studentEmail,
+                password: password,
+                email_confirm: true, // Auto-confirm
+                user_metadata: {
+                    role: 'student',
+                    student_no: student.student_no,
+                    names: student.names
+                }
+            })
+
+            if (authError || !authData.user) {
+                console.error('Failed to create auth account:', authError)
+                return errorResponse('Failed to create account. Please contact admin.', 500)
+            }
+
+            authUserId = authData.user.id
+
+            // Create user profile link
+            await supabase.from('user_profiles').insert({
+                auth_id: authUserId,
+                role: 'student',
+                profile_id: student.id,
+                profile_type: 'student',
+                email: studentEmail
+            })
         }
 
-        // Verify password using database function
-        const { data: isValid, error: verifyError } = await supabase.rpc(
-            'verify_student_password',
-            {
-                plain_password: password,
-                hashed_password: student.password_hash
-            }
+        // Sign in the student using regular client
+        const clientSupabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         )
 
-        if (verifyError || !isValid) {
+        const { data: signInData, error: signInError } = await clientSupabase.auth.signInWithPassword({
+            email: studentEmail,
+            password: password
+        })
+
+        if (signInError) {
+            console.error('Sign in error:', signInError)
             return errorResponse('Invalid credentials', 401)
         }
 
-        // Return student info (without password)
-        const { password_hash, ...safeStudent } = student
-
+        // Return session and student info
         return NextResponse.json({
             success: true,
+            session: signInData.session,
             student: {
-                ...safeStudent,
+                id: student.id,
+                student_no: student.student_no,
+                names: student.names,
+                class_id: student.class_id,
+                gender: student.gender,
+                passport_url: student.passport_url,
                 role: 'student',
-                name: safeStudent.names,
-                student_id: safeStudent.id
+                name: student.names,
+                student_id: student.id
             }
         })
     } catch (error) {

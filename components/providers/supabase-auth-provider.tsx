@@ -32,9 +32,27 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
 
     const supabase = createClient()
 
-    // Fetch user profile data
+    // Fetch user profile data from user_profiles table
     const fetchUserData = useCallback(async (userId: string, email?: string) => {
         try {
+            // First try user_profiles table (new unified auth)
+            const { data: profileData, error: profileError } = await supabase
+                .from('user_profiles')
+                .select('id, role, profile_id, profile_type, email')
+                .eq('auth_id', userId)
+                .maybeSingle()
+
+            if (profileData) {
+                return {
+                    id: userId,
+                    email: profileData.email || email || '',
+                    role: profileData.role as 'admin' | 'teacher' | 'student' | 'staff',
+                    profile_id: profileData.profile_id,
+                    profile_type: profileData.profile_type as 'teacher' | 'student' | 'staff' | null
+                } as UserData
+            }
+
+            // Fallback to old users table for existing admin/staff
             const { data, error } = await supabase
                 .from('users')
                 .select('id, email, role, profile_id, profile_type')
@@ -42,7 +60,6 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
                 .maybeSingle()
 
             if (error) {
-                // RLS error or other issue - provide fallback based on auth user
                 console.warn('Could not fetch user profile:', error.message || 'Unknown error')
                 return {
                     id: userId,
@@ -54,7 +71,6 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
             }
 
             if (!data) {
-                // No user record exists - return default admin
                 console.warn('No user record found, using default admin role')
                 return {
                     id: userId,

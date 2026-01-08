@@ -111,7 +111,7 @@ export const LoginView = () => {
         setIsLoading(true);
 
         try {
-            // Use secure API endpoint for password verification
+            // Call API which creates Supabase auth account if needed and signs in
             const response = await fetch('/api/auth/student-login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -129,11 +129,16 @@ export const LoginView = () => {
                 return;
             }
 
-            // Login successful
+            // Student is now authenticated via Supabase Auth
+            // The session is automatically managed by Supabase
+            // Just set the local state for immediate UI update
             login('student', data.student);
-            router.push('/dashboard'); // Redirect to dashboard
+            
+            // Redirect to dashboard
+            router.push('/dashboard');
             setIsLoading(false);
         } catch (err) {
+            console.error('Student login error:', err);
             setLoginError('An unexpected error occurred. Please try again.');
             setIsLoading(false);
         }
