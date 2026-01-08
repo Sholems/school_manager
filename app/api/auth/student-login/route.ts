@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { 
     safeJsonParse, 
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
             return errorResponse('Student number and password are required', 400)
         }
 
-        const supabase = await createClient()
+        const supabase = createServiceRoleClient()
 
         // Find student by student number (case-insensitive)
         const { data: student, error: fetchError } = await supabase
