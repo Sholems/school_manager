@@ -61,16 +61,23 @@ export async function POST(request: NextRequest) {
             passwordHash = await hashPasswordWithSupabase(supabase, body.password)
         }
 
-        // Remove plain password from body
-        const { password, ...studentData } = body
+        // Remove plain password and client-generated id from body
+        const { password, id, ...studentData } = body
+
+        // Default school_id for single-school setup
+        const DEFAULT_SCHOOL_ID = '00000000-0000-0000-0000-000000000001'
 
         const { data: student, error } = await supabase
             .from('students')
             .insert({
                 ...studentData,
+                school_id: studentData.school_id || DEFAULT_SCHOOL_ID,
                 password_hash: passwordHash,
             })
-            .select()
+            .select(`
+                *,
+                class:classes(id, name)
+            `)
             .single()
 
         if (error) {
