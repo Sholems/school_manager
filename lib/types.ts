@@ -252,6 +252,7 @@ export interface Message extends Entity {
   to_id: string;
   to_role: UserRole;
   student_id?: string;
+  parent_message_id?: string; // For replies
   subject: string;
   body: string;
   is_read: boolean;

@@ -3,9 +3,9 @@
   "middleware": {
     "/": {
       "files": [
-        "server/edge/chunks/node_modules_next_dist_esm_build_templates_edge-wrapper_3b93bb62.js",
-        "server/edge/chunks/[root-of-the-server]__9ec23830._.js",
-        "server/edge/chunks/turbopack-node_modules_next_dist_esm_build_templates_edge-wrapper_aba53161.js"
+        "server/edge/chunks/[root-of-the-server]__5b3c1c95._.js",
+        "server/edge/chunks/node_modules_d1826079._.js",
+        "server/edge/chunks/turbopack-node_modules_next_dist_esm_build_templates_edge-wrapper_c47a79a7.js"
       ],
       "name": "middleware",
       "page": "/",
@@ -58,16 +58,107 @@
       "wasm": [],
       "assets": [],
       "env": {
-        "__NEXT_BUILD_ID": "mwe57KgqKfsDLKdpQPhoH",
-        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "ko/29PZ519t+BgHhq14/QejxPsf3xUDwMjw1aXqTvaY=",
-        "__NEXT_PREVIEW_MODE_ID": "a33fc0194f112e0c5fc7f943020d22b7",
-        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "909275d1e59f4cb83d220e09d287195d30a19d679ca26cc675ed63ad7c22fded",
-        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "e6430b1cf2474325cf23f92ca0648e9ae6674ac7101ca6febd6a3a0945d36b2a"
+        "__NEXT_BUILD_ID": "JdYLnSuFEppwELEAJCyru",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "FdcBouKEWtIFazONnfelghyrmgzDUjqUoMsjBErc0Ao=",
+        "__NEXT_PREVIEW_MODE_ID": "6ca6ea0ccb3f96d31ec6afe069b7b882",
+        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "e899dc39a986a8ce00179884d50334a5bd68fabb8457943c43274341e4199b50",
+        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "fb8dac24cdc965b68daf937f8f5cee5af84b9fd3a2fd5c7e5a1d18447509be13"
       }
     }
   },
   "sortedMiddleware": [
     "/"
   ],
-  "functions": {}
+  "functions": {
+    "/opengraph-image/route": {
+      "files": [
+        "server/middleware-build-manifest.js",
+        "server/interception-route-rewrite-manifest.js",
+        "required-server-files.js",
+        "server/server-reference-manifest.js",
+        "server/app/opengraph-image/route_client-reference-manifest.js",
+        "server/edge/chunks/_next-internal_server_app_opengraph-image_route_actions_238d033d.js",
+        "server/edge/chunks/[root-of-the-server]__e559a4a5._.js",
+        "server/edge/chunks/node_modules_2c7434a1._.js",
+        "server/edge/chunks/node_modules_next_dist_compiled_@vercel_og_16be1ace._.js",
+        "server/edge/chunks/turbopack-node_modules_next_dist_esm_build_templates_edge-wrapper_c3f8100b.js"
+      ],
+      "name": "app/opengraph-image/route",
+      "page": "/opengraph-image/route",
+      "matchers": [
+        {
+          "regexp": "^/opengraph-image(?:/)?$",
+          "originalSource": "/opengraph-image"
+        }
+      ],
+      "wasm": [
+        {
+          "name": "wasm_fdb56e4cc5936d29",
+          "filePath": "server/edge/chunks/node_modules_next_dist_compiled_@vercel_og_resvg_23ace1ce.wasm"
+        },
+        {
+          "name": "wasm_1ccdc983b1fd9f87",
+          "filePath": "server/edge/chunks/node_modules_next_dist_compiled_@vercel_og_yoga_23ace1ce.wasm"
+        }
+      ],
+      "assets": [
+        {
+          "name": "server/edge/assets/noto-sans-v27-latin-regular.bdfa676c.ttf",
+          "filePath": "server/edge/assets/noto-sans-v27-latin-regular.bdfa676c.ttf"
+        }
+      ],
+      "env": {
+        "__NEXT_BUILD_ID": "JdYLnSuFEppwELEAJCyru",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "FdcBouKEWtIFazONnfelghyrmgzDUjqUoMsjBErc0Ao=",
+        "__NEXT_PREVIEW_MODE_ID": "6ca6ea0ccb3f96d31ec6afe069b7b882",
+        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "e899dc39a986a8ce00179884d50334a5bd68fabb8457943c43274341e4199b50",
+        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "fb8dac24cdc965b68daf937f8f5cee5af84b9fd3a2fd5c7e5a1d18447509be13"
+      }
+    },
+    "/twitter-image/route": {
+      "files": [
+        "server/middleware-build-manifest.js",
+        "server/interception-route-rewrite-manifest.js",
+        "required-server-files.js",
+        "server/server-reference-manifest.js",
+        "server/app/twitter-image/route_client-reference-manifest.js",
+        "server/edge/chunks/_next-internal_server_app_twitter-image_route_actions_72195298.js",
+        "server/edge/chunks/[root-of-the-server]__6dbe1a4a._.js",
+        "server/edge/chunks/node_modules_2c7434a1._.js",
+        "server/edge/chunks/node_modules_next_dist_compiled_@vercel_og_16be1ace._.js",
+        "server/edge/chunks/turbopack-node_modules_next_dist_esm_build_templates_edge-wrapper_499a7eec.js"
+      ],
+      "name": "app/twitter-image/route",
+      "page": "/twitter-image/route",
+      "matchers": [
+        {
+          "regexp": "^/twitter-image(?:/)?$",
+          "originalSource": "/twitter-image"
+        }
+      ],
+      "wasm": [
+        {
+          "name": "wasm_fdb56e4cc5936d29",
+          "filePath": "server/edge/chunks/node_modules_next_dist_compiled_@vercel_og_resvg_23ace1ce.wasm"
+        },
+        {
+          "name": "wasm_1ccdc983b1fd9f87",
+          "filePath": "server/edge/chunks/node_modules_next_dist_compiled_@vercel_og_yoga_23ace1ce.wasm"
+        }
+      ],
+      "assets": [
+        {
+          "name": "server/edge/assets/noto-sans-v27-latin-regular.bdfa676c.ttf",
+          "filePath": "server/edge/assets/noto-sans-v27-latin-regular.bdfa676c.ttf"
+        }
+      ],
+      "env": {
+        "__NEXT_BUILD_ID": "JdYLnSuFEppwELEAJCyru",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "FdcBouKEWtIFazONnfelghyrmgzDUjqUoMsjBErc0Ao=",
+        "__NEXT_PREVIEW_MODE_ID": "6ca6ea0ccb3f96d31ec6afe069b7b882",
+        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "e899dc39a986a8ce00179884d50334a5bd68fabb8457943c43274341e4199b50",
+        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "fb8dac24cdc965b68daf937f8f5cee5af84b9fd3a2fd5c7e5a1d18447509be13"
+      }
+    }
+  }
 }

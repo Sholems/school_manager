@@ -1,12 +1,13 @@
 -- Create messages table for internal messaging system
 CREATE TABLE IF NOT EXISTS messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    school_id UUID NOT NULL REFERENCES schools(id) ON DELETE CASCADE,
+    school_id UUID DEFAULT '00000000-0000-0000-0000-000000000001' REFERENCES schools(id) ON DELETE CASCADE,
     from_id UUID NOT NULL,
     from_role TEXT NOT NULL CHECK (from_role IN ('admin', 'teacher', 'student', 'parent', 'staff')),
     to_id UUID NOT NULL,
     to_role TEXT NOT NULL CHECK (to_role IN ('admin', 'teacher', 'student', 'parent', 'staff')),
     student_id UUID REFERENCES students(id) ON DELETE SET NULL,
+    parent_message_id UUID REFERENCES messages(id) ON DELETE SET NULL,
     subject TEXT NOT NULL,
     body TEXT NOT NULL,
     is_read BOOLEAN DEFAULT FALSE,
@@ -14,15 +15,33 @@ CREATE TABLE IF NOT EXISTS messages (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Add parent_message_id column if table already exists
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'messages' AND column_name = 'parent_message_id') THEN
+        ALTER TABLE messages ADD COLUMN parent_message_id UUID REFERENCES messages(id) ON DELETE SET NULL;
+    END IF;
+END $$;
+
 -- Create indexes for faster querying
 CREATE INDEX IF NOT EXISTS idx_messages_school_id ON messages(school_id);
 CREATE INDEX IF NOT EXISTS idx_messages_to_id ON messages(to_id);
 CREATE INDEX IF NOT EXISTS idx_messages_from_id ON messages(from_id);
 CREATE INDEX IF NOT EXISTS idx_messages_is_read ON messages(is_read);
 CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_parent_id ON messages(parent_message_id);
 
 -- Enable RLS
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "admin_messages_select" ON messages;
+DROP POLICY IF EXISTS "user_messages_select" ON messages;
+DROP POLICY IF EXISTS "admin_messages_insert" ON messages;
+DROP POLICY IF EXISTS "user_messages_reply" ON messages;
+DROP POLICY IF EXISTS "user_messages_update" ON messages;
+DROP POLICY IF EXISTS "admin_messages_delete" ON messages;
 
 -- RLS Policies
 
@@ -50,6 +69,14 @@ CREATE POLICY "admin_messages_insert" ON messages
         school_id IN (
             SELECT school_id FROM users WHERE id = auth.uid() AND role = 'admin'
         )
+    );
+
+-- Non-admin users can insert replies (messages with parent_message_id)
+CREATE POLICY "user_messages_reply" ON messages
+    FOR INSERT TO authenticated
+    WITH CHECK (
+        from_id = auth.uid()
+        AND parent_message_id IS NOT NULL
     );
 
 -- Users can update their own received messages (mark as read)

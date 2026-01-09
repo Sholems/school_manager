@@ -245,6 +245,12 @@
       "namedRegex": "^/newsletter(?:/)?$"
     },
     {
+      "page": "/opengraph-image",
+      "regex": "^/opengraph\\-image(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/opengraph\\-image(?:/)?$"
+    },
+    {
       "page": "/privacy-policy",
       "regex": "^/privacy\\-policy(?:/)?$",
       "routeKeys": {},
@@ -279,6 +285,12 @@
       "regex": "^/terms\\-of\\-service(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/terms\\-of\\-service(?:/)?$"
+    },
+    {
+      "page": "/twitter-image",
+      "regex": "^/twitter\\-image(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/twitter\\-image(?:/)?$"
     }
   ],
   "dataRoutes": [],

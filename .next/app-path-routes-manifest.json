@@ -31,7 +31,9 @@
   "/api/teachers/route": "/api/teachers",
   "/api/upload/route": "/api/upload",
   "/auth/error/page": "/auth/error",
+  "/opengraph-image/route": "/opengraph-image",
   "/page": "/",
   "/privacy-policy/page": "/privacy-policy",
-  "/terms-of-service/page": "/terms-of-service"
+  "/terms-of-service/page": "/terms-of-service",
+  "/twitter-image/route": "/twitter-image"
 }

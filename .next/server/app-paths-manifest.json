@@ -31,7 +31,9 @@
   "/api/teachers/route": "app/api/teachers/route.js",
   "/api/upload/route": "app/api/upload/route.js",
   "/auth/error/page": "app/auth/error/page.js",
+  "/opengraph-image/route": "app-edge-has-no-entrypoint",
   "/page": "app/page.js",
   "/privacy-policy/page": "app/privacy-policy/page.js",
-  "/terms-of-service/page": "app/terms-of-service/page.js"
+  "/terms-of-service/page": "app/terms-of-service/page.js",
+  "/twitter-image/route": "app-edge-has-no-entrypoint"
 }

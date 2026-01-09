@@ -143,6 +143,11 @@ export async function createItem<T>(table: string, item: any): Promise<T> {
         delete safeItem.id;
     }
 
+    // Add default school_id for messages table if not provided
+    if (table === 'messages' && !safeItem.school_id) {
+        safeItem.school_id = '00000000-0000-0000-0000-000000000001';
+    }
+
     // Convert timestamps to ISO strings
     if (typeof safeItem.created_at === 'number') {
         safeItem.created_at = new Date(safeItem.created_at).toISOString();
