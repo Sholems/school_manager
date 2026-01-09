@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Key, Shield, Eye, EyeOff, Edit } from 'lucide-react';
 import * as Types from '@/lib/types';
-import * as Utils from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
@@ -9,8 +8,8 @@ import { useToast } from '@/components/providers/toast-provider';
 
 interface StaffViewProps {
     staff: Types.Staff[];
-    onAdd: (s: Types.Staff) => void;
-    onUpdate: (params: { id: string; updates: Partial<Types.Staff> }) => void;
+    onAdd: (s: Types.Staff, options?: { onSuccess?: () => void; onError?: (error: Error) => void }) => void;
+    onUpdate: (params: { id: string; updates: Partial<Types.Staff> }, options?: { onSuccess?: () => void; onError?: (error: Error) => void }) => void;
     onDelete: (id: string) => void;
 }
 
@@ -22,6 +21,7 @@ export const StaffView: React.FC<StaffViewProps> = ({ staff, onAdd, onUpdate, on
     const [loginPassword, setLoginPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isCreatingLogin, setIsCreatingLogin] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState({ name: '', role: '', tasks: '', email: '', phone: '', address: '', assigned_modules: [] as string[], passport_url: null as string | null });
     const { addToast } = useToast();
 
@@ -63,16 +63,47 @@ export const StaffView: React.FC<StaffViewProps> = ({ staff, onAdd, onUpdate, on
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSaving(true);
+        
+        const resetForm = () => {
+            setShowModal(false);
+            setEditingId(null);
+            setFormData({ name: '', role: '', tasks: '', email: '', phone: '', address: '', assigned_modules: [], passport_url: null });
+            setIsSaving(false);
+        };
+        
         if (editingId) {
-            onUpdate({ id: editingId, updates: { ...formData, updated_at: Date.now() } });
-            addToast('Staff member updated successfully', 'success');
+            onUpdate(
+                { id: editingId, updates: { ...formData, updated_at: Date.now() } },
+                {
+                    onSuccess: () => {
+                        addToast('Staff member updated successfully', 'success');
+                        resetForm();
+                    },
+                    onError: (error) => {
+                        addToast(error.message || 'Failed to update staff member', 'error');
+                        setIsSaving(false);
+                    }
+                }
+            );
         } else {
-            onAdd({ ...formData as Types.Staff, id: Utils.generateId(), created_at: Date.now(), updated_at: Date.now() });
-            addToast('Staff member added successfully', 'success');
+            // Let database generate ID and handle timestamps
+            const staffData = {
+                ...formData,
+                id: '', // Empty ID will be removed by data-service, letting DB generate it
+            } as Types.Staff;
+            
+            onAdd(staffData, {
+                onSuccess: () => {
+                    addToast('Staff member added successfully', 'success');
+                    resetForm();
+                },
+                onError: (error) => {
+                    addToast(error.message || 'Failed to add staff member', 'error');
+                    setIsSaving(false);
+                }
+            });
         }
-        setShowModal(false);
-        setEditingId(null);
-        setFormData({ name: '', role: '', tasks: '', email: '', phone: '', address: '', assigned_modules: [], passport_url: null });
     };
 
     const handleEdit = (staffMember: Types.Staff) => {
@@ -234,7 +265,9 @@ export const StaffView: React.FC<StaffViewProps> = ({ staff, onAdd, onUpdate, on
                     <Input label="Assigned Tasks" value={formData.tasks} onChange={e => setFormData({ ...formData, tasks: e.target.value })} />
                     <div className="grid grid-cols-2 gap-4"><Input label="Phone" required value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} /><Input label="Email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} /></div>
                     <Input label="Address" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
-                    <Button type="submit" className="w-full">{editingId ? 'Update Staff Member' : 'Save Staff Member'}</Button>
+                    <Button type="submit" className="w-full" disabled={isSaving}>
+                        {isSaving ? 'Saving...' : (editingId ? 'Update Staff Member' : 'Save Staff Member')}
+                    </Button>
                 </form>
             </Modal>
 
