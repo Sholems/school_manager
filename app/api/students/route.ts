@@ -61,8 +61,8 @@ export async function POST(request: NextRequest) {
             passwordHash = await hashPasswordWithSupabase(supabase, body.password)
         }
 
-        // Remove plain password and client-generated id from body
-        const { password, id, ...studentData } = body
+        // Remove plain password and client-generated id/timestamps from body
+        const { password, id, created_at, updated_at, ...studentData } = body
 
         // Default school_id for single-school setup
         const DEFAULT_SCHOOL_ID = '00000000-0000-0000-0000-000000000001'
@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
                 ...studentData,
                 school_id: studentData.school_id || DEFAULT_SCHOOL_ID,
                 password_hash: passwordHash,
+                // Let database handle timestamps with NOW()
             })
             .select(`
                 *,
