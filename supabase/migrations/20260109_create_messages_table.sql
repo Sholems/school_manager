@@ -54,11 +54,13 @@ CREATE POLICY "admin_messages_select" ON messages
         )
     );
 
--- Users can see messages sent to them
+-- Users can see messages sent to them (match to_id with their profile_id from users table)
 CREATE POLICY "user_messages_select" ON messages
     FOR SELECT TO authenticated
     USING (
-        to_id = auth.uid()
+        to_id IN (SELECT profile_id FROM users WHERE id = auth.uid())
+        OR from_id IN (SELECT profile_id FROM users WHERE id = auth.uid())
+        OR to_id = auth.uid()
         OR from_id = auth.uid()
     );
 
@@ -75,15 +77,21 @@ CREATE POLICY "admin_messages_insert" ON messages
 CREATE POLICY "user_messages_reply" ON messages
     FOR INSERT TO authenticated
     WITH CHECK (
-        from_id = auth.uid()
+        (from_id = auth.uid() OR from_id IN (SELECT profile_id FROM users WHERE id = auth.uid()))
         AND parent_message_id IS NOT NULL
     );
 
 -- Users can update their own received messages (mark as read)
 CREATE POLICY "user_messages_update" ON messages
     FOR UPDATE TO authenticated
-    USING (to_id = auth.uid())
-    WITH CHECK (to_id = auth.uid());
+    USING (
+        to_id IN (SELECT profile_id FROM users WHERE id = auth.uid())
+        OR to_id = auth.uid()
+    )
+    WITH CHECK (
+        to_id IN (SELECT profile_id FROM users WHERE id = auth.uid())
+        OR to_id = auth.uid()
+    );
 
 -- Admin can delete messages
 CREATE POLICY "admin_messages_delete" ON messages
