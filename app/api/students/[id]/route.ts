@@ -58,12 +58,21 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
             return errorResponse(parseError, 400)
         }
 
+        // Remove fields that shouldn't be updated directly
+        const { 
+            id: _id, 
+            class: _class, // This is a joined object from the query
+            password,
+            password_hash: _pwHash,
+            created_at: _createdAt,
+            updated_at: _updatedAt,
+            ...updateData 
+        } = body
+
         // Hash password if being updated
-        let updateData = { ...body }
-        if (body.password) {
-            const passwordHash = await hashPasswordWithSupabase(supabase, body.password)
+        if (password) {
+            const passwordHash = await hashPasswordWithSupabase(supabase, password)
             updateData.password_hash = passwordHash
-            delete updateData.password
         }
 
         const { data: student, error } = await supabase
@@ -73,10 +82,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
                 updated_at: new Date().toISOString(),
             })
             .eq('id', id)
-            .select()
+            .select(`
+                *,
+                class:classes(id, name)
+            `)
             .single()
 
         if (error) {
+            console.error('Error updating student:', error)
             return errorResponse(error.message)
         }
 

@@ -24,7 +24,10 @@ export default function StudentsPage() {
             students={students}
             classes={classes}
             onAdd={(student) => createStudentMutation.mutateAsync(student)}
-            onUpdate={(student) => updateStudentMutation.mutate({ id: student.id, updates: student })}
+            onUpdate={(student, options) => updateStudentMutation.mutate(
+                { id: student.id, updates: student },
+                options
+            )}
             onDelete={(id) => deleteStudentMutation.mutate(id)}
         />
     );

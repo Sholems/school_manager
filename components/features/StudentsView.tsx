@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Search, User, Edit, Trash2, UserCheck } from 'lucide-react';
 import * as Types from '@/lib/types';
-import * as Utils from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,8 +12,8 @@ import { useToast } from '@/components/providers/toast-provider';
 interface StudentsViewProps {
     students: Types.Student[];
     classes: Types.Class[];
-    onAdd: (s: Types.Student) => void;
-    onUpdate: (s: Types.Student) => void;
+    onAdd: (s: Types.Student) => Promise<Types.Student>;
+    onUpdate: (s: Types.Student, options?: { onSuccess?: () => void; onError?: (error: Error) => void }) => void;
     onDelete: (id: string) => void;
 }
 
@@ -31,6 +30,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
     const [editingId, setEditingId] = useState<string | null>(null);
     const [filterClass, setFilterClass] = useState('all');
     const [search, setSearch] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
 
     const [formData, setFormData] = useState<Partial<Types.Student>>({});
     const { addToast } = useToast();
@@ -50,21 +50,41 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
         setShowModal(true);
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (editingId) {
-            onUpdate({ ...formData as Types.Student, updated_at: Date.now() });
-            addToast('Student updated successfully', 'success');
-        } else {
-            onAdd({
-                ...formData as Types.Student,
-                id: Utils.generateId(),
-                created_at: Date.now(),
-                updated_at: Date.now()
-            });
-            addToast('Student registered successfully', 'success');
+        setIsSaving(true);
+        
+        try {
+            if (editingId) {
+                // For updates, use callback pattern
+                onUpdate({ ...formData as Types.Student, id: editingId }, {
+                    onSuccess: () => {
+                        addToast('Student updated successfully', 'success');
+                        setShowModal(false);
+                        setEditingId(null);
+                        setFormData({});
+                        setIsSaving(false);
+                    },
+                    onError: (error) => {
+                        addToast(error.message || 'Failed to update student', 'error');
+                        setIsSaving(false);
+                    }
+                });
+            } else {
+                // For creates, use Promise (mutateAsync)
+                await onAdd({
+                    ...formData as Types.Student,
+                    id: '', // Let database generate ID
+                });
+                addToast('Student registered successfully', 'success');
+                setShowModal(false);
+                setFormData({});
+                setIsSaving(false);
+            }
+        } catch (error: any) {
+            addToast(error.message || 'Failed to save student', 'error');
+            setIsSaving(false);
         }
-        setShowModal(false);
     };
 
     const filteredStudents = students.filter(s => {
@@ -194,7 +214,9 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                         <p className="text-xs text-gray-500 mt-1">This password allows the student/parent to login using the Student Number + Password.</p>
                     </div>
 
-                    <Button type="submit" className="w-full mt-4">{editingId ? 'Update Record' : 'Complete Registration'}</Button>
+                    <Button type="submit" className="w-full mt-4" disabled={isSaving}>
+                        {isSaving ? 'Saving...' : (editingId ? 'Update Record' : 'Complete Registration')}
+                    </Button>
                 </form>
             </Modal>
         </div>
