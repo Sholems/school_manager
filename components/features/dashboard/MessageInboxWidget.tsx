@@ -21,8 +21,8 @@ export const MessageInboxWidget: React.FC<MessageInboxWidgetProps> = ({
     maxMessages = 5,
     showViewAll = true
 }) => {
-    const { user: authUser } = useAuth();
-    const { currentRole } = useSchoolStore();
+    const { user: authUser, userData } = useAuth();
+    const { currentRole, currentUser } = useSchoolStore();
     const { addToast } = useToast();
     const { data: messages = [] } = useMessages();
     const { mutate: updateMessage } = useUpdateMessage();
@@ -33,22 +33,44 @@ export const MessageInboxWidget: React.FC<MessageInboxWidgetProps> = ({
     const [isReplyMode, setIsReplyMode] = useState(false);
     const [replyBody, setReplyBody] = useState('');
 
+    // Get the user's profile ID - could be from userData, currentUser, or authUser
+    const myProfileId = userData?.profile_id || currentUser?.id || authUser?.id;
+    const myAuthId = authUser?.id;
+
     // Get messages for this user (both received and sent)
+    // Check both profile_id AND auth user id since messages may use either
     const myMessages = React.useMemo(() => {
         return messages
-            .filter((m: Types.Message) => m.to_id === authUser?.id || m.from_id === authUser?.id)
+            .filter((m: Types.Message) => 
+                m.to_id === myProfileId || 
+                m.from_id === myProfileId ||
+                m.to_id === myAuthId || 
+                m.from_id === myAuthId
+            )
             .sort((a: Types.Message, b: Types.Message) => b.created_at - a.created_at)
             .slice(0, maxMessages);
-    }, [messages, authUser?.id, maxMessages]);
+    }, [messages, myProfileId, myAuthId, maxMessages]);
 
     // Get unread count (only for received messages)
     const unreadCount = React.useMemo(() => {
-        return messages.filter((m: Types.Message) => m.to_id === authUser?.id && !m.is_read).length;
-    }, [messages, authUser?.id]);
+        return messages.filter((m: Types.Message) => 
+            (m.to_id === myProfileId || m.to_id === myAuthId) && !m.is_read
+        ).length;
+    }, [messages, myProfileId, myAuthId]);
+
+    // Check if this message was sent to me
+    const isMessageToMe = (message: Types.Message) => {
+        return message.to_id === myProfileId || message.to_id === myAuthId;
+    };
+
+    // Check if this message was sent by me
+    const isMessageFromMe = (message: Types.Message) => {
+        return message.from_id === myProfileId || message.from_id === myAuthId;
+    };
 
     const handleViewMessage = (message: Types.Message) => {
         // Mark as read if it's a received message and not already read
-        if (message.to_id === authUser?.id && !message.is_read) {
+        if (isMessageToMe(message) && !message.is_read) {
             updateMessage({ id: message.id, updates: { is_read: true } });
         }
         setViewingMessage(message);
@@ -64,7 +86,7 @@ export const MessageInboxWidget: React.FC<MessageInboxWidgetProps> = ({
 
         const replyMessage: Types.Message = {
             id: Utils.generateId(),
-            from_id: authUser?.id || '',
+            from_id: myProfileId || myAuthId || '',
             from_role: currentRole,
             to_id: viewingMessage.from_id,
             to_role: viewingMessage.from_role,
@@ -97,12 +119,12 @@ export const MessageInboxWidget: React.FC<MessageInboxWidgetProps> = ({
 
     // Check if message is from admin (can reply)
     const canReply = (message: Types.Message) => {
-        return message.to_id === authUser?.id && message.from_role === 'admin';
+        return isMessageToMe(message) && message.from_role === 'admin';
     };
 
     // Get display name for sender
     const getSenderName = (message: Types.Message) => {
-        if (message.from_id === authUser?.id) return 'You';
+        if (isMessageFromMe(message)) return 'You';
         if (message.from_role === 'admin') return 'School Admin';
         return message.from_role.charAt(0).toUpperCase() + message.from_role.slice(1);
     };
