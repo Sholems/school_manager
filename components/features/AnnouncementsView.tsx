@@ -38,16 +38,16 @@ export const AnnouncementsView: React.FC = () => {
     const { mutate: updateAnnouncement } = useUpdateAnnouncement();
     const { mutate: deleteAnnouncement } = useDeleteAnnouncement();
 
-    // Role-based access control
-    const isReadOnlyRole = currentRole === 'student' || currentRole === 'parent';
+    // Role-based access control - Only admin can create/edit/delete
+    const isReadOnlyRole = currentRole !== 'admin';
 
-    // Get student's class for filtering announcements
+    // Get student's class for filtering announcements (for student/parent roles)
     const studentClassId = React.useMemo(() => {
-        if (!isReadOnlyRole) return null;
+        if (currentRole !== 'student' && currentRole !== 'parent') return null;
         const studentId = currentUser?.student_id || students[0]?.id;
         const student = students.find((s: Types.Student) => s.id === studentId);
         return student?.class_id || null;
-    }, [isReadOnlyRole, currentUser, students]);
+    }, [currentRole, currentUser, students]);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAnnouncement, setEditingAnnouncement] = useState<Types.Announcement | null>(null);
@@ -126,14 +126,25 @@ export const AnnouncementsView: React.FC = () => {
     // Filter and sort announcements
     const filteredAnnouncements = announcements
         .filter(a => {
-            // Role-based filtering for students/parents
-            if (isReadOnlyRole) {
-                // Show announcements targeted at: all, parents (for parent role), or student's class
+            // Role-based filtering
+            if (currentRole === 'student' || currentRole === 'parent') {
+                // Students/parents see: all, parents (for parent role), or student's class
                 const isForAll = a.target === 'all';
                 const isForParents = currentRole === 'parent' && a.target === 'parents';
                 const isForMyClass = a.target === 'class' && a.class_id === studentClassId;
                 if (!isForAll && !isForParents && !isForMyClass) return false;
+            } else if (currentRole === 'teacher') {
+                // Teachers see: all, teachers
+                const isForAll = a.target === 'all';
+                const isForTeachers = a.target === 'teachers';
+                if (!isForAll && !isForTeachers) return false;
+            } else if (currentRole === 'staff') {
+                // Staff see: all, staff
+                const isForAll = a.target === 'all';
+                const isForStaff = a.target === 'staff';
+                if (!isForAll && !isForStaff) return false;
             }
+            // Admin sees all
 
             // Apply user filter
             if (filter === 'pinned') return a.is_pinned;

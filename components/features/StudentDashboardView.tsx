@@ -22,7 +22,8 @@ import {
     ClipboardList,
     ArrowUp,
     ArrowDown,
-    Timer
+    Timer,
+    Mail
 } from 'lucide-react';
 import { useSchoolStore } from '@/lib/store';
 import {
@@ -36,6 +37,7 @@ import * as Types from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { AcademicProgressChart } from './grading/AcademicProgressChart';
+import { MessageInboxWidget } from './dashboard/MessageInboxWidget';
 
 export const StudentDashboardView = () => {
     // Auth state from store
@@ -646,6 +648,9 @@ export const StudentDashboardView = () => {
                             )}
                         </div>
                     </div>
+
+                    {/* Messages Inbox */}
+                    <MessageInboxWidget maxMessages={3} />
                 </div>
             </div>
         </div>

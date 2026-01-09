@@ -14,7 +14,8 @@ import {
     XCircle,
     AlertCircle,
     ChevronRight,
-    Save
+    Save,
+    Mail
 } from 'lucide-react';
 import { useSchoolStore } from '@/lib/store';
 import * as Utils from '@/lib/utils';
@@ -29,6 +30,7 @@ import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/providers/toast-provider';
 import { GradingView } from './GradingView';
 import { AttendanceView } from './AttendanceView';
+import { MessageInboxWidget } from './dashboard/MessageInboxWidget';
 
 // Internal components for the modules (to be expanded)
 const MySubjectsModule = ({ subjects, classes }: { subjects: any[], classes: any[] }) => {
@@ -282,6 +284,9 @@ export const TeacherDashboardView = () => {
                                 <p className="text-brand-100 text-sm">Review school announcements and upcoming events.</p>
                             </div>
                         </div>
+
+                        {/* Messages Inbox */}
+                        <MessageInboxWidget maxMessages={3} />
                     </div>
                 </div>
             )}

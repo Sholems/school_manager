@@ -92,16 +92,35 @@ export async function POST(request: NextRequest) {
             message: sanitize(message),
         };
 
-        // Configure SMTP transporter
+        // Configure SMTP transporter with multiple fallback options
+        const port = parseInt(process.env.SMTP_PORT || '465');
         const transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
-            port: parseInt(process.env.SMTP_PORT || '465'),
-            secure: true, // true for 465, false for 587
+            port: port,
+            secure: port === 465, // true for 465, false for other ports
             auth: {
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASS,
             },
+            tls: {
+                // Do not fail on invalid certs (common with cPanel)
+                rejectUnauthorized: false,
+            },
+            connectionTimeout: 10000, // 10 seconds
+            greetingTimeout: 10000,
+            socketTimeout: 15000,
         });
+
+        // Verify SMTP connection before sending
+        try {
+            await transporter.verify();
+        } catch (verifyError) {
+            logError('SMTP connection verification failed', verifyError);
+            return NextResponse.json(
+                { error: 'Email service temporarily unavailable. Please try again later or contact us by phone.' },
+                { status: 503 }
+            );
+        }
 
         // Email content
         const mailOptions = {
@@ -206,7 +225,30 @@ From: www.fruitfulvineheritageschools.org.ng
         });
 
     } catch (error) {
-        logError('Contact form error', error);
+        // Log detailed error for debugging
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        logError('Contact form error', error, { 
+            errorMessage,
+            smtpHost: process.env.SMTP_HOST,
+            smtpPort: process.env.SMTP_PORT,
+        });
+        
+        // Check for specific error types
+        if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('ETIMEDOUT')) {
+            return NextResponse.json(
+                { error: 'Could not connect to email server. Please try again later or contact us by phone.' },
+                { status: 503 }
+            );
+        }
+        
+        if (errorMessage.includes('authentication') || errorMessage.includes('auth')) {
+            return NextResponse.json(
+                { error: 'Email service configuration error. Please contact us by phone.' },
+                { status: 503 }
+            );
+        }
+        
         return NextResponse.json(
             { error: 'Failed to send message. Please try again later.' },
             { status: 500 }

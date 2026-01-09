@@ -11,6 +11,7 @@
   "/(dashboard)/data/page": "app/(dashboard)/data/page.js",
   "/(dashboard)/grading/page": "app/(dashboard)/grading/page.js",
   "/(dashboard)/id_cards/page": "app/(dashboard)/id_cards/page.js",
+  "/(dashboard)/messages/page": "app/(dashboard)/messages/page.js",
   "/(dashboard)/newsletter/page": "app/(dashboard)/newsletter/page.js",
   "/(dashboard)/settings/page": "app/(dashboard)/settings/page.js",
   "/(dashboard)/staff/page": "app/(dashboard)/staff/page.js",

@@ -5,7 +5,7 @@ import {
     LayoutDashboard, Users, BookOpen, GraduationCap,
     CalendarCheck, CreditCard, Database, Settings as SettingsIcon,
     LogOut, Menu, ClipboardList, BadgeCheck, UserCog,
-    Megaphone, Calendar, BarChart3, FileCheck, Newspaper
+    Megaphone, Calendar, BarChart3, FileCheck, Newspaper, Mail
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -70,6 +70,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { id: 'bursary', name: 'Bursary', href: '/bursary', icon: CreditCard },
         { id: 'admissions', name: 'Admissions', href: '/admissions', icon: FileCheck },
         { id: 'announcements', name: 'Announcements', href: '/announcements', icon: Megaphone },
+        { id: 'messages', name: 'Messages', href: '/messages', icon: Mail },
         { id: 'calendar', name: 'Calendar', href: '/calendar', icon: Calendar },
         { id: 'analytics', name: 'Analytics', href: '/analytics', icon: BarChart3 },
         { id: 'id_cards', name: 'ID Cards', href: '/id_cards', icon: BadgeCheck },

@@ -11,6 +11,7 @@
   "/(dashboard)/data/page": "/data",
   "/(dashboard)/grading/page": "/grading",
   "/(dashboard)/id_cards/page": "/id_cards",
+  "/(dashboard)/messages/page": "/messages",
   "/(dashboard)/newsletter/page": "/newsletter",
   "/(dashboard)/settings/page": "/settings",
   "/(dashboard)/staff/page": "/staff",

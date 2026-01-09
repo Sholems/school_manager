@@ -43,8 +43,8 @@ export const CalendarView: React.FC = () => {
     const { mutate: updateEvent } = useUpdateEvent();
     const { mutate: deleteEvent } = useDeleteEvent();
 
-    // Role-based access control
-    const isReadOnlyRole = currentRole === 'student' || currentRole === 'parent';
+    // Role-based access control - Only admin can create/edit/delete events
+    const isReadOnlyRole = currentRole !== 'admin';
 
     const [viewMode, setViewMode] = useState<ViewMode>('month');
     const [currentDate, setCurrentDate] = useState(new Date());

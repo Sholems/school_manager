@@ -11,12 +11,14 @@ import {
     DollarSign,
     Megaphone,
     TrendingDown,
-    FileText
+    FileText,
+    Mail
 } from 'lucide-react';
 import { useSchoolStore } from '@/lib/store';
 import { useStaff, useSettings, useExpenses, usePayments, useAnnouncements, useStudents } from '@/lib/hooks/use-data';
 import * as Utils from '@/lib/utils';
 import * as Types from '@/lib/types';
+import { MessageInboxWidget } from './dashboard/MessageInboxWidget';
 
 export const StaffDashboardView = () => {
     const { currentUser } = useSchoolStore();
@@ -231,6 +233,9 @@ export const StaffDashboardView = () => {
                             </div>
                         </div>
                     )}
+
+                    {/* Messages Inbox */}
+                    <MessageInboxWidget maxMessages={3} />
                 </div>
             </div>
         </div>

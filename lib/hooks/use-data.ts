@@ -540,3 +540,40 @@ export function useDeleteNewsletter() {
         onSuccess: () => { queryClient.invalidateQueries({ queryKey: KEY_NEWSLETTERS }); },
     });
 }
+
+// =============================================
+// MESSAGES
+// =============================================
+export const KEY_MESSAGES = ['messages'] as const;
+
+export function useMessages() {
+    return useQuery({
+        queryKey: KEY_MESSAGES,
+        queryFn: () => DataService.fetchAll<Types.Message>('messages'),
+    });
+}
+
+export function useCreateMessage() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (item: Types.Message) => DataService.createItem<Types.Message>('messages', item),
+        onSuccess: () => { queryClient.invalidateQueries({ queryKey: KEY_MESSAGES }); },
+    });
+}
+
+export function useUpdateMessage() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, updates }: { id: string; updates: Partial<Types.Message> }) =>
+            DataService.updateItem<Types.Message>('messages', id, updates),
+        onSuccess: () => { queryClient.invalidateQueries({ queryKey: KEY_MESSAGES }); },
+    });
+}
+
+export function useDeleteMessage() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => DataService.deleteItem('messages', id),
+        onSuccess: () => { queryClient.invalidateQueries({ queryKey: KEY_MESSAGES }); },
+    });
+}

@@ -233,6 +233,12 @@
       "namedRegex": "^/id_cards(?:/)?$"
     },
     {
+      "page": "/messages",
+      "regex": "^/messages(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/messages(?:/)?$"
+    },
+    {
       "page": "/newsletter",
       "regex": "^/newsletter(?:/)?$",
       "routeKeys": {},
