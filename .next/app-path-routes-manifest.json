@@ -23,6 +23,7 @@
   "/api/auth/create-staff-account/route": "/api/auth/create-staff-account",
   "/api/auth/student-login/route": "/api/auth/student-login",
   "/api/classes/route": "/api/classes",
+  "/api/contact/route": "/api/contact",
   "/api/health/route": "/api/health",
   "/api/students/[id]/route": "/api/students/[id]",
   "/api/students/route": "/api/students",
