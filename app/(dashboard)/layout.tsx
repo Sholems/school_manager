@@ -131,14 +131,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Sidebar */}
             <aside className={`
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} 
-                ${isSidebarOpen ? 'w-64' : 'lg:w-20'} 
                 w-64 h-full bg-brand-900 transition-all duration-300 flex flex-col fixed inset-y-0 z-40 no-print
             `}>
                 <div className="h-16 lg:h-20 flex items-center px-4 lg:px-6 border-b border-white/10 shrink-0 gap-3">
                     <div className="h-10 w-10 bg-white rounded-lg flex items-center justify-center text-brand-600 font-bold shrink-0 shadow-sm">
                         <img src={settings.logo_media || '/fruitful_logo_main.png'} alt="Logo" className="h-8 w-8 object-contain" />
                     </div>
-                    <span className={`${isSidebarOpen ? 'block' : 'lg:hidden'} ml-2 text-white font-bold text-lg lg:text-xl truncate tracking-tight`}>
+                    <span className="ml-2 text-white font-bold text-lg lg:text-xl truncate tracking-tight">
                         {settings.school_name.split(' ')[0]}
                     </span>
                     {/* Mobile close button */}
@@ -162,7 +161,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 }`}
                         >
                             <item.icon className="h-5 w-5 shrink-0" />
-                            <span className={`${isSidebarOpen ? 'block' : 'lg:hidden'} ml-3`}>{item.name}</span>
+                            <span className="ml-3">{item.name}</span>
                         </Link>
                     ))}
                 </nav>
@@ -173,17 +172,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         className="w-full flex items-center px-3 lg:px-4 py-2.5 lg:py-3 text-sm font-medium text-brand-100 hover:bg-white/5 hover:text-white rounded-lg transition-colors"
                     >
                         <LogOut className="h-5 w-5 shrink-0" />
-                        <span className={`${isSidebarOpen ? 'block' : 'lg:hidden'} ml-3`}>Log Out</span>
+                        <span className="ml-3">Log Out</span>
                     </button>
                 </div>
             </aside>
 
             {/* Main Content - Adjust margin for sidebar */}
-            <main className={`flex-1 flex flex-col min-w-0 h-full overflow-hidden transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
+            <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden transition-all duration-300 lg:ml-64">
                 <header className="h-16 lg:h-20 bg-white border-b sticky top-0 z-20 flex items-center justify-between px-4 lg:px-6 no-print shadow-sm shrink-0">
-                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-md transition-colors hover:bg-gray-100">
-                        <Menu className="h-5 w-5 lg:h-6 lg:w-6 text-gray-600" />
+                    {/* Mobile menu button - hidden on desktop */}
+                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-md transition-colors hover:bg-gray-100 lg:hidden">
+                        <Menu className="h-5 w-5 text-gray-600" />
                     </button>
+                    <div className="hidden lg:block" />
                     <div className="flex items-center gap-3 lg:gap-6">
                         <NotificationCenter />
                         <div className="flex items-center gap-2 lg:gap-4 border-l pl-3 lg:pl-6">
