@@ -4,6 +4,8 @@
 -- Drop any conflicting policies
 DROP POLICY IF EXISTS "students_school_isolation" ON students;
 DROP POLICY IF EXISTS "authenticated_access" ON students;
+DROP POLICY IF EXISTS "authenticated_full_access" ON students;
+DROP POLICY IF EXISTS "public_read_for_login" ON students;
 DROP POLICY IF EXISTS "Enable all access for authenticated users" ON students;
 DROP POLICY IF EXISTS "Allow public read for login" ON students;
 DROP POLICY IF EXISTS "Authenticated users can insert students" ON students;
