@@ -231,13 +231,13 @@ export const StudentDashboardView = () => {
 
     // Subject Performance Analysis
     const subjectAnalysis = useMemo(() => {
-        if (!myScore || !myScore.rows.length) return null;
+        if (!isResultPublished || !myScore || !myScore.rows.length) return null;
         const sorted = [...myScore.rows].sort((a, b) => b.total - a.total);
         return {
             top: sorted.slice(0, 2),
             needsImprovement: sorted.slice(-2).filter(s => s.total < 50),
         };
-    }, [myScore]);
+    }, [myScore, isResultPublished]);
 
     if (showReportCard && currentClass && myScore && isResultPublished) {
         return (
@@ -380,7 +380,9 @@ export const StudentDashboardView = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                 <div className="lg:col-span-2 space-y-6">
                     {/* Academic Progress Chart */}
-                    <AcademicProgressChart scores={scores} studentId={student.id} />
+                    {isResultPublished ? (
+                        <AcademicProgressChart scores={scores} studentId={student.id} />
+                    ) : null}
 
                     {/* Academic Performance Widget */}
                     <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
@@ -393,7 +395,7 @@ export const StudentDashboardView = () => {
                                 View Details →
                             </Link>
                         </div>
-                        {myScore && myScore.rows.length > 0 ? (
+                        {isResultPublished && myScore && myScore.rows.length > 0 ? (
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead>
@@ -433,7 +435,9 @@ export const StudentDashboardView = () => {
                                 )}
                             </div>
                         ) : (
-                            <div className="text-center py-8 text-gray-400 italic text-sm">No scores available for this term yet.</div>
+                            <div className="text-center py-8 text-gray-400 italic text-sm">
+                                {!isResultPublished ? 'Results pending publication by school administration.' : 'No scores available for this term yet.'}
+                            </div>
                         )}
                     </div>
 
