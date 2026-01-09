@@ -7,6 +7,7 @@ import {
     errorResponse 
 } from '@/lib/api-utils'
 import { RATE_LIMITS } from '@/lib/rate-limit'
+import { logDebug, logError, logInfo } from '@/lib/logger'
 
 // POST /api/auth/student-login - Proper Supabase Auth for students
 export async function POST(request: NextRequest) {
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
 
         // If no auth account exists, create one
         if (!authUserId) {
-            console.log('Creating Supabase auth account for student:', student.student_no)
+            logDebug('Creating Supabase auth account for student', { studentNo: student.student_no })
             
             // Create auth user using admin client
             const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
             })
 
             if (authError || !authData.user) {
-                console.error('Failed to create auth account:', authError)
+                logError('Failed to create student auth account', authError)
                 return errorResponse('Failed to create account. Please contact admin.', 500)
             }
 
@@ -97,10 +98,12 @@ export async function POST(request: NextRequest) {
         })
 
         if (signInError) {
-            console.error('Sign in error:', signInError)
+            logDebug('Student sign in failed', { error: signInError.message })
             return errorResponse('Invalid credentials', 401)
         }
 
+        logInfo('Student login successful', { studentNo: student.student_no })
+        
         // Return session and student info
         return NextResponse.json({
             success: true,
@@ -118,7 +121,7 @@ export async function POST(request: NextRequest) {
             }
         })
     } catch (error) {
-        console.error('Student login error:', error)
+        logError('Student login error', error as Error)
         return errorResponse('An unexpected error occurred')
     }
 }

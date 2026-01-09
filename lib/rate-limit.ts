@@ -2,7 +2,17 @@
  * Rate Limiting Utility
  * 
  * Simple in-memory rate limiter for API routes.
- * For production at scale, use Redis or a dedicated rate limiting service.
+ * 
+ * IMPORTANT: This implementation works best for single-instance deployments.
+ * For production at scale with multiple instances:
+ * - Use Redis (Upstash Redis is great for serverless)
+ * - Or use Vercel's Edge Config / KV
+ * - Or use a dedicated rate limiting service (e.g., Arcjet)
+ * 
+ * The current implementation is suitable for:
+ * - Development
+ * - Single-instance production (single Vercel function)
+ * - Low-traffic applications
  */
 
 interface RateLimitEntry {
@@ -14,15 +24,18 @@ interface RateLimitEntry {
 // For multi-instance deployments, use Redis
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
-// Clean up expired entries periodically
-setInterval(() => {
+// Lazy cleanup on access (serverless-friendly, no setInterval)
+function cleanupExpired(): void {
     const now = Date.now();
-    for (const [key, entry] of rateLimitStore.entries()) {
-        if (now > entry.resetTime) {
-            rateLimitStore.delete(key);
+    // Only cleanup if store is getting large (memory optimization)
+    if (rateLimitStore.size > 1000) {
+        for (const [key, entry] of rateLimitStore.entries()) {
+            if (now > entry.resetTime) {
+                rateLimitStore.delete(key);
+            }
         }
     }
-}, 60000); // Clean up every minute
+}
 
 export interface RateLimitConfig {
     maxRequests: number;
@@ -45,6 +58,9 @@ export function checkRateLimit(
     identifier: string,
     config: RateLimitConfig = { maxRequests: 100, windowMs: 60000 }
 ): RateLimitResult {
+    // Lazy cleanup for serverless environments
+    cleanupExpired();
+    
     const now = Date.now();
     const entry = rateLimitStore.get(identifier);
 
