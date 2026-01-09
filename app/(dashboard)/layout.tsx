@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     LayoutDashboard, Users, BookOpen, GraduationCap,
     CalendarCheck, CreditCard, Database, Settings as SettingsIcon,
@@ -10,7 +10,7 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSchoolStore } from '@/lib/store';
-import { useSettings } from '@/lib/hooks/use-data';
+import { useSettings, useStaff } from '@/lib/hooks/use-data';
 import * as Types from '@/lib/types';
 import * as Utils from '@/lib/utils';
 import { LoginView } from '@/components/features/LoginView';
@@ -26,8 +26,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     // Settings from TanStack Query - only enabled once auth is ready
     const { data: settings = Utils.INITIAL_SETTINGS, isLoading: settingsLoading } = useSettings();
+    
+    // Fetch staff data to get assigned_modules for staff users
+    const { data: staffList = [] } = useStaff();
+    
     const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Start closed on mobile
     const pathname = usePathname();
+    
+    // Get current staff member's profile with assigned_modules
+    const currentStaffProfile = useMemo(() => {
+        if (currentRole === 'staff' && userData?.profile_id) {
+            return staffList.find(s => s.id === userData.profile_id);
+        }
+        // Also try matching by email as fallback
+        if (currentRole === 'staff' && userData?.email) {
+            return staffList.find(s => s.email === userData.email);
+        }
+        return null;
+    }, [currentRole, userData, staffList]);
 
     // Set sidebar open by default on desktop
     useEffect(() => {
@@ -88,10 +104,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         ? navigation.map(n => n.id)
         : (rolePermissions?.navigation || ['dashboard']);
 
-    // Special handling for Staff: Merge assigned modules into navigation
-    if (currentRole === 'staff' && currentUser && 'assigned_modules' in currentUser) {
-        const staffModules = (currentUser as Types.Staff).assigned_modules || [];
-        allowedNavIds = [...new Set([...allowedNavIds, ...staffModules])];
+    // Special handling for Staff: Use assigned_modules from the staff profile in database
+    if (currentRole === 'staff' && currentStaffProfile) {
+        const staffModules = currentStaffProfile.assigned_modules || [];
+        // Staff gets dashboard + their assigned modules
+        allowedNavIds = ['dashboard', ...staffModules];
     }
 
     const filteredNavigation = navigation.filter(item => allowedNavIds.includes(item.id));
