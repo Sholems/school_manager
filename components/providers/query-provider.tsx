@@ -11,7 +11,8 @@ export default function QueryProvider({ children }: { children: React.ReactNode 
                     queries: {
                         staleTime: 60 * 1000, // 1 minute
                         refetchOnWindowFocus: false,
-                        retry: 1,
+                        retry: 3, // Retry failed requests up to 3 times
+                        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
                     },
                 },
             })
