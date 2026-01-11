@@ -28,7 +28,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const { data: settings = Utils.INITIAL_SETTINGS, isLoading: settingsLoading } = useSettings();
     
     // Fetch staff data to get assigned_modules for staff users
-    const { data: staffList = [] } = useStaff();
+    const { data: staffList = [], isLoading: staffLoading } = useStaff();
     
     const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Start closed on mobile
     const pathname = usePathname();
@@ -113,9 +113,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     const filteredNavigation = navigation.filter(item => allowedNavIds.includes(item.id));
 
-    // Show loading spinner only while auth is initializing
-    // Settings will load with fallback defaults, so we don't block on them
-    if (authLoading) {
+    // Show loading spinner while auth OR settings are initializing
+    // Also wait for staff data if user is a staff member (to load assigned_modules)
+    const isStaffLoadingModules = currentRole === 'staff' && staffLoading;
+    if (authLoading || settingsLoading || isStaffLoadingModules) {
         return (
             <div className="h-screen w-full flex items-center justify-center bg-gray-50">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
