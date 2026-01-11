@@ -75,6 +75,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         logout();
     };
 
+    // Show loading spinner while auth OR settings are initializing
+    // Also wait for staff data if user is a staff member (to load assigned_modules)
+    // IMPORTANT: This must be checked BEFORE computing navigation to prevent flickering
+    const isStaffLoadingModules = currentRole === 'staff' && staffLoading;
+    if (authLoading || settingsLoading || isStaffLoadingModules) {
+        return (
+            <div className="h-screen w-full flex items-center justify-center bg-gray-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
+            </div>
+        );
+    }
+
+    // Check if user is authenticated
+    // Now properly unified: all users (including students) use Supabase auth
+    // Students get auto-created Supabase accounts on first login
+    const isAuthenticated = !!user;
+    
+    if (!isAuthenticated) {
+        return <LoginView />;
+    }
+
     const navigation = [
         { id: 'dashboard', name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { id: 'students', name: 'Students', href: '/students', icon: GraduationCap },
@@ -105,33 +126,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         : (rolePermissions?.navigation || ['dashboard']);
 
     // Special handling for Staff: Use assigned_modules from the staff profile in database
+    // Only override if the staff has specific modules assigned, otherwise use role permissions
     if (currentRole === 'staff' && currentStaffProfile) {
         const staffModules = currentStaffProfile.assigned_modules || [];
-        // Staff gets dashboard + their assigned modules
-        allowedNavIds = ['dashboard', ...staffModules];
+        if (staffModules.length > 0) {
+            // Staff with specific modules gets dashboard + their assigned modules
+            allowedNavIds = ['dashboard', ...staffModules];
+        }
+        // If no modules assigned, fall through to use rolePermissions.navigation
     }
 
     const filteredNavigation = navigation.filter(item => allowedNavIds.includes(item.id));
-
-    // Show loading spinner while auth OR settings are initializing
-    // Also wait for staff data if user is a staff member (to load assigned_modules)
-    const isStaffLoadingModules = currentRole === 'staff' && staffLoading;
-    if (authLoading || settingsLoading || isStaffLoadingModules) {
-        return (
-            <div className="h-screen w-full flex items-center justify-center bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
-            </div>
-        );
-    }
-
-    // Check if user is authenticated
-    // Now properly unified: all users (including students) use Supabase auth
-    // Students get auto-created Supabase accounts on first login
-    const isAuthenticated = !!user;
-    
-    if (!isAuthenticated) {
-        return <LoginView />;
-    }
 
     // If user is authenticated but no userData yet, we may still be loading
     // But don't block forever - after auth loads, userData should always be set
