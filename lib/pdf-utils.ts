@@ -1,6 +1,24 @@
 'use client';
 
 /**
+ * Removes lab(), oklch(), lch() and other modern CSS color functions from inline styles
+ */
+const stripModernColorFunctions = (html: string): string => {
+    // Remove lab(), oklch(), lch() and similar color functions from style attributes
+    return html.replace(/style="([^"]*)"/g, (match, styleContent) => {
+        // Remove color properties with lab/oklch/lch functions
+        const cleaned = styleContent
+            .replace(/color\s*:\s*(?:lab|oklch|lch|hwb)\([^)]+\)[^;]*/gi, '')
+            .replace(/background(?:-color)?\s*:\s*(?:lab|oklch|lch|hwb)\([^)]+\)[^;]*/gi, '')
+            .replace(/border(?:-color)?\s*:\s*(?:lab|oklch|lch|hwb)\([^)]+\)[^;]*/gi, '')
+            .replace(/;;+/g, ';') // Remove duplicate semicolons
+            .replace(/;\s*$/, ''); // Remove trailing semicolon
+        
+        return cleaned ? `style="${cleaned}"` : '';
+    });
+};
+
+/**
  * Generates and downloads a PDF from an HTML element
  * Works on both desktop and mobile devices
  * Uses iframe isolation to avoid CSS color parsing issues
@@ -34,6 +52,10 @@ export const downloadPDF = async (
         return;
     }
 
+    // Get HTML and strip modern color functions
+    let html = element.innerHTML;
+    html = stripModernColorFunctions(html);
+
     // Write clean HTML with only inline styles (no external CSS with lab() colors)
     iframeDoc.open();
     iframeDoc.write(`
@@ -50,9 +72,10 @@ export const downloadPDF = async (
                     color: #333;
                 }
                 table { border-collapse: collapse; }
+                img { max-width: 100%; height: auto; }
             </style>
         </head>
-        <body>${element.innerHTML}</body>
+        <body>${html}</body>
         </html>
     `);
     iframeDoc.close();
