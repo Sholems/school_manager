@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Printer, Check, Plus, Trash2 } from 'lucide-react';
+import { Printer, Check, Plus, Trash2, Download } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { ReceiptTemplate } from './ReceiptTemplate';
 import { InvoiceTemplate } from './InvoiceTemplate';
+import { downloadPDF } from '@/lib/pdf-utils';
 import * as Types from '@/lib/types';
 import * as Utils from '@/lib/utils';
 
@@ -244,6 +245,24 @@ export const BursaryModals: React.FC<BursaryModalsProps> = ({
         setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
     };
 
+    const handleDownloadReceipt = async () => {
+        if (!receiptPayment || !receiptStudent) return;
+        await downloadPDF(
+            'receipt-print',
+            `Receipt-${receiptStudent.student_no}-${receiptPayment.date}`,
+            { logoUrl: settings.logo_media }
+        );
+    };
+
+    const handleDownloadInvoice = async () => {
+        if (!invoiceStudent) return;
+        await downloadPDF(
+            'invoice-print',
+            `Invoice-${invoiceStudent.student_no}-${settings.current_term.replace(/\s+/g, '_')}`,
+            { logoUrl: settings.logo_media }
+        );
+    };
+
     return (
         <>
             {/* Payment Modal */}
@@ -309,6 +328,9 @@ export const BursaryModals: React.FC<BursaryModalsProps> = ({
                         />
                         <div className="mt-4 flex justify-end gap-2">
                             <Button variant="secondary" onClick={() => setReceiptPayment(null)}>Close</Button>
+                            <Button variant="outline" onClick={handleDownloadReceipt}>
+                                <Download className="h-4 w-4 mr-2" /> Save PDF
+                            </Button>
                             <Button onClick={handlePrintReceipt}>
                                 <Printer className="h-4 w-4 mr-2" /> Print
                             </Button>
@@ -369,8 +391,11 @@ export const BursaryModals: React.FC<BursaryModalsProps> = ({
 
                         <div className="flex justify-end gap-2 pt-2 border-t">
                             <Button variant="secondary" onClick={() => { setInvoiceStudent(null); setInvoiceDiscount(''); setDiscountReason(''); }}>Close</Button>
+                            <Button variant="outline" onClick={handleDownloadInvoice}>
+                                <Download className="h-4 w-4 mr-2" /> Save PDF
+                            </Button>
                             <Button onClick={handlePrintInvoice}>
-                                <Printer className="h-4 w-4 mr-2" /> Print Invoice
+                                <Printer className="h-4 w-4 mr-2" /> Print
                             </Button>
                         </div>
                     </div>

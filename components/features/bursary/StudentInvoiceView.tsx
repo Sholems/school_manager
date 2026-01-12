@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import * as Types from '@/lib/types';
 import * as Utils from '@/lib/utils';
+import { downloadPDF } from '@/lib/pdf-utils';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { InvoiceTemplate } from './InvoiceTemplate';
@@ -82,6 +83,14 @@ export const StudentInvoiceView: React.FC<StudentInvoiceViewProps> = ({
         });
     };
 
+    const handleDownloadPDF = async () => {
+        await downloadPDF(
+            'student-invoice-container',
+            `Invoice-${student.student_no}-${settings.current_term.replace(/\s+/g, '_')}`,
+            { logoUrl: settings.logo_media, title: `Fee Invoice - ${settings.school_name}` }
+        );
+    };
+
     const paymentStatus = balance <= 0 ? 'paid' : balance < totalBill ? 'partial' : 'unpaid';
 
     // Original return with updated Print Button handler
@@ -95,10 +104,16 @@ export const StudentInvoiceView: React.FC<StudentInvoiceViewProps> = ({
                         {settings.current_term} • {settings.current_session}
                     </p>
                 </div>
-                <Button onClick={handlePrint} className="flex gap-2">
-                    <Printer size={16} />
-                    Print Invoice
-                </Button>
+                <div className="flex gap-2">
+                    <Button onClick={handleDownloadPDF} variant="outline" className="flex gap-2">
+                        <Download size={16} />
+                        Save PDF
+                    </Button>
+                    <Button onClick={handlePrint} className="flex gap-2">
+                        <Printer size={16} />
+                        Print
+                    </Button>
+                </div>
             </div>
 
             {/* Summary Cards */}
@@ -315,6 +330,17 @@ export const StudentInvoiceView: React.FC<StudentInvoiceViewProps> = ({
                     )}
                 </Card>
             )}
+
+            {/* Hidden container for PDF generation */}
+            <div id="student-invoice-container" style={{ position: 'absolute', left: '-9999px', top: 0, width: '210mm', background: 'white' }}>
+                <InvoiceTemplate
+                    student={student}
+                    cls={cls}
+                    fees={studentFees}
+                    payments={studentPayments}
+                    settings={settings}
+                />
+            </div>
         </div>
     );
 };
