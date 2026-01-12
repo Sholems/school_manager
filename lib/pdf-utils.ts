@@ -21,44 +21,22 @@ export const downloadPDF = async (
     // Dynamically import html2pdf to avoid SSR issues
     const html2pdf = (await import('html2pdf.js')).default;
 
-    // Create a wrapper with watermark if logo provided
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'position: relative; background: white; padding: 20px;';
+    // Clone the element to avoid modifying the original
+    const clone = element.cloneNode(true) as HTMLElement;
+    clone.style.width = '210mm'; // A4 width
+    clone.style.padding = '15px';
+    clone.style.background = 'white';
 
-    // Add watermark if logo URL provided
-    if (options?.logoUrl) {
-        const watermark = document.createElement('div');
-        watermark.style.cssText = `
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            opacity: 0.05;
-            width: 300px;
-            height: 300px;
-            pointer-events: none;
-            z-index: 0;
-        `;
-        watermark.innerHTML = `<img src="${options.logoUrl}" alt="" style="width: 100%; height: 100%; object-fit: contain;" />`;
-        wrapper.appendChild(watermark);
-    }
-
-    // Clone content and add to wrapper
-    const content = document.createElement('div');
-    content.style.cssText = 'position: relative; z-index: 1;';
-    content.innerHTML = element.innerHTML;
-    wrapper.appendChild(content);
-
-    // Configure html2pdf options
+    // Configure html2pdf options - optimized for speed
     const pdfOptions = {
-        margin: [10, 10, 10, 10] as [number, number, number, number],
+        margin: [5, 5, 5, 5] as [number, number, number, number],
         filename: `${filename}.pdf`,
-        image: { type: 'jpeg' as const, quality: 0.98 },
+        image: { type: 'jpeg' as const, quality: 0.85 },
         html2canvas: {
-            scale: 2,
+            scale: 1.5, // Reduced from 2 for faster rendering
             useCORS: true,
-            letterRendering: true,
             logging: false,
+            windowWidth: 800,
         },
         jsPDF: {
             unit: 'mm' as const,
@@ -68,11 +46,10 @@ export const downloadPDF = async (
     };
 
     try {
-        await html2pdf().set(pdfOptions).from(wrapper).save();
+        await html2pdf().set(pdfOptions).from(clone).save();
     } catch (error) {
         console.error('Error generating PDF:', error);
-        // Fallback: try to open print dialog
-        window.print();
+        alert('Failed to generate PDF. Please try the Print option instead.');
     }
 };
 
