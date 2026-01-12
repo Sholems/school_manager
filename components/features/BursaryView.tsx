@@ -54,19 +54,21 @@ export const BursaryView: React.FC<BursaryViewProps> = ({
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h1 className="text-2xl font-bold text-gray-900">Bursary & Finance</h1>
-                <div className="flex bg-gray-100 p-1 rounded-lg overflow-x-auto">
-                    {tabs.map(tab => (
-                        <button
-                            key={tab.key}
-                            onClick={() => setActiveTab(tab.key)}
-                            className={`px-3 py-2 text-sm font-medium rounded-md whitespace-nowrap ${activeTab === tab.key
-                                    ? 'bg-white shadow-sm text-brand-700'
-                                    : 'text-gray-600 hover:text-gray-900'
-                                }`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
+                <div className="w-full sm:w-auto overflow-x-auto scrollbar-hide -mx-1 px-1">
+                    <div className="flex bg-gray-100 p-1 rounded-lg w-max min-w-full sm:min-w-0">
+                        {tabs.map(tab => (
+                            <button
+                                key={tab.key}
+                                onClick={() => setActiveTab(tab.key)}
+                                className={`px-3 py-2 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${activeTab === tab.key
+                                        ? 'bg-white shadow-sm text-brand-700'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 

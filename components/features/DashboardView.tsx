@@ -220,20 +220,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
 
                 {/* Tabs Navigation */}
-                <div className="flex bg-gray-100 p-1 rounded-xl w-fit overflow-x-auto">
-                    {tabs.map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === tab.id
-                                ? 'bg-white shadow text-gray-900'
-                                : 'text-gray-500 hover:text-gray-700'
-                                }`}
-                        >
-                            <tab.icon size={16} />
-                            {tab.name}
-                        </button>
-                    ))}
+                <div className="w-full md:w-auto overflow-x-auto scrollbar-hide -mx-1 px-1">
+                    <div className="flex bg-gray-100 p-1 rounded-xl w-max min-w-full md:min-w-0">
+                        {tabs.map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === tab.id
+                                    ? 'bg-white shadow text-gray-900'
+                                    : 'text-gray-500 hover:text-gray-700'
+                                    }`}
+                            >
+                                <tab.icon size={16} />
+                                {tab.name}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
