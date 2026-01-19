@@ -295,7 +295,20 @@ export const getStudentBalance = (student: Student, fees: FeeStructure[], paymen
     f.term === term &&
     (f.class_id === null || f.class_id === student.class_id)
   );
-  const totalBill = classFees.reduce((acc, f) => acc + f.amount, 0);
+
+  // Filter mandatory vs optional fees
+  const applicableFees = classFees.filter(f => {
+    if (!f.is_optional) return true; // Mandatory fees always apply
+    return student.assigned_fees?.includes(f.id); // Optional fees only if assigned
+  });
+
+  const rawBill = applicableFees.reduce((acc, f) => acc + f.amount, 0);
+
+  // Calculate discounts for this session/term
+  const activeDiscounts = student.discounts?.filter(d => d.session === session && d.term === term) || [];
+  const totalDiscount = activeDiscounts.reduce((acc, d) => acc + d.amount, 0);
+
+  const totalBill = Math.max(0, rawBill - totalDiscount); // Ensure bill doesn't go below 0
 
   // Calculate total paid
   const studentPayments = payments.filter(p =>
@@ -305,7 +318,7 @@ export const getStudentBalance = (student: Student, fees: FeeStructure[], paymen
   );
   const totalPaid = studentPayments.reduce((acc, p) => acc + p.amount, 0);
 
-  return { totalBill, totalPaid, balance: totalBill - totalPaid };
+  return { totalBill, totalPaid, balance: totalBill - totalPaid, totalDiscount, applicableFees };
 };
 
 export const getStudentPosition = (studentId: string, students: Student[], scores: Score[], session: string, term: string) => {

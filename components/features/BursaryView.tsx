@@ -23,12 +23,13 @@ interface BursaryViewProps {
     onDeletePayment: (id: string) => void;
     onDeleteFee: (id: string) => void;
     onDeleteExpense?: (id: string) => void;
+    onUpdateStudent?: (student: Types.Student) => void;
 }
 
 type TabType = 'dashboard' | 'fees' | 'debtors' | 'expenses' | 'structure';
 
 export const BursaryView: React.FC<BursaryViewProps> = ({
-    students, classes, fees, payments, expenses, settings, onAddPayment, onAddFee, onAddExpense, onDeletePayment, onDeleteFee, onDeleteExpense
+    students, classes, fees, payments, expenses, settings, onAddPayment, onAddFee, onAddExpense, onDeletePayment, onDeleteFee, onDeleteExpense, onUpdateStudent
 }) => {
     const [activeTab, setActiveTab] = useState<TabType>('dashboard');
     const [selectedClass, setSelectedClass] = useState(classes[0]?.id || '');
@@ -38,6 +39,7 @@ export const BursaryView: React.FC<BursaryViewProps> = ({
     const [showPayModal, setShowPayModal] = useState(false);
     const [showExpenseModal, setShowExpenseModal] = useState(false);
     const [showFeeModal, setShowFeeModal] = useState(false);
+    const [showDiscountModal, setShowDiscountModal] = useState(false); // New state
     const [receiptPayment, setReceiptPayment] = useState<Types.Payment | null>(null);
     const [invoiceStudent, setInvoiceStudent] = useState<Types.Student | null>(null);
     const { addToast } = useToast();
@@ -61,8 +63,8 @@ export const BursaryView: React.FC<BursaryViewProps> = ({
                                 key={tab.key}
                                 onClick={() => setActiveTab(tab.key)}
                                 className={`px-3 py-2 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${activeTab === tab.key
-                                        ? 'bg-white shadow-sm text-brand-700'
-                                        : 'text-gray-600 hover:text-gray-900'
+                                    ? 'bg-white shadow-sm text-brand-700'
+                                    : 'text-gray-600 hover:text-gray-900'
                                     }`}
                             >
                                 {tab.label}
@@ -98,6 +100,8 @@ export const BursaryView: React.FC<BursaryViewProps> = ({
                     onPrintReceipt={(p) => setReceiptPayment(p)}
                     onDeletePayment={onDeletePayment}
                     onPrintInvoice={(student) => setInvoiceStudent(student)}
+                    onUpdateStudent={onUpdateStudent}
+                    onOpenDiscountModal={() => setShowDiscountModal(true)}
                 />
             )}
 
@@ -151,6 +155,19 @@ export const BursaryView: React.FC<BursaryViewProps> = ({
                 onAddExpense={onAddExpense}
                 onAddFee={onAddFee}
                 addToast={addToast}
+                showDiscountModal={showDiscountModal}
+                setShowDiscountModal={setShowDiscountModal}
+                onAddDiscount={(discount) => {
+                    if (selectedStudent && onUpdateStudent) {
+                        const student = students.find(s => s.id === selectedStudent);
+                        if (student) {
+                            onUpdateStudent({
+                                ...student,
+                                discounts: [...(student.discounts || []), discount]
+                            });
+                        }
+                    }
+                }}
             />
         </div>
     );

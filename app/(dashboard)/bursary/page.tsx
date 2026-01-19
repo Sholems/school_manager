@@ -6,7 +6,8 @@ import { StudentInvoiceView } from '@/components/features/bursary/StudentInvoice
 import {
     useStudents, useClasses, useFees, usePayments, useExpenses, useSettings,
     useCreatePayment, useCreateFee, useCreateExpense,
-    useDeletePayment, useDeleteFee, useDeleteExpense
+    useDeletePayment, useDeleteFee, useDeleteExpense,
+    useUpdateStudent
 } from '@/lib/hooks/use-data';
 import * as Utils from '@/lib/utils';
 import * as Types from '@/lib/types';
@@ -27,6 +28,7 @@ export default function BursaryPage() {
     const { mutate: deletePayment } = useDeletePayment();
     const { mutate: deleteFee } = useDeleteFee();
     const { mutate: deleteExpense } = useDeleteExpense();
+    const { mutate: updateStudent } = useUpdateStudent();
 
     // For students/parents, show simplified invoice view
     const isStudentOrParent = currentRole === 'student' || currentRole === 'parent';
@@ -61,6 +63,7 @@ export default function BursaryPage() {
             expenses={expenses} settings={settings}
             onAddPayment={addPayment} onAddFee={addFee} onAddExpense={addExpense}
             onDeletePayment={deletePayment} onDeleteFee={deleteFee} onDeleteExpense={deleteExpense}
+            onUpdateStudent={(student) => updateStudent({ id: student.id, updates: student })}
         />
     );
 }

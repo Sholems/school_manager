@@ -129,8 +129,8 @@ export const ReceiptTemplate: React.FC<ReceiptTemplateProps> = ({ payment, stude
                                 <img src={settings.head_of_school_signature} alt="Signature" style={{ height: '28px', objectFit: 'contain' }} />
                             )}
                         </div>
-                        <p style={{ fontWeight: 600, fontSize: '10px', margin: 0 }}>{settings.head_of_school_name || 'Head of School'}</p>
-                        <p style={{ fontSize: '8px', color: '#666', margin: 0 }}>{settings.head_teacher_label || 'Head of School'}</p>
+                        <p style={{ fontWeight: 600, fontSize: '10px', margin: 0 }}>{settings.head_of_school_name || 'Head of Schools'}</p>
+                        <p style={{ fontSize: '8px', color: '#666', margin: 0 }}>{(settings.head_teacher_label === 'Head Teacher' ? 'Head of Schools' : settings.head_teacher_label) || 'Head of Schools'}</p>
                     </div>
                     <div style={{ textAlign: 'right', flex: '1 1 auto', minWidth: 0 }}>
                         <p style={{ color: '#8FC31F', fontStyle: 'italic', fontSize: '10px', margin: '0 0 3px 0', wordWrap: 'break-word' }}>{settings.school_tagline}</p>

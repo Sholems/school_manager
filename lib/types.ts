@@ -131,6 +131,17 @@ export interface Student extends Entity {
   address: string;
   passport_url?: string | null; // Base64 image or URL
   password?: string; // Portal login password (set by admin)
+  assigned_fees?: string[]; // IDs of optional fees assigned to this student
+  discounts?: StudentDiscount[]; // Applied discounts/scholarships
+}
+
+export interface StudentDiscount {
+  id: string;
+  amount: number;
+  reason: string;
+  category: 'discount' | 'scholarship';
+  session: string;
+  term: string;
 }
 
 export interface Subject extends Entity {
@@ -195,6 +206,7 @@ export interface FeeStructure extends Entity {
   class_id: string | null; // null = All Classes
   session: string;
   term: string;
+  is_optional?: boolean;
 }
 
 export interface PaymentLineItem {

@@ -29,7 +29,8 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({
     const applicableFees = fees.filter(f =>
         f.session === settings.current_session &&
         f.term === settings.current_term &&
-        (f.class_id === null || f.class_id === student.class_id)
+        (f.class_id === null || f.class_id === student.class_id) &&
+        (!f.is_optional || student.assigned_fees?.includes(f.id))
     );
 
     const studentPayments = payments.filter(p =>
@@ -61,7 +62,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({
                             <p style={{ color: '#666', fontSize: '10px', margin: '2px 0 0 0' }}>Tel: {settings.school_phone} | {settings.school_email}</p>
                         </div>
                     </div>
-                    
+
                     <div style={{ textAlign: 'right', flex: '0 0 auto' }}>
                         <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#1A3A5C', margin: 0 }}>INVOICE</h2>
                         <p style={{ fontSize: '10px', color: '#666', margin: '3px 0 0 0' }}>#{invoiceNo}</p>
@@ -86,7 +87,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({
                         <p style={{ fontSize: '10px', color: '#555', margin: '1px 0', wordWrap: 'break-word' }}>Guardian: {student.parent_name} ({student.parent_phone})</p>
                     </div>
                 </div>
-                
+
                 <div style={{ flex: '0 0 auto' }}>
                     <table style={{ fontSize: '10px' }}>
                         <tbody>
@@ -240,7 +241,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({
                         <div style={{ width: '100px', borderBottom: '1px solid #333', height: '32px', marginBottom: '3px' }}></div>
                         <p style={{ fontSize: '9px', fontWeight: 600, color: '#333', margin: 0 }}>Bursar&apos;s Signature</p>
                     </div>
-                    
+
                     <div style={{ textAlign: 'center', flex: '0 0 auto' }}>
                         <p style={{ margin: '0 0 6px 0' }}>
                             {balance > 0 ? (
@@ -257,10 +258,10 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({
 
                     <div style={{ textAlign: 'center', flex: '0 0 auto' }}>
                         <div style={{ width: '100px', borderBottom: '1px solid #333', height: '32px', marginBottom: '3px' }}></div>
-                        <p style={{ fontSize: '9px', fontWeight: 600, color: '#333', margin: 0 }}>{settings.head_of_school_name || 'Head of School'}</p>
+                        <p style={{ fontSize: '9px', fontWeight: 600, color: '#333', margin: 0 }}>{settings.head_of_school_name || 'Head of Schools'}</p>
                     </div>
                 </div>
-                
+
                 <div style={{ textAlign: 'center', marginTop: '14px', paddingTop: '8px', borderTop: '1px solid #eee' }}>
                     <p style={{ fontSize: '10px', color: '#888', fontStyle: 'italic', margin: 0 }}>&quot;{settings.school_tagline}&quot;</p>
                     <p style={{ fontSize: '8px', color: '#aaa', margin: '4px 0 0 0' }}>

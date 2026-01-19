@@ -20,10 +20,12 @@ interface FeeManagementProps {
     onPrintReceipt: (p: Types.Payment) => void;
     onDeletePayment: (id: string) => void;
     onPrintInvoice?: (student: Types.Student) => void;
+    onUpdateStudent?: (student: Types.Student) => void; // New prop to save assignments/discounts
+    onOpenDiscountModal?: () => void;
 }
 
 export const FeeManagement: React.FC<FeeManagementProps> = ({
-    students, classes, fees, payments, settings, selectedClass, setSelectedClass, selectedStudent, setSelectedStudent, onRecordPayment, onPrintReceipt, onDeletePayment, onPrintInvoice
+    students, classes, fees, payments, settings, selectedClass, setSelectedClass, selectedStudent, setSelectedStudent, onRecordPayment, onPrintReceipt, onDeletePayment, onPrintInvoice, onUpdateStudent, onOpenDiscountModal
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -41,8 +43,32 @@ export const FeeManagement: React.FC<FeeManagementProps> = ({
     const studentPayments = selectedStudent
         ? payments.filter(p => p.student_id === selectedStudent && p.session === settings.current_session && p.term === settings.current_term)
         : [];
-    const applicableFees = student ? fees.filter(f => f.session === settings.current_session && f.term === settings.current_term && (f.class_id === null || f.class_id === student.class_id)) : [];
-    const { totalBill, totalPaid, balance } = student ? Utils.getStudentBalance(student, fees, payments, settings.current_session, settings.current_term) : { totalBill: 0, totalPaid: 0, balance: 0 };
+
+    // Derived values using the new logic
+    const { totalBill, totalPaid, balance, totalDiscount, applicableFees } = student
+        ? Utils.getStudentBalance(student, fees, payments, settings.current_session, settings.current_term)
+        : { totalBill: 0, totalPaid: 0, balance: 0, totalDiscount: 0, applicableFees: [] };
+
+    const handleToggleFee = (feeId: string, assigned: boolean) => {
+        if (!student || !onUpdateStudent) return;
+        const currentAssigned = student.assigned_fees || [];
+        const newAssigned = assigned
+            ? [...currentAssigned, feeId]
+            : currentAssigned.filter(id => id !== feeId);
+
+        onUpdateStudent({ ...student, assigned_fees: newAssigned });
+    };
+
+    const handleRemoveDiscount = (discountId: string) => {
+        if (!student || !onUpdateStudent) return;
+        const newDiscounts = (student.discounts || []).filter(d => d.id !== discountId);
+        onUpdateStudent({ ...student, discounts: newDiscounts });
+    };
+
+    // Get all potential optional fees for this student's class
+    const potentialOptionalFees = student
+        ? fees.filter(f => (f.class_id === null || f.class_id === student.class_id) && f.session === settings.current_session && f.term === settings.current_term && f.is_optional)
+        : [];
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
@@ -76,8 +102,8 @@ export const FeeManagement: React.FC<FeeManagementProps> = ({
                                     key={s.id}
                                     onClick={() => setSelectedStudent(s.id)}
                                     className={`p-2 lg:p-3 rounded-md cursor-pointer flex justify-between items-center text-sm transition-colors ${selectedStudent === s.id
-                                            ? 'bg-brand-50 border-brand-200 border'
-                                            : 'hover:bg-gray-50'
+                                        ? 'bg-brand-50 border-brand-200 border'
+                                        : 'hover:bg-gray-50'
                                         }`}
                                 >
                                     <div className="min-w-0 flex-1">
@@ -138,7 +164,7 @@ export const FeeManagement: React.FC<FeeManagementProps> = ({
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
-                                        {applicableFees.map(fee => (
+                                        {applicableFees && applicableFees.map(fee => (
                                             <tr key={fee.id}>
                                                 <td className="px-3 lg:px-4 py-2">{fee.name}</td>
                                                 <td className="px-3 lg:px-4 py-2 text-right font-mono">{Utils.formatCurrency(fee.amount)}</td>
@@ -146,10 +172,84 @@ export const FeeManagement: React.FC<FeeManagementProps> = ({
                                         ))}
                                         <tr className="bg-gray-50 font-bold">
                                             <td className="px-3 lg:px-4 py-2">Total Billed</td>
+                                            <td className="px-3 lg:px-4 py-2 text-right">{Utils.formatCurrency(totalBill + totalDiscount)}</td>
+                                        </tr>
+                                        {totalDiscount > 0 && (
+                                            <tr className="bg-green-50 text-green-700">
+                                                <td className="px-3 lg:px-4 py-2">Discount/Scholarship</td>
+                                                <td className="px-3 lg:px-4 py-2 text-right">-{Utils.formatCurrency(totalDiscount)}</td>
+                                            </tr>
+                                        )}
+                                        <tr className="bg-gray-100 font-bold">
+                                            <td className="px-3 lg:px-4 py-2">Net Payable</td>
                                             <td className="px-3 lg:px-4 py-2 text-right">{Utils.formatCurrency(totalBill)}</td>
                                         </tr>
                                     </tbody>
                                 </table>
+                            </div>
+                        </Card>
+
+                        {/* Fee Adjustments (Optional Fees & Discounts) */}
+                        <Card title="Fee Adjustments">
+                            <div className="space-y-4">
+                                {/* Optional Fees */}
+                                {potentialOptionalFees.length > 0 && (
+                                    <div>
+                                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Optional Services</h4>
+                                        <div className="space-y-2">
+                                            {potentialOptionalFees.map(fee => {
+                                                const isAssigned = student?.assigned_fees?.includes(fee.id);
+                                                return (
+                                                    <label key={fee.id} className="flex items-center justify-between p-2 rounded hover:bg-gray-50 border border-transparent hover:border-gray-100 cursor-pointer">
+                                                        <div className="flex items-center gap-2">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={isAssigned || false}
+                                                                onChange={(e) => handleToggleFee(fee.id, e.target.checked)}
+                                                                className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                                                            />
+                                                            <span className="text-sm text-gray-700">{fee.name}</span>
+                                                        </div>
+                                                        <span className="text-sm font-mono text-gray-600">{Utils.formatCurrency(fee.amount)}</span>
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Discounts & Scholarships */}
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Discounts & Scholarships</h4>
+                                        <button
+                                            onClick={onOpenDiscountModal}
+                                            className="text-xs text-brand-600 hover:text-brand-700 font-medium"
+                                        >
+                                            + Add Adjustment
+                                        </button>
+                                    </div>
+
+                                    {student?.discounts && student.discounts.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {student.discounts.filter(d => d.session === settings.current_session && d.term === settings.current_term).map(d => (
+                                                <div key={d.id} className="flex items-center justify-between p-2 bg-green-50 rounded border border-green-100">
+                                                    <div>
+                                                        <div className="text-sm font-medium text-green-900">{d.reason} <span className="text-xs opacity-75">({d.category})</span></div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-bold text-green-700">-{Utils.formatCurrency(d.amount)}</span>
+                                                        <button onClick={() => handleRemoveDiscount(d.id)} className="text-green-400 hover:text-red-500">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-400 italic">No active discounts.</p>
+                                    )}
+                                </div>
                             </div>
                         </Card>
 

@@ -32,7 +32,13 @@ interface BursaryModalsProps {
     onAddPayment: (p: Types.Payment) => void;
     onAddExpense: (e: Types.Expense) => void;
     onAddFee: (f: Types.FeeStructure) => void;
+
     addToast: (msg: string, type: 'success' | 'error') => void;
+
+    // Discount/Scholarship Modal Props
+    showDiscountModal?: boolean;
+    setShowDiscountModal?: (show: boolean) => void;
+    onAddDiscount?: (discount: Types.StudentDiscount) => void;
 }
 
 const PAYMENT_PURPOSES = [
@@ -55,7 +61,8 @@ export const BursaryModals: React.FC<BursaryModalsProps> = ({
     settings, classes, students, fees, payments,
     showPayModal, setShowPayModal, showExpenseModal, setShowExpenseModal, showFeeModal, setShowFeeModal,
     receiptPayment, setReceiptPayment, invoiceStudent, setInvoiceStudent,
-    selectedStudent, onAddPayment, onAddExpense, onAddFee, addToast
+    selectedStudent, onAddPayment, onAddExpense, onAddFee, addToast,
+    showDiscountModal, setShowDiscountModal, onAddDiscount
 }) => {
     // Payment form with line items
     const [lineItems, setLineItems] = useState<LineItem[]>([{ purpose: 'tuition', amount: '' }]);
@@ -71,6 +78,12 @@ export const BursaryModals: React.FC<BursaryModalsProps> = ({
     const [feeName, setFeeName] = useState('');
     const [feeAmount, setFeeAmount] = useState('');
     const [feeClass, setFeeClass] = useState('');
+    const [feeOptional, setFeeOptional] = useState(false);
+
+    // New Discount Form State
+    const [discAmount, setDiscAmount] = useState('');
+    const [discReason, setDiscReason] = useState('');
+    const [discCategory, setDiscCategory] = useState<'discount' | 'scholarship'>('discount');
 
     // Invoice discount
     const [invoiceDiscount, setInvoiceDiscount] = useState('');
@@ -154,9 +167,36 @@ export const BursaryModals: React.FC<BursaryModalsProps> = ({
     const handleFeeSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onAddFee({
-            id: Utils.generateId(), name: feeName, amount: Number(feeAmount), class_id: feeClass || null, session: settings.current_session, term: settings.current_term, created_at: Date.now(), updated_at: Date.now()
+            id: Utils.generateId(),
+            name: feeName,
+            amount: Number(feeAmount),
+            class_id: feeClass || null,
+            session: settings.current_session,
+            term: settings.current_term,
+            is_optional: feeOptional,
+            created_at: Date.now(),
+            updated_at: Date.now()
         });
-        addToast('Fee structure added', 'success'); setShowFeeModal(false); setFeeName(''); setFeeAmount(''); setFeeClass('');
+        addToast('Fee structure added', 'success'); setShowFeeModal(false); setFeeName(''); setFeeAmount(''); setFeeClass(''); setFeeOptional(false);
+    };
+
+    const handleDiscountSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (onAddDiscount) {
+            onAddDiscount({
+                id: Utils.generateId(),
+                amount: Number(discAmount),
+                reason: discReason,
+                category: discCategory,
+                session: settings.current_session,
+                term: settings.current_term
+            });
+            addToast(`${discCategory === 'scholarship' ? 'Scholarship' : 'Discount'} added`, 'success');
+            if (setShowDiscountModal) setShowDiscountModal(false);
+            setDiscAmount('');
+            setDiscReason('');
+            setDiscCategory('discount');
+        }
     };
 
     const receiptStudent = receiptPayment ? students.find(s => s.id === receiptPayment.student_id) : null;
@@ -429,9 +469,34 @@ export const BursaryModals: React.FC<BursaryModalsProps> = ({
                         <option value="">All Classes</option>
                         {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </Select>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="feeOptional"
+                            checked={feeOptional}
+                            onChange={e => setFeeOptional(e.target.checked)}
+                            className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                        />
+                        <label htmlFor="feeOptional" className="text-sm text-gray-700">Optional Fee (e.g. Bus, Excursion)</label>
+                    </div>
                     <Button type="submit" className="w-full">Create Fee</Button>
                 </form>
             </Modal>
+
+            {/* Discount/Scholarship Modal */}
+            {showDiscountModal && setShowDiscountModal && (
+                <Modal isOpen={showDiscountModal} onClose={() => setShowDiscountModal(false)} title="Add Adjustment">
+                    <form onSubmit={handleDiscountSubmit} className="space-y-4">
+                        <Select label="Type" value={discCategory} onChange={e => setDiscCategory(e.target.value as any)}>
+                            <option value="discount">Discount</option>
+                            <option value="scholarship">Scholarship</option>
+                        </Select>
+                        <Input label="Amount (₦)" type="number" required value={discAmount} onChange={e => setDiscAmount(e.target.value)} />
+                        <Input label="Reason/Description" required value={discReason} onChange={e => setDiscReason(e.target.value)} placeholder="e.g. Staff Child, Merit Award" />
+                        <Button type="submit" className="w-full">Apply Adjustment</Button>
+                    </form>
+                </Modal>
+            )}
         </>
     );
 };

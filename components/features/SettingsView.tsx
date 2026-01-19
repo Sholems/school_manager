@@ -26,7 +26,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onUpdate }
         next_term_begins: s.next_term_begins ?? '',
         report_font_family: s.report_font_family ?? 'inherit',
         class_teacher_label: s.class_teacher_label ?? 'Class Teacher',
-        head_teacher_label: s.head_teacher_label ?? 'Head Teacher',
+        head_teacher_label: (s.head_teacher_label === 'Head Teacher' ? 'Head of Schools' : s.head_teacher_label) ?? 'Head of Schools',
         landing_hero_title: s.landing_hero_title ?? '',
         landing_hero_subtitle: s.landing_hero_subtitle ?? '',
         landing_about_text: s.landing_about_text ?? '',
@@ -112,7 +112,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, onUpdate }
                     <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <Input label="Class Teacher Label" value={formData.class_teacher_label} onChange={e => handleChange('class_teacher_label', e.target.value)} />
-                            <Input label="Head Teacher Label" value={formData.head_teacher_label} onChange={e => handleChange('head_teacher_label', e.target.value)} />
+                            <Input label="Head of Schools Label" value={formData.head_teacher_label} onChange={e => handleChange('head_teacher_label', e.target.value)} />
                         </div>
                         <div className="grid grid-cols-2 gap-4 border-t pt-4">
                             <div>
