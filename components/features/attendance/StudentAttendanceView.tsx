@@ -27,7 +27,8 @@ export const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({
                 const record = a.records.find(r => r.student_id === student.id);
                 return {
                     date: a.date,
-                    status: record?.status || 'absent'
+                    status: record?.status || 'absent',
+                    remark: record?.remark
                 };
             });
     }, [attendance, student.id, student.class_id, settings]);
@@ -143,27 +144,34 @@ export const StudentAttendanceView: React.FC<StudentAttendanceViewProps> = ({
                         {myAttendance.map((record, i) => (
                             <div
                                 key={i}
-                                className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100"
+                                className="flex flex-col p-3 bg-gray-50 rounded-xl border border-gray-100 gap-2"
                             >
-                                <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 bg-white rounded-lg border flex items-center justify-center">
-                                        <span className="text-xs font-bold text-gray-900">
-                                            {new Date(record.date).getDate()}
-                                        </span>
+                                <div className="flex items-center justify-between w-full">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 bg-white rounded-lg border flex items-center justify-center">
+                                            <span className="text-xs font-bold text-gray-900">
+                                                {new Date(record.date).getDate()}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-gray-900">
+                                                {new Date(record.date).toLocaleDateString('en-US', { weekday: 'long' })}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                {new Date(record.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="font-medium text-gray-900">
-                                            {new Date(record.date).toLocaleDateString('en-US', { weekday: 'long' })}
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            {new Date(record.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                                        </p>
-                                    </div>
+                                    <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase ${getStatusColor(record.status)}`}>
+                                        {getStatusIcon(record.status)}
+                                        {record.status}
+                                    </span>
                                 </div>
-                                <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase ${getStatusColor(record.status)}`}>
-                                    {getStatusIcon(record.status)}
-                                    {record.status}
-                                </span>
+                                {record.remark && (
+                                    <div className="text-xs text-gray-500 bg-white border border-gray-100 p-2 rounded-md italic">
+                                        "{record.remark}"
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
